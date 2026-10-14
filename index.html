@@ -291,6 +291,28 @@
   .ledger-row.overdue .ledger-mark,
   .ledger-row.soon .ledger-mark { background: var(--badge-red-fg); }
   .ledger-row.near .ledger-mark { background: var(--badge-yellow-fg); }
+  /* 一覧の ✓（押すと済んだ）。見た目は 24px の四角、押せる広さは 44px。枠の色は期日の色の約束と同じ */
+  .ledger-row.has-check { align-items: center; }
+  .ledger-check {
+    flex: 0 0 auto; position: relative; width: 44px; height: 44px; margin: -10px 0 -10px -10px;
+    border: 0; padding: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .ledger-check::before {
+    content: ''; position: absolute; left: 10px; top: 10px; width: 24px; height: 24px; box-sizing: border-box;
+    border-radius: 7px; border: 2px solid var(--badge-gray-fg); background: transparent;
+  }
+  .ledger-row.overdue .ledger-check::before,
+  .ledger-row.soon .ledger-check::before { border-color: var(--badge-red-fg); }
+  .ledger-row.near .ledger-check::before { border-color: var(--badge-yellow-fg); }
+  .ledger-check[aria-checked="true"]::before { background: var(--lime); border-color: var(--lime); }
+  .ledger-check[aria-checked="true"]::after {
+    content: ''; position: absolute; left: 18px; top: 14px; width: 6px; height: 12px;
+    border: solid var(--on-lime, #131311); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+  }
+  .ledger-check.busy::before { animation: ledger-check-pulse .9s ease-in-out infinite; }
+  @keyframes ledger-check-pulse { 50% { opacity: .55; } }
+  @media (prefers-reduced-motion: reduce) { .ledger-check.busy::before { animation: none; } }
+  .ledger-check:focus-visible { outline: 2px solid var(--lime); outline-offset: -4px; border-radius: 10px; }
   .ledger-main { flex: 1 1 auto; min-width: 0; }
   .ledger-name { font-size: 15px; line-height: 1.4; }
   .ledger-meta { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -2122,7 +2144,7 @@
     var edit = v.ok && v.edit ? v.edit : null;
     document.getElementById('ledger-add').hidden = !edit;
     document.getElementById('ledger-foot').textContent = edit
-      ? '行を押すと直せます。表で直しても同じです。表は代表のアカウントの中にあるので、事務員には見えません。'
+      ? '左の四角を押すと「済んだ」になります（押し間違えたら下の「元に戻す」）。行を押すと直せます。表は代表のアカウントの中にあるので、事務員には見えません。'
       : '期日は表で直します。表は代表のアカウントの中にあるので、事務員には見えません。';
 
     if (!v.ok) {
@@ -2141,7 +2163,7 @@
     } else {
       var ul = el('ul', 'ledger');
       v.items.forEach(function (it) {
-        ul.appendChild(ledgerRowEl(it, edit ? ledgerFindItem(it.row) : null));
+        ul.appendChild(ledgerRowEl(it, edit ? ledgerFindItem(it.row) : null, true));
       });
       body.appendChild(ul);
     }
@@ -2462,9 +2484,24 @@
   }
 
   // 1行の見た目。item（直す一覧の行）があれば押せる行にする
-  function ledgerRowEl(it, item) {
+  // quick: 台帳の一覧（近い順）では、左に ✓ の四角を置き、押すとその場で「済んだ」にする
+  // （2026-10-14 代表「済んだものを1個1個開いて消すのは大変」。押し間違いは下の「元に戻す」で戻せる）
+  function ledgerRowEl(it, item, quick) {
     var li = el('li', 'ledger-row ' + (it.level || 'far'));
-    li.appendChild(el('span', 'ledger-mark'));
+    if (quick && item && (item.doneAction === 'advance' || item.doneAction === 'hide')) {
+      var box = el('button', 'ledger-check');
+      box.type = 'button';
+      box.setAttribute('role', 'checkbox');
+      box.setAttribute('aria-checked', 'false');
+      box.setAttribute('aria-label', it.name + 'を済んだにする');
+      box.setAttribute('data-row', String(item.row));
+      box.addEventListener('click', function (e) { e.stopPropagation(); quickCompleteLedger(item, box); });
+      box.addEventListener('keydown', function (e) { e.stopPropagation(); });
+      li.appendChild(box);
+      li.classList.add('has-check');
+    } else {
+      li.appendChild(el('span', 'ledger-mark'));
+    }
     var main = el('div', 'ledger-main');
     main.appendChild(el('div', 'ledger-name', it.name));
     var meta = [it.dueText, it.cycle, it.who].filter(function (s) { return s; }).join('・');
@@ -2520,7 +2557,7 @@
   }
 
   // allOpen の初期値は見本づくり用（本番の webapp.js は ledgerAllOpen を渡さない）
-  var LEDGER_UI = { item: null, busy: false, allOpen: !!(DATA && DATA.ledgerAllOpen), undoTimer: null, confirmStep: 0,
+  var LEDGER_UI = { item: null, busy: false, quick: false, allOpen: !!(DATA && DATA.ledgerAllOpen), undoTimer: null, confirmStep: 0,
     // 見せ方（list / calendar）。前に選んだほうを覚えておく（この端末だけ。消えてもリストに戻るだけ）
     view: DATA.ledgerView || readLedgerView() || 'list', cal: null, calAnim: '' };
 
@@ -2634,6 +2671,8 @@
   function openLedgerEditor(item) {
     var edit = DATA.ledger && DATA.ledger.edit;
     if (!edit) return;
+    // ✓ の返事を待っている間は開かない（開くと待ちが解けて、別の行も済んだにできてしまう。2026-10-14 猪八戒の点検）
+    if (LEDGER_UI.quick) { toast('「済んだ」にしている途中です。少しお待ちください。'); return; }
     LEDGER_UI.item = item || null;
     document.getElementById('le-title').textContent = item ? '行事を直す' : '行事を足す';
     document.getElementById('le-sub').textContent = item
@@ -2819,6 +2858,33 @@
     setLedgerBusy(true);
     var item = LEDGER_UI.item;
     callLedger('ledgerSave', item ? { row: item.row, version: item.version, values: got.values } : { values: got.values });
+  }
+
+  // 一覧の ✓ から「済んだ」にする（直す画面は開かない）。結果は「済んだ」ボタンと同じ返事・同じ「元に戻す」
+  function quickCompleteLedger(item, box) {
+    // 待ちの印は直す画面（LEDGER_UI.busy）と分ける。待っている間は別の ✓・行を開く・足す を止める（openLedgerEditor）
+    if (LEDGER_UI.quick || LEDGER_UI.busy || box.disabled) return;
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので保存しません'); return; }
+    LEDGER_UI.quick = true;
+    box.disabled = true;
+    box.setAttribute('aria-checked', 'true');
+    box.classList.add('busy');
+    var fail = function (text) {
+      LEDGER_UI.quick = false;
+      box.disabled = false;
+      box.setAttribute('aria-checked', 'false');
+      box.classList.remove('busy');
+      toast(text);
+    };
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (r && r.ok) { LEDGER_UI.quick = false; onLedgerResult(r); return; }
+        if (r && r.ledger) { DATA.ledger = r.ledger; renderLedger(); }
+        if (r && r.partial) refreshLedger(); // 途中まで書いたかもしれないので、表の今の中身を出し直す
+        fail((r && r.errorText) || '済んだにできませんでした。もう一度押してください。');
+      })
+      .withFailureHandler(function () { fail('つながりませんでした。もう一度押してください。'); })
+      .ledgerComplete({ row: item.row, version: item.version });
   }
 
   function completeLedger() {
