@@ -1,0 +1,3573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="秘書">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#131311">
+<title>はるうた秘書</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- iPhone のホーム画面から開いたときの、上のバーの見た目。
+     GAS の addMetaTag はこの名前を受け付けないので、ここに直接書く（効かなくても害はない） -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ==== デザインシステム（引き継ぎ仕様書 第4章）==== */
+  :root {
+    --bg: #131311;
+    --card: #1D1D1A;
+    --line: #2C2C27;
+    --nav: #1A1A17;
+    --text: #F2F0E8;
+    --text-soft: #D9D6CB;
+    --muted: #A09B8E;
+    --weak: #8B877B;
+    --lime: #C9F158;
+    --on-lime: #131311;
+    --badge-gray-bg: #26261F;
+    --badge-gray-fg: #A09B8E;
+    --badge-lime-bg: #252B16;
+    --badge-lime-fg: #C9F158;
+    --badge-red-bg: #3A211B;
+    --badge-red-fg: #FF9B85;
+    --badge-yellow-bg: #38301A;
+    --badge-yellow-fg: #F0C75E;
+    --nav-h: 64px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+  /* ==== ヘッダー ==== */
+  header {
+    padding: 28px 0 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--weak);
+    text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+
+  .greeting {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.35;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .date {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  /* ==== カード ==== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .card-title {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .count-chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--badge-gray-bg);
+    color: var(--badge-gray-fg);
+  }
+  .count-chip.has { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+
+  /* ==== 予定のリスト ==== */
+  .agenda { margin: 14px 0 0; padding: 0; list-style: none; }
+
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 12px;
+    padding: 12px 0 12px 0;
+    min-height: 44px;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+
+  .row-time {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-soft);
+    font-variant-numeric: tabular-nums;
+    padding-top: 1px;
+    white-space: nowrap;
+  }
+  .row-time .end {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--weak);
+    margin-top: 2px;
+  }
+  .row-time.allday {
+    font-size: 12px;
+    color: var(--badge-lime-fg);
+  }
+
+  .row-title {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .row-place {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .row.finished .row-time,
+  .row.finished .row-title,
+  .row.finished .row-place { color: var(--weak); }
+
+  .row.next::before {
+    content: "";
+    position: absolute;
+    left: -16px;
+    top: 18px;
+    width: 3px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--lime);
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--badge-gray-bg);
+    color: var(--badge-gray-fg);
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+
+  .empty {
+    margin: 18px 0 4px;
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+    padding: 14px 0;
+  }
+
+  .overflow {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--weak);
+  }
+
+  .error {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--badge-red-fg);
+    background: var(--badge-red-bg);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+  /* ==== 利用者案件（件数だけ）==== */
+  .cases { margin: 10px 0 0; padding: 0; list-style: none; }
+
+  .case-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 0;
+  }
+  .case-row + .case-row { border-top: 1px solid var(--line); }
+
+  .case-label {
+    font-size: 14px;
+    color: var(--text-soft);
+    white-space: nowrap;
+  }
+
+  .case-stats {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 16px;
+    white-space: nowrap;
+  }
+
+  .stat { display: inline-flex; align-items: baseline; gap: 5px; }
+  .stat-label { font-size: 11px; color: var(--muted); }
+  .stat-num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    min-width: 1ch;
+    text-align: right;
+  }
+  .stat-unit { font-size: 11px; color: var(--muted); }
+  .stat.zero .stat-num { color: var(--weak); }
+  .stat.urgent .stat-num { color: var(--lime); }
+
+  /* 要対応メール */
+  .mails { margin: 10px 0 0; padding: 0; list-style: none; }
+  .mail-row { padding: 10px 0; border-top: 1px solid var(--line); }
+  .mail-row:first-child { border-top: none; }
+  .mail-head { display: flex; gap: 8px; align-items: baseline; }
+  .mail-time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mail-from { color: var(--soft); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-subject { margin-top: 2px; font-size: 15px; line-height: 1.4; }
+  .mail-note { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+  /* ==== 台帳（年間行事）。docs/spec.md 5-19 ==== */
+  /* 画面は下のタブで入れ替える。出していない画面は hidden を付けて隠す */
+  .screen[hidden] { display: none; }
+  .ledger { margin: 10px 0 0; padding: 0; list-style: none; }
+  .ledger-row {
+    padding: 11px 0; border-top: 1px solid var(--line);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .ledger-row:first-child { border-top: none; }
+  /* 色の約束: 赤＝過ぎた・もうすぐ / 黄＝近い / 灰＝まだ先（config.js の SOON_DAYS・NEAR_DAYS） */
+  .ledger-mark {
+    flex: 0 0 auto; width: 8px; height: 8px; margin-top: 7px;
+    border-radius: 999px; background: var(--badge-gray-fg);
+  }
+  .ledger-row.overdue .ledger-mark,
+  .ledger-row.soon .ledger-mark { background: var(--badge-red-fg); }
+  .ledger-row.near .ledger-mark { background: var(--badge-yellow-fg); }
+  .ledger-main { flex: 1 1 auto; min-width: 0; }
+  .ledger-name { font-size: 15px; line-height: 1.4; }
+  .ledger-meta { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .ledger-note { margin-top: 3px; color: var(--weak); font-size: 12px; line-height: 1.4; }
+  .ledger-days {
+    flex: 0 0 auto; margin-top: 1px; padding: 2px 8px; border-radius: 999px;
+    font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap;
+    background: var(--badge-gray-bg); color: var(--badge-gray-fg);
+  }
+  .ledger-row.overdue .ledger-days,
+  .ledger-row.soon .ledger-days { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .ledger-row.near .ledger-days { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+
+  /* ==== 台帳をアプリから直す（docs/spec.md 5-20）==== */
+  #ledger-card .card-head .count-chip:not(:empty) { margin-left: auto; margin-right: 10px; }
+  .ledger-row.tappable { cursor: pointer; }
+  .ledger-row.tappable:active { background: rgba(255,255,255,.03); }
+  .ledger-row.hidden-row .ledger-name { color: var(--weak); text-decoration: line-through; }
+  .ledger-chev { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 4px; color: var(--weak); }
+  .ledger-head-btn {
+    min-height: 44px; padding: 0 14px; margin: -8px -6px -8px 0;
+    border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .ledger-head-btn svg { width: 16px; height: 16px; }
+  /* 下の display の指定が hidden 属性に勝たないように */
+  .ledger-head-btn[hidden], .danger-link[hidden], .field input[hidden], #undo-btn[hidden] { display: none !important; }
+
+  /* ==== 台帳: リスト／カレンダーの切り替えとカレンダー（docs/spec.md 5-21。2026-10-08 代表「カレンダー機能入れて」）==== */
+  .card[hidden], .seg[hidden] { display: none !important; }
+  .seg {
+    display: flex; gap: 4px; padding: 4px; margin: 0 0 14px;
+    background: var(--nav); border: 1px solid var(--line); border-radius: 999px;
+  }
+  .seg-btn {
+    flex: 1; min-height: 44px; border: 0; border-radius: 999px; background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 14px; letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+  }
+  .seg-btn svg { width: 16px; height: 16px; }
+  .seg-btn[aria-selected="true"] { background: var(--lime); color: var(--on-lime); font-weight: 700; }
+  .cal-card { padding: 16px 10px 14px; overflow: hidden; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .cal-title { flex: 1; text-align: center; }
+  .cal-eyebrow { font-size: 10px; letter-spacing: 3px; color: var(--weak); }
+  .cal-ym {
+    font-family: "Shippori Mincho B1", serif; font-weight: 700;
+    display: flex; align-items: baseline; justify-content: center; gap: 4px; margin-top: 2px;
+  }
+  .cal-ym .y { font-size: 13px; color: var(--muted); margin-right: 4px; }
+  .cal-ym .m { font-size: 32px; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .cal-ym .mu { font-size: 14px; color: var(--text-soft); }
+  .cal-nav {
+    width: 44px; height: 44px; flex: 0 0 auto; border-radius: 999px; border: 1px solid var(--line);
+    background: transparent; color: var(--text-soft); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .cal-nav:disabled { opacity: .25; cursor: default; }
+  .cal-nav svg { width: 18px; height: 18px; }
+  .cal-sub { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 2px; }
+  .cal-count { font-size: 12px; color: var(--muted); }
+  .cal-today-btn {
+    min-height: 44px; padding: 0 14px; border: 0; background: transparent;
+    color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .cal-today-btn[hidden] { visibility: hidden; display: inline-block !important; }
+  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .cal-week span { text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--weak); padding: 6px 0; }
+  .cal-week .sun { color: var(--badge-red-fg); }
+  .cal-week .sat { color: #A9B9D6; }
+  .cal-grid { touch-action: pan-y; }
+  .cal-grid.from-right { animation: calFromRight .28s ease; }
+  .cal-grid.from-left { animation: calFromLeft .28s ease; }
+  @keyframes calFromRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes calFromLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .cal-grid.from-right, .cal-grid.from-left { animation: none; } }
+  .cal-day {
+    min-height: 54px; border: 0; border-radius: 12px; background: transparent; color: var(--text-soft);
+    font-family: inherit; padding: 6px 0 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    cursor: pointer; transition: background .15s ease;
+  }
+  .cal-day.blank { visibility: hidden; pointer-events: none; }
+  .cal-day .num {
+    width: 30px; height: 30px; line-height: 30px; border-radius: 999px; text-align: center;
+    font-size: 15px; font-variant-numeric: tabular-nums;
+  }
+  .cal-day.sun .num { color: var(--badge-red-fg); }
+  .cal-day.sat .num { color: #A9B9D6; }
+  .cal-day.has { background: rgba(255, 255, 255, .03); }
+  .cal-day.today .num { box-shadow: inset 0 0 0 1.5px var(--lime); color: var(--lime); }
+  .cal-day.selected { background: var(--badge-lime-bg); }
+  .cal-day.selected .num { background: var(--lime); color: var(--on-lime); box-shadow: none; font-weight: 700; }
+  .cal-dots { display: flex; align-items: center; gap: 3px; height: 7px; }
+  .cal-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--badge-gray-fg); }
+  .cal-dot.overdue, .cal-dot.soon { background: var(--badge-red-fg); }
+  .cal-dot.near { background: var(--badge-yellow-fg); }
+  .cal-dot.past { background: var(--weak); opacity: .5; }
+  .cal-dot.repeat { background: transparent; box-shadow: inset 0 0 0 1.5px var(--badge-gray-fg); }
+  .cal-dot.repeat.overdue, .cal-dot.repeat.soon { box-shadow: inset 0 0 0 1.5px var(--badge-red-fg); }
+  .cal-dot.repeat.near { box-shadow: inset 0 0 0 1.5px var(--badge-yellow-fg); }
+  .cal-more { font-size: 9px; line-height: 7px; color: var(--muted); }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 8px 2px; font-size: 11px; color: var(--muted); }
+  .cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .cal-section { margin: 14px 6px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .cal-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cal-section-title { font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 15px; margin: 0; color: var(--text); }
+  .cal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cal-chip {
+    min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--badge-gray-bg); color: var(--text-soft); font-family: inherit; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .cal-chip.overdue, .cal-chip.soon { background: var(--badge-red-bg); color: var(--badge-red-fg); border-color: transparent; }
+  .cal-chip.near { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); border-color: transparent; }
+  .cal-empty { font-size: 12px; color: var(--weak); margin: 10px 0 0; line-height: 1.6; }
+  .ledger-row.past .ledger-name { color: var(--muted); }
+  .ledger-row.past .ledger-mark { background: var(--weak); opacity: .5; }
+
+  /* ==== AI の一言（docs/spec.md 5-23。Claude が作る短い段取り。根拠の行事名を下に出す）==== */
+  .ai-note {
+    border-radius: 18px; padding: 14px 16px 12px; margin-bottom: 14px;
+    background: linear-gradient(135deg, rgba(201, 241, 88, .11), rgba(201, 241, 88, .02) 70%);
+    border: 1px solid rgba(201, 241, 88, .28);
+  }
+  .ai-note[hidden] { display: none !important; }
+  .ai-note-head { display: flex; align-items: center; gap: 6px; color: var(--lime); font-size: 11px; letter-spacing: 3px; }
+  .ai-note-head svg { width: 15px; height: 15px; }
+  .ai-note-text { margin: 8px 0 0; font-size: 14px; line-height: 1.8; color: var(--text); }
+  .ai-note-text.loading {
+    height: 14px; margin: 14px 0 6px; border-radius: 7px; width: 82%;
+    background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.12), rgba(255,255,255,.04));
+    background-size: 200% 100%; animation: aiShimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes aiShimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @media (prefers-reduced-motion: reduce) { .ai-note-text.loading { animation: none; } }
+  .ai-note-basis { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .ai-note-basis-label { font-size: 11px; color: var(--weak); margin-right: 2px; }
+  .ai-basis-chip {
+    min-height: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(19, 19, 17, .5); color: var(--text-soft); font-family: inherit; font-size: 12px; cursor: pointer;
+  }
+  .ai-basis-chip:disabled { cursor: default; }
+  .ledger-more {
+    display: block; width: 100%; min-height: 44px; margin: 12px 0 0;
+    border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .ledger-group { margin: 14px 0 0; font-size: 11px; letter-spacing: 1px; color: var(--weak); }
+
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet-backdrop[hidden] { display: none; }
+  .sheet {
+    width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--line); border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheet h3 { margin: 0 0 4px; font-family: 'Shippori Mincho B1', serif; font-size: 19px; }
+  .sheet-sub { margin: 0 0 10px; font-size: 12px; color: var(--weak); }
+  .field { margin: 14px 0 0; }
+  .field > label, .field > .field-label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+  .field input[type=text], .field select, .field textarea {
+    width: 100%; min-height: 44px; padding: 10px 12px;
+    background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 12px;
+    font-family: inherit; font-size: 16px; /* 16px 未満だと iPhone が勝手に拡大する */
+  }
+  .field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+  .field select:disabled { opacity: .45; }
+  .due-row { display: grid; grid-template-columns: 1.3fr 1fr 1.3fr; gap: 6px; }
+  .field-hint { margin: 6px 0 0; font-size: 11px; line-height: 1.6; color: var(--weak); }
+  .field-error { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--badge-red-fg); }
+  .field-error:empty { display: none; }
+  .field.bad input, .field.bad select, .field.bad textarea { border-color: var(--badge-red-fg); }
+  .switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; color: var(--text-soft); }
+  .switch-row input { width: 22px; height: 22px; accent-color: var(--lime); }
+  .sheet-msg {
+    margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+    background: var(--badge-red-bg); color: var(--badge-red-fg);
+  }
+  .sheet-msg[hidden] { display: none; }
+  .done-box {
+    margin: 16px 0 0; padding: 12px; border-radius: 14px;
+    background: var(--badge-lime-bg); display: grid; gap: 6px;
+  }
+  .done-box[hidden] { display: none; }
+  .done-hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--badge-lime-fg); }
+  .btn {
+    min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line);
+    background: transparent; color: var(--text-soft); font-family: inherit; font-size: 14px; cursor: pointer;
+  }
+  .btn.primary { background: var(--lime); border-color: var(--lime); color: var(--on-lime); font-weight: 700; }
+  .btn.done { background: transparent; border-color: var(--badge-lime-fg); color: var(--badge-lime-fg); width: 100%; }
+  .btn.danger { background: var(--badge-red-bg); border-color: var(--badge-red-fg); color: var(--badge-red-fg); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .sheet-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; margin: 18px 0 0; }
+  .danger-link {
+    display: block; width: 100%; min-height: 44px; margin: 14px 0 0;
+    background: none; border: none; color: var(--badge-red-fg); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .confirm-backdrop { align-items: center; z-index: 50; padding: 0 16px; }
+  .dialog {
+    width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; padding: 18px;
+  }
+  .dialog-text { margin: 0; font-size: 15px; line-height: 1.7; color: var(--text); }
+  .dialog-sub { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0 0; }
+  .undo-bar {
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 30;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);
+    width: calc(100% - 32px); max-width: 520px;
+    display: flex; align-items: center; gap: 10px;
+    background: #2A2A25; border: 1px solid var(--line); border-radius: 16px; padding: 8px 8px 8px 14px;
+    font-size: 13px; line-height: 1.5; color: var(--text-soft);
+  }
+  .undo-bar[hidden] { display: none; }
+  .undo-bar span { flex: 1 1 auto; min-width: 0; }
+  .undo-bar button {
+    flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px;
+    border: 1px solid var(--lime); background: transparent; color: var(--lime);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .badge {
+    display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+    font-size: 11px; line-height: 1.6; white-space: nowrap;
+  }
+  .badge.unread { background: var(--lime); color: #131311; font-weight: 700; }
+  .badge.unreplied { border: 1px solid var(--line); color: var(--soft); }
+  /* 代表がやること */
+  .todos { margin: 10px 0 0; padding: 0; list-style: none; }
+  .todo-row { padding: 12px 0; border-top: 1px solid var(--line); }
+  .todo-row:first-child { border-top: none; }
+  /* 印を左に固定し、右に本文。長い文でも印の下に回り込ませない */
+  .todo-head { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+  .when {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; line-height: 1.6; white-space: nowrap;
+    background: var(--badge-gray-bg); color: var(--badge-gray-fg);
+  }
+  .when.when-today { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .when.when-week { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .todo-text { font-size: 15px; line-height: 1.45; }
+  .todo-note { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+  /* タップ領域を44px以上にする（iPhone で指で押すため） */
+  .todo-link {
+    display: inline-flex; align-items: center; min-height: 44px; margin-top: 2px;
+    color: var(--lime); font-size: 13px; text-decoration: none;
+  }
+  .todo-link::after { content: '›'; margin-left: 4px; font-size: 16px; }
+
+  .weather-text { font-weight: 600; font-size: 15px; }
+  /* 降水確率は「見出しの下に帯を並べる」。狭い画面では折り返す */
+  .pop-block { margin: 10px 0 0; }
+  .pop-block .case-label { display: block; margin-bottom: 6px; }
+  .pops { display: flex; flex-wrap: wrap; gap: 6px; }
+  .card-note {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--weak);
+  }
+
+  /* 「これから作ります」の文。台帳の行の「期日が近い」（.ledger-row.soon）と名前が同じなので p に絞る（10/8 薄く出ていた） */
+  p.soon {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--weak);
+    line-height: 1.7;
+  }
+
+  /* ==== 天竺の様子（天竺の寺院の広間のドット絵。docs/spec.md 5-18）==== */
+  /* 112×64 のドット絵を1枚の canvas に描き、CSS で横幅いっぱいに拡大する（image-rendering でぼかさない）。
+     名札と吹き出しは canvas の上に重ねた HTML（ドット絵の中では字が読めないため）。 */
+  .tenjiku-stage {
+    position: relative;
+    margin: 12px 0 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #2b2a26;
+  }
+  .tenjiku-stage canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .tenjiku-tag {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    white-space: nowrap;
+    pointer-events: none;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 6px;
+    background: rgba(19, 19, 17, .82);
+    color: var(--text-soft);
+    border: 1px solid rgba(255, 255, 255, .14);
+    transition: left .1s linear, top .1s linear;
+  }
+  .tenjiku-tag.work { color: var(--badge-yellow-fg); border-color: var(--badge-yellow-fg); }
+  .tenjiku-tag.done { color: var(--lime); border-color: var(--lime); }
+  .tenjiku-bubble {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    white-space: nowrap;
+    pointer-events: none;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--lime);
+    color: var(--on-lime);
+    transition: left .1s linear, top .1s linear;
+  }
+  .tenjiku-bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    margin-left: -4px;
+    border: 4px solid transparent;
+    border-top-color: var(--lime);
+    border-bottom: 0;
+  }
+  .tenjiku-labels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 8px; }
+  .tenjiku-labels > div { display: grid; justify-items: center; gap: 3px; min-width: 0; }
+  .tenjiku-name { font-size: 12px; font-weight: 700; color: var(--text-soft); }
+  .tenjiku-pill {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--badge-gray-bg);
+    color: var(--badge-gray-fg);
+  }
+  .tenjiku-pill.work { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .tenjiku-pill.done { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+
+  /* ==== ボトムナビ ==== */
+  /* できあがったタブが「今日」だけのうちは、列ごと出さない（config.js の NAV.READY） */
+  body.no-nav { --nav-h: 0px; }
+  body.no-nav nav { display: none; }
+  nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: var(--nav);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 10;
+  }
+  .nav-inner {
+    max-width: 560px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .tab {
+    appearance: none;
+    background: none;
+    border: 0;
+    height: var(--nav-h);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--weak);
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .tab svg { width: 21px; height: 21px; display: block; }
+  .tab.active { color: var(--lime); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 18px);
+    transform: translateX(-50%) translateY(8px);
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--text-soft);
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 20;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ==== 開いたときのお出迎え（docs/spec.md 5-14）====
+     毎日何度も開く画面なので、1秒以内に触れる状態にすること。
+     画面を触れば途中でも飛ばせる。iPhone の「視差効果を減らす」を入れている人には出さない。
+
+     【間合い】0ms 絵が浮かぶ → 140ms あいさつが1文字ずつ → 360ms 件数が左から流れる
+              → 460ms モリーが会釈 → 620ms 案内 → 760ms 幕が消えはじめる（ここで触れる）
+              → 1000ms 幕が消えきる。1秒を超えさせないこと。 */
+  .welcome {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(120% 70% at 50% 34%, #1B1B17 0%, var(--bg) 62%),
+      var(--bg);
+    opacity: 1;
+    cursor: pointer;
+  }
+  .welcome.is-gone { opacity: 0; pointer-events: none; transition: opacity 240ms ease-out; }
+  .welcome.is-off { display: none; }
+
+  .welcome-inner { position: relative; text-align: center; padding: 0 24px; }
+
+  /* 絵のうしろの、うっすらした光。出たあとはゆっくり脈打つ */
+  .welcome-glow {
+    position: absolute;
+    left: 50%;
+    top: -42px;
+    width: 280px;
+    height: 280px;
+    margin-left: -140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201, 241, 88, .16), rgba(201, 241, 88, 0) 68%);
+    pointer-events: none;
+    opacity: 0;
+    animation:
+      welcomeGlow 820ms ease-out both,
+      welcomeGlowPulse 2600ms ease-in-out 820ms infinite;
+  }
+
+  /* 絵の入れもの。浮かび上がりはここ、会釈は中の絵に付ける（同じ transform を取り合わないため） */
+  .welcome-badge {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 22px;
+    animation: welcomeBadge 560ms cubic-bezier(.16, .84, .34, 1) both;
+  }
+
+  .welcome-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 22px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+    transform-origin: 50% 88%;
+    animation: welcomeBow 620ms cubic-bezier(.34, .9, .38, 1) 460ms both;
+  }
+
+  /* 絵の上を1回だけ通る光の帯 */
+  .welcome-shine {
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .welcome-shine::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: -60%;
+    width: 46%;
+    height: 180%;
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .42), rgba(255, 255, 255, 0));
+    transform: rotate(14deg);
+    animation: welcomeShine 720ms cubic-bezier(.3, .6, .3, 1) 380ms both;
+  }
+
+  /* 絵から1回だけ広がる細い輪 */
+  .welcome-ring {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 96px;
+    height: 96px;
+    margin-left: -48px;
+    border: 1.5px solid rgba(201, 241, 88, .55);
+    border-radius: 26px;
+    pointer-events: none;
+    animation: welcomeRing 1100ms cubic-bezier(.2, .7, .3, 1) 300ms both;
+  }
+
+  .welcome-greeting {
+    position: relative;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.4;
+    margin: 0;
+    color: var(--text);
+  }
+  /* あいさつは1文字ずつ。JS が span に分けて --i（何文字目か）を入れる */
+  .welcome-greeting .ch {
+    display: inline-block;
+    white-space: pre;
+    animation: charIn 340ms cubic-bezier(.16, .84, .34, 1) both;
+    animation-delay: calc(140ms + var(--i) * 32ms);
+  }
+
+  .welcome-summary {
+    position: relative;
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+    animation: sweepIn 440ms cubic-bezier(.22, .72, .3, 1) 360ms both;
+  }
+
+  .welcome-hint {
+    position: relative;
+    margin: 30px 0 0;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--weak);
+    animation: welcomeHint 420ms ease-out 620ms both;
+  }
+
+  @keyframes welcomeBadge {
+    from { opacity: 0; transform: scale(.84) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  /* 会釈: 少しうつむいて、ゆっくり戻る */
+  @keyframes welcomeBow {
+    0%   { transform: rotate(0deg) translateY(0); }
+    38%  { transform: rotate(-4.5deg) translateY(3px); }
+    100% { transform: rotate(0deg) translateY(0); }
+  }
+  @keyframes welcomeShine { from { left: -60%; } to { left: 130%; } }
+  @keyframes welcomeRing {
+    from { opacity: .9; transform: scale(1); }
+    to   { opacity: 0; transform: scale(1.55); }
+  }
+  @keyframes welcomeGlow { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes welcomeGlowPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .72; transform: scale(1.06); }
+  }
+  @keyframes welcomeHint { from { opacity: 0; } to { opacity: .85; } }
+  @keyframes charIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sweepIn {
+    from { opacity: 0; transform: translateY(6px); clip-path: inset(0 100% 0 0); }
+    to   { opacity: 1; transform: translateY(0); clip-path: inset(0 0 0 0); }
+  }
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(14px) scale(.985); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* お出迎えのあと、ヘッダーとカードが波打つように立ち上がる。
+     動きを付けないときは body に motion が付かないので、何も起きない（最初から見えている）。 */
+  body.motion .stagger { opacity: 0; }
+  body.motion .stagger.anim-in {
+    animation: riseIn 380ms cubic-bezier(.2, .9, .25, 1) both;
+  }
+
+  /* ==== 画面の中身の動き（docs/spec.md 5-14-8）====
+     動きを止める設定のときは body に motion が付かないので、ここは全部効かない。 */
+
+  /* 行が1行ずつ出る。カードが立ち上がったあと、中身が続く */
+  body.motion li.stagger-row { opacity: 0; }
+  body.motion li.stagger-row.anim-in {
+    animation: rowIn 300ms cubic-bezier(.2, .9, .25, 1) both;
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* 「次の予定」の緑の線が、ゆっくり呼吸する */
+  body.motion .row.next::before {
+    animation: nextBreath 2800ms ease-in-out infinite;
+  }
+  @keyframes nextBreath {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50%      { opacity: .45; transform: scaleY(.62); }
+  }
+
+  /* 数字が回って止まる間、けたがガタつかないように */
+  .count-chip { font-variant-numeric: tabular-nums; }
+  /* 中身が無いときは、灰色の粒だけが残って不具合のように見えるので出さない
+     （2026-10-08、台帳の「表がまだありません」の見本で見つけた） */
+  .count-chip:empty { display: none; }
+
+  /* 押したときの手応え（押せるものだけ。カードは押せないので動かさない） */
+  body.motion .tab { transition: transform 120ms ease, color 120ms ease; }
+  body.motion .tab:active { transform: scale(.86); }
+  body.motion .todo-link { transition: transform 120ms ease, opacity 120ms ease; }
+  body.motion .todo-link:active { transform: scale(.96); opacity: .7; }
+
+  /* ==== ヘッダーに常駐するモリー（docs/spec.md 5-14-9）====
+     ゆっくり呼吸して、たまに首をかしげる。急ぎがある日・雨の日は右上に印が付く。
+     押すと今日の一言を下に出す。44px は指で押せる大きさの下限。 */
+  .head-text { min-width: 0; }
+
+  .molly {
+    flex: 0 0 auto;
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: none;                 /* 出す設定のときだけ JS が block にする */
+  }
+  .molly.is-on { display: block; }
+  .molly-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+  }
+  .molly-dot {
+    position: absolute;
+    right: -3px;
+    top: -3px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    background: var(--badge-red-fg);
+  }
+  .molly.is-rain .molly-dot { background: var(--badge-yellow-fg); }
+  .molly-dot[hidden] { display: none; }
+
+  body.motion .molly { animation: mollyBreath 3600ms ease-in-out 1400ms infinite; }
+  body.motion .molly-img { animation: mollyTilt 6200ms ease-in-out 2000ms infinite; }
+  /* 急ぎがある日は、少しそわそわする */
+  body.motion .molly.is-urgent .molly-img { animation-duration: 3400ms; }
+  body.motion .molly-dot { animation: mollyDot 1800ms ease-in-out infinite; }
+  body.motion .molly:active { transform: scale(.9); }
+
+  @keyframes mollyBreath {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+  }
+  @keyframes mollyTilt {
+    0%, 76%, 100% { transform: translateY(0) rotate(0deg); }
+    82%           { transform: translateY(-2px) rotate(-7deg); }
+    90%           { transform: translateY(-1px) rotate(4deg); }
+    96%           { transform: translateY(0) rotate(0deg); }
+  }
+  @keyframes mollyDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.35); opacity: .6; }
+  }
+
+  /* iPhone: 設定 > アクセシビリティ > 動作 > 視差効果を減らす */
+  @media (prefers-reduced-motion: reduce) {
+    .welcome { display: none !important; }
+    .welcome *,
+    .welcome *::after,
+    body.motion .stagger,
+    body.motion .stagger.anim-in,
+    body.motion li.stagger-row,
+    body.motion li.stagger-row.anim-in,
+    body.motion .row.next::before,
+    body.motion .molly,
+    body.motion .molly-img,
+    body.motion .molly-dot { opacity: 1 !important; animation: none !important; transform: none !important; }
+  }
+
+  /* ==== 新しい画面の合言葉（docs/spec.md 5-26。今の画面にだけ出る）==== */
+  .np-card { border-color: rgba(201, 241, 88, .28); }
+  .np-lead { margin: 6px 0 12px; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .np-steps { margin: 0 0 12px; padding-left: 20px; font-size: 13px; line-height: 1.8; color: var(--text-soft); }
+  .np-actions { display: grid; gap: 8px; }
+  .np-actions .btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+  .np-token { width: 100%; min-height: 44px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font-family: ui-monospace, monospace; font-size: 13px; }
+  .np-token[hidden] { display: none; }
+  .np-msg { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--badge-lime-fg); min-height: 1em; }
+  .np-rotate { margin-top: 6px; background: none; border: none; min-height: 44px; color: var(--weak); font-family: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
+
+  /* ==== 進言の相談（docs/spec.md 5-25）==== */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .adv-hero { padding: 4px 2px 14px; }
+  .adv-hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--lime); }
+  .adv-hero-title { margin: 6px 0 4px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 24px; color: var(--text); }
+  .adv-hero-lead { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .adv-ask { position: relative; overflow: hidden; }
+  .adv-ask::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+    background: linear-gradient(90deg, var(--lime), rgba(201, 241, 88, 0));
+  }
+  .adv-step { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; font-size: 12px; color: var(--muted); }
+  .adv-step b {
+    display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--badge-lime-bg); color: var(--lime); font-size: 11px; font-weight: 700;
+  }
+  .adv-step.second { margin-top: 18px; }
+  .adv-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .adv-chip {
+    min-height: 48px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text-soft); font-family: inherit; font-size: 14px; cursor: pointer;
+    text-align: left; display: flex; align-items: center; gap: 8px; transition: border-color .15s, background .15s;
+  }
+  .adv-chip .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--weak); flex: none; }
+  .adv-chip[aria-checked="true"] { border-color: var(--lime); background: var(--badge-lime-bg); color: var(--text); font-weight: 700; }
+  .adv-chip[aria-checked="true"] .dot { background: var(--lime); border-color: var(--lime); }
+  .adv-hint { margin: 10px 2px 0; font-size: 12px; line-height: 1.6; color: var(--badge-lime-fg); min-height: 19px; }
+  .adv-q {
+    width: 100%; min-height: 150px; padding: 12px 14px; resize: vertical;
+    background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 14px;
+    font-family: inherit; font-size: 16px; line-height: 1.7; /* 16px 未満だと iPhone が勝手に拡大する */
+  }
+  .adv-q:focus { outline: none; border-color: var(--lime); }
+  .adv-q.bad { border-color: var(--badge-red-fg); }
+  .adv-meta { display: flex; justify-content: space-between; gap: 10px; margin: 6px 2px 0; font-size: 11px; color: var(--weak); }
+  .adv-guard { display: inline-flex; align-items: center; gap: 4px; }
+  .adv-guard svg { width: 13px; height: 13px; flex: none; }
+  .adv-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .adv-count.over { color: var(--badge-red-fg); }
+  .adv-error { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+    background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .adv-error[hidden] { display: none; }
+  .adv-send { width: 100%; margin-top: 14px; min-height: 50px; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .adv-send svg { width: 18px; height: 18px; }
+  .adv-send .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(19, 19, 17, .25); border-top-color: var(--on-lime); animation: advSpin .8s linear infinite; }
+  @keyframes advSpin { to { transform: rotate(360deg); } }
+  .adv-note { margin: 8px 0 0; text-align: center; font-size: 11px; color: var(--weak); }
+  .adv-answer {
+    border-radius: 18px; padding: 16px 16px 14px; margin-bottom: 14px;
+    background: linear-gradient(160deg, rgba(201, 241, 88, .10), rgba(29, 29, 26, 1) 55%);
+    border: 1px solid rgba(201, 241, 88, .30);
+  }
+  .adv-answer[hidden] { display: none !important; }
+  .adv-answer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .adv-answer-eyebrow { display: flex; align-items: center; gap: 6px; color: var(--lime); font-size: 11px; letter-spacing: 3px; }
+  .adv-answer-eyebrow svg { width: 15px; height: 15px; }
+  .adv-tag { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--badge-lime-bg); color: var(--badge-lime-fg); white-space: nowrap; }
+  .adv-quote {
+    margin: 10px 0 0; padding: 8px 12px; border-left: 2px solid var(--line); font-size: 12px; line-height: 1.6;
+    color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .adv-body { margin: 12px 0 0; color: var(--text); font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; }
+  .adv-body h4 { margin: 14px 0 4px; font-size: 14px; font-weight: 700; color: var(--lime); }
+  .adv-body h4:first-child { margin-top: 0; }
+  .adv-body p { margin: 0 0 6px; }
+  .adv-body ul { margin: 0 0 6px; padding: 0; list-style: none; }
+  .adv-body li { position: relative; padding-left: 14px; margin: 2px 0; }
+  .adv-body li::before { content: ""; position: absolute; left: 2px; top: .8em; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+  .adv-foot { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--weak); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .adv-warn { margin: 10px 0 0; padding: 8px 12px; border-radius: 12px; font-size: 12px; line-height: 1.6;
+    background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .adv-wait { margin: 14px 0 4px; }
+  .adv-wait i {
+    display: block; height: 12px; margin: 10px 0; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.12), rgba(255,255,255,.04));
+    background-size: 200% 100%; animation: aiShimmer 1.4s ease-in-out infinite;
+  }
+  .adv-wait i:nth-child(2) { width: 88%; } .adv-wait i:nth-child(3) { width: 64%; }
+  .adv-wait-text { font-size: 12px; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .adv-wait i, .adv-send .spin { animation: none; } }
+  .adv-list { margin: 10px 0 0; padding: 0; list-style: none; }
+  .adv-item { border-top: 1px solid var(--line); }
+  .adv-item:first-child { border-top: none; }
+  .adv-item-btn {
+    width: 100%; min-height: 56px; padding: 12px 2px; background: none; border: none; color: inherit; cursor: pointer;
+    font-family: inherit; text-align: left; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center;
+  }
+  .adv-item-top { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--weak); }
+  .adv-item-q { grid-column: 1 / 2; font-size: 14px; line-height: 1.55; color: var(--text-soft);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .adv-item-chev { grid-column: 2; grid-row: 1 / span 2; width: 18px; height: 18px; color: var(--weak); transition: transform .2s; }
+  .adv-item.open .adv-item-chev { transform: rotate(90deg); color: var(--lime); }
+  .adv-item-panel { padding: 0 2px 14px; }
+  .adv-item-panel[hidden] { display: none; }
+  .adv-item-panel .adv-quote { -webkit-line-clamp: unset; display: block; }
+</style>
+</head>
+<body>
+<!-- ==== 新しい画面だけで動く部分（tools/build-pages.cjs が差し込む。docs/spec.md 5-26）==== -->
+<style>
+  .hb { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 24px 16px;
+    background: var(--bg, #131311); color: var(--text, #F2F0E8); font-family: "Zen Kaku Gothic New", system-ui, sans-serif; }
+  .hb[hidden] { display: none; }
+  .hb-box { width: 100%; max-width: 380px; text-align: center; }
+  .hb-icon { width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 16px; display: block; }
+  .hb-title { margin: 0 0 8px; font-family: "Shippori Mincho B1", serif; font-size: 22px; }
+  .hb-text { margin: 0 0 16px; font-size: 13px; line-height: 1.8; color: var(--muted, #A09B8E); }
+  .hb-input { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line, #2C2C27);
+    background: var(--card, #1D1D1A); color: var(--text, #F2F0E8); font-size: 16px; font-family: ui-monospace, monospace; }
+  .hb-btn { width: 100%; min-height: 50px; margin-top: 12px; border-radius: 999px; border: none; background: var(--lime, #C9F158);
+    color: #131311; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
+  .hb-msg { margin: 12px 0 0; min-height: 1.5em; font-size: 13px; line-height: 1.6; color: var(--badge-red-fg, #FF9B85); }
+  .hb-dots { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+  .hb-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--lime, #C9F158); opacity: .3; animation: hbDot 1.2s infinite; }
+  .hb-dots i:nth-child(2) { animation-delay: .2s; } .hb-dots i:nth-child(3) { animation-delay: .4s; }
+  @keyframes hbDot { 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .hb-dots i { animation: none; opacity: .8; } }
+</style>
+<div class="hb" id="hb-setup" hidden>
+  <div class="hb-box">
+    <img class="hb-icon" src="icon-180.png" alt="">
+    <h1 class="hb-title">合言葉を入れてください</h1>
+    <p class="hb-text" id="hb-setup-text">今の画面（Google のログインの画面）の「新しい画面（青い帯なし）」で「合言葉をコピー」を押し、ここに貼り付けます。最初の1回だけです。</p>
+    <input class="hb-input" id="hb-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ここに貼り付け" aria-label="合言葉">
+    <button class="hb-btn" id="hb-save" type="button">はじめる</button>
+    <p class="hb-msg" id="hb-setup-msg" role="alert"></p>
+  </div>
+</div>
+<div class="hb" id="hb-wait" hidden>
+  <div class="hb-box">
+    <img class="hb-icon" src="icon-180.png" alt="">
+    <p class="hb-text" id="hb-wait-text">読み込んでいます</p>
+    <div class="hb-dots" id="hb-dots"><i></i><i></i><i></i></div>
+    <button class="hb-btn" id="hb-retry" type="button" hidden>もう一度</button>
+  </div>
+</div>
+<script>
+  var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', timeoutMs: 90000 };
+  function hishoToken(v) {
+    try {
+      if (v === undefined) return window.localStorage.getItem(HISHO_PAGES.key) || '';
+      if (v) window.localStorage.setItem(HISHO_PAGES.key, v); else window.localStorage.removeItem(HISHO_PAGES.key);
+    } catch (e) { /* 保存できない端末では、開くたびに貼り付けることになる */ }
+    return '';
+  }
+  var hishoMemToken = '';
+  // 合言葉付きで Apps Script を呼ぶ。外のページから送れるのは text/plain の本文だけ（見出しに合言葉は入れられない）
+  function hishoCall(action, args, done, fail) {
+    var token = hishoToken() || hishoMemToken;
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    // 返事は1回だけ使う（時間切れのあとに遅れて届いた返事は捨てる。AbortController が無い端末でも時間切れで先へ進める）
+    var settled = false;
+    var finish = function (fn, v) { if (settled) return; settled = true; clearTimeout(timer); fn(v); };
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); finish(fail, new Error('timeout')); }, HISHO_PAGES.timeoutMs);
+    fetch(HISHO_PAGES.api, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, credentials: 'omit', cache: 'no-store',
+      body: JSON.stringify({ token: token, action: action, args: args || [] }), signal: ctrl ? ctrl.signal : undefined,
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (settled) return;
+      if (j && j.ok) { finish(done, j.result); return; }
+      var kind = (j && j.error) || 'server';
+      if (kind === 'auth') hishoNeedToken('合言葉が違うか、作り直されています。今の画面でもう一度コピーして貼り付けてください。');
+      finish(fail, new Error(kind));
+    }).catch(function (e) { finish(fail, e || new Error('network')); });
+  }
+  // 画面のコードは google.script.run で呼んでいるので、同じ形の差し替え部品を置く（画面のコードは変えない）
+  window.google = { script: { get run() {
+    var ok = function () {}, ng = function () {};
+    var runner = {
+      withSuccessHandler: function (f) { ok = f; return runner; },
+      withFailureHandler: function (f) { ng = f; return runner; },
+    };
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState"].forEach(function (fn) {
+      runner[fn] = function () { hishoCall(fn, Array.prototype.slice.call(arguments), ok, ng); };
+    });
+    return runner;
+  } } };
+  function hishoNeedToken(message) {
+    hishoToken(null); hishoMemToken = '';
+    document.getElementById('hb-wait').hidden = true;
+    document.getElementById('hb-setup').hidden = false;
+    document.getElementById('hb-setup-msg').textContent = message || '';
+  }
+  function hishoLoad() {
+    var wait = document.getElementById('hb-wait');
+    document.getElementById('hb-setup').hidden = true;
+    wait.hidden = false;
+    document.getElementById('hb-wait-text').textContent = '読み込んでいます';
+    document.getElementById('hb-dots').hidden = false;
+    document.getElementById('hb-retry').hidden = true;
+    hishoCall('page', [], function (data) {
+      DATA = data;
+      wait.hidden = true;
+      render();
+    }, function (e) {
+      if (e && e.message === 'auth') return; // 貼り付ける画面に切り替え済み
+      document.getElementById('hb-wait-text').textContent = '読み込めませんでした。電波の良いところで「もう一度」を押してください。';
+      document.getElementById('hb-dots').hidden = true;
+      document.getElementById('hb-retry').hidden = false;
+    });
+  }
+  function hishoBoot() {
+    document.getElementById('hb-retry').addEventListener('click', hishoLoad);
+    document.getElementById('hb-save').addEventListener('click', function () {
+      var v = document.getElementById('hb-token').value.replace(/\s+/g, '');
+      if (!/^h[0-9a-f]{64}$/.test(v)) {
+        document.getElementById('hb-setup-msg').textContent = '合言葉の形が違います。コピーし直して、全部を貼り付けてください。';
+        return;
+      }
+      hishoToken(v); hishoMemToken = v;
+      document.getElementById('hb-token').value = '';
+      hishoLoad();
+    });
+    if (!hishoToken()) { hishoNeedToken(''); return; }
+    hishoLoad();
+  }
+</script>
+
+
+<!-- 開いたときのお出迎え。動きを付けない設定のときは、JS がすぐ消す -->
+<div class="welcome is-off" id="welcome">
+  <div class="welcome-inner">
+    <div class="welcome-glow"></div>
+    <div class="welcome-badge" id="welcome-badge">
+      <img class="welcome-icon" id="welcome-icon" alt="">
+      <span class="welcome-shine"></span>
+      <span class="welcome-ring"></span>
+    </div>
+    <p class="welcome-greeting" id="welcome-greeting"></p>
+    <p class="welcome-summary" id="welcome-summary"></p>
+    <p class="welcome-hint" id="welcome-hint"></p>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="stagger">
+    <div class="head-text">
+      <p class="eyebrow">TODAY</p>
+      <h1 class="greeting" id="greeting"></h1>
+      <p class="date" id="date"></p>
+    </div>
+    <!-- 常駐するモリー。出す設定で、かつ絵があるときだけ JS が表示する -->
+    <button class="molly" id="molly" type="button" aria-label="モリー">
+      <img class="molly-img" id="molly-img" alt="">
+      <span class="molly-dot" id="molly-dot" hidden></span>
+    </button>
+  </header>
+
+  <!-- 画面は下のタブで入れ替える（config.js の NAV.READY に書いたタブだけ出る）。
+       ヘッダーはどの画面でも出したままにする -->
+  <div class="screen" id="screen-today">
+
+  <!-- AI の一言（今日のまとめ。docs/spec.md 5-23-2）。予定の名前は送らず、時刻と件数・天気・件数だけで作る -->
+  <section class="ai-note stagger" id="ai-note-today" hidden aria-live="polite">
+    <div class="ai-note-head">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      AI の一言
+    </div>
+    <p class="ai-note-text" id="ai-note-today-text"></p>
+    <div class="ai-note-basis" id="ai-note-today-basis"></div>
+  </section>
+
+  <!-- 天竺（4人の様子）。設定で出さないときは JS がカードごと消す。見出しは代表の指示で「天竺」だけ（2026-10-07）。置き場所は画面の一番上＝挨拶のすぐ下（2026-10-07 代表の指示、@20） -->
+  <section class="card stagger" id="tenjiku-card">
+    <div class="card-head">
+      <h2 class="card-title">天竺</h2>
+      <span class="count-chip" id="tenjiku-chip"></span>
+    </div>
+    <div id="tenjiku-body"></div>
+  </section>
+
+  <section class="card stagger">
+    <div class="card-head">
+      <h2 class="card-title">今日の予定</h2>
+      <span class="count-chip" id="count"></span>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <section class="card stagger" id="todo-card">
+    <div class="card-head">
+      <h2 class="card-title">代表がやること</h2>
+      <span class="count-chip" id="todo-count"></span>
+    </div>
+    <div id="todo-body"></div>
+  </section>
+
+  <section class="card stagger" id="cases-card">
+    <div class="card-head">
+      <h2 class="card-title">利用者案件</h2>
+    </div>
+    <div id="cases-body"></div>
+  </section>
+
+  <section class="card stagger" id="mail-card">
+    <div class="card-head">
+      <h2 class="card-title">要対応メール</h2>
+      <span class="count-chip" id="mail-count"></span>
+    </div>
+    <div id="mail-body"></div>
+  </section>
+
+  <section class="card stagger" id="weather-card">
+    <div class="card-head">
+      <h2 class="card-title">天気</h2>
+    </div>
+    <div id="weather-body"></div>
+  </section>
+
+  <!-- 新しい画面（GitHub Pages）の合言葉。Google のログインで守られた今の画面にだけ出る（docs/spec.md 5-26） -->
+  <section class="card np-card stagger" id="np-card" hidden>
+    <div class="card-head"><h2 class="card-title">新しい画面（青い帯なし）</h2></div>
+    <p class="np-lead">Google のログインも青い帯も無い、新しい画面です。ホーム画面に置いて使います。</p>
+    <ol class="np-steps">
+      <li>「新しい画面を開く」→ 共有ボタン →「ホーム画面に追加」</li>
+      <li>ここに戻って「合言葉をコピー」</li>
+      <li>ホーム画面の新しいアイコンを開き、合言葉を貼り付ける</li>
+    </ol>
+    <div class="np-actions">
+      <a class="btn primary" id="np-open" target="_blank" rel="noopener">新しい画面を開く</a>
+      <button class="btn" id="np-copy" type="button">合言葉をコピー</button>
+    </div>
+    <input class="np-token" id="np-token" type="text" readonly hidden aria-label="新しい画面の合言葉">
+    <p class="np-msg" id="np-msg" role="status"></p>
+    <button class="np-rotate" id="np-rotate" type="button">合言葉を作り直す（漏れたと思ったとき）</button>
+  </section>
+
+  <p class="soon stagger">このあと、経営・ランチ・マイの順に画面を作っていきます。</p>
+  </div><!-- /screen-today -->
+
+  <!-- 台帳（年間行事）。表は代表個人の Drive の中にあり、事務員には見えない（2026-10-07 代表の指摘） -->
+  <div class="screen" id="screen-ledger" hidden>
+    <!-- AI の一言（docs/spec.md 5-23）。画面が開いたあとに getAiNote('ledger') を呼んで出す。出せないときは隠す -->
+    <section class="ai-note stagger" id="ai-note-ledger" hidden aria-live="polite">
+      <div class="ai-note-head">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        AI の一言
+      </div>
+      <p class="ai-note-text" id="ai-note-ledger-text"></p>
+      <div class="ai-note-basis" id="ai-note-ledger-basis"></div>
+    </section>
+    <!-- リスト／カレンダーの切り替え（docs/spec.md 5-21）。カレンダーを止める設定のときは JS が隠す -->
+    <div class="seg stagger" id="ledger-seg" role="tablist" aria-label="台帳の見せ方" hidden>
+      <button type="button" class="seg-btn" id="seg-list" data-view="list" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>リスト
+      </button>
+      <button type="button" class="seg-btn" id="seg-cal" data-view="calendar" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>カレンダー
+      </button>
+    </div>
+
+    <section class="card cal-card" id="ledger-cal-card" hidden>
+      <div class="cal-head">
+        <button class="cal-nav" id="cal-prev" type="button" aria-label="前の月">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="cal-title">
+          <div class="cal-eyebrow">CALENDAR</div>
+          <div class="cal-ym" id="cal-ym"><span class="y" id="cal-y"></span><span class="m" id="cal-m"></span><span class="mu">月</span></div>
+        </div>
+        <button class="cal-nav" id="cal-next" type="button" aria-label="次の月">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="cal-sub">
+        <span class="cal-count" id="cal-count"></span>
+        <button class="cal-today-btn" id="cal-today" type="button">今日へ</button>
+      </div>
+      <div class="cal-week" aria-hidden="true">
+        <span class="sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="sat">土</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend" aria-hidden="true">
+        <span><i class="cal-dot soon"></i>30日以内・過ぎた</span>
+        <span><i class="cal-dot near"></i>3か月以内</span>
+        <span><i class="cal-dot"></i>それより先</span>
+        <span><i class="cal-dot repeat"></i>繰り返しの予定</span>
+      </div>
+      <div id="cal-monthonly"></div>
+      <div id="cal-day"></div>
+    </section>
+
+    <section class="card stagger" id="ledger-card">
+      <div class="card-head">
+        <h2 class="card-title">年間行事</h2>
+        <span class="count-chip" id="ledger-count"></span>
+        <!-- 行事を足す（docs/spec.md 5-20）。書き込みを止める設定のときは JS が隠す -->
+        <button class="ledger-head-btn" id="ledger-add" type="button" hidden>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>足す
+        </button>
+      </div>
+      <div id="ledger-body"></div>
+    </section>
+
+    <!-- 全部の行（期日がまだの行・隠した行も）。ここから押して直す -->
+    <section class="card" id="ledger-all-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">すべての行事</h2>
+        <span class="count-chip" id="ledger-all-count"></span>
+      </div>
+      <div id="ledger-all-body"></div>
+    </section>
+
+    <p class="soon stagger" id="ledger-foot">期日は表で直します。表は代表のアカウントの中にあるので、事務員には見えません。</p>
+  </div><!-- /screen-ledger -->
+
+  <!-- 進言の相談（docs/spec.md 5-25）。押したときだけ adviceAsk を呼ぶ。最近の相談は画面を出したときに adviceRecent で読む -->
+  <div class="screen" id="screen-advice" hidden>
+    <section class="adv-hero stagger">
+      <div class="adv-hero-eyebrow">ADVISOR</div>
+      <h2 class="adv-hero-title">相談する</h2>
+      <p class="adv-hero-lead">迷っていることを書いてください。考え方を選ぶと、その目で Claude が答えます。</p>
+    </section>
+
+    <section class="card adv-ask stagger" id="adv-ask">
+      <div class="adv-step"><b>1</b>考え方を選ぶ</div>
+      <div class="adv-chips" id="adv-chips" role="radiogroup" aria-label="考え方"></div>
+      <p class="adv-hint" id="adv-hint"></p>
+      <div class="adv-step second"><b>2</b>相談を書く</div>
+      <label class="sr-only" for="adv-q">相談の文</label>
+      <textarea class="adv-q" id="adv-q" rows="6" placeholder="例: 来年度に職員を1人増やすか迷っている。いまの訪問件数と、採用にかかる費用は…"></textarea>
+      <div class="adv-meta">
+        <span class="adv-guard"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l7 3v5.2c0 4.3-2.9 7.6-7 8.8-4.1-1.2-7-4.5-7-8.8V6.5l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>利用者・職員の名前は書かない（Aさん のように）</span>
+        <span class="adv-count" id="adv-count"></span>
+      </div>
+      <p class="adv-error" id="adv-error" hidden role="alert"></p>
+      <button class="btn primary adv-send" id="adv-send" type="button"></button>
+      <p class="adv-note" id="adv-note"></p>
+    </section>
+
+    <section class="adv-answer" id="adv-answer" hidden aria-live="polite"></section>
+
+    <section class="card stagger" id="adv-recent-card">
+      <div class="card-head">
+        <h2 class="card-title">最近の相談</h2>
+        <span class="count-chip" id="adv-recent-count"></span>
+      </div>
+      <div id="adv-recent-body"></div>
+    </section>
+
+    <p class="soon stagger">相談と答えは、代表個人の Drive の表「はるうた秘書 相談の記録」に残ります。事務員には見えません。</p>
+  </div><!-- /screen-advice -->
+</div>
+
+<nav class="stagger">
+  <div class="nav-inner" id="nav"></div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- 台帳の行を足す・直す画面（下からせり上がる）。docs/spec.md 5-20 -->
+<div class="sheet-backdrop" id="ledger-editor" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="le-title">
+    <h3 id="le-title">行事を直す</h3>
+    <p class="sheet-sub" id="le-sub"></p>
+    <p class="sheet-msg" id="le-msg" hidden></p>
+
+    <div class="field" data-field="NAME">
+      <label for="le-name">行事名</label>
+      <input type="text" id="le-name" autocomplete="off" enterkeyhint="done">
+      <p class="field-error" data-error="NAME"></p>
+    </div>
+
+    <div class="field" data-field="DUE">
+      <span class="field-label">次回の期日</span>
+      <div class="due-row">
+        <select id="le-year" aria-label="年"></select>
+        <select id="le-month" aria-label="月"></select>
+        <select id="le-day" aria-label="日"></select>
+      </div>
+      <p class="field-hint">日が決まっていなければ「日は決めない」で月だけにできます。年を「未定」にすると期日なしになります。</p>
+      <p class="field-error" data-error="DUE"></p>
+    </div>
+
+    <div class="field" data-field="CYCLE">
+      <label for="le-cycle">繰り返し</label>
+      <select id="le-cycle"></select>
+      <input type="text" id="le-cycle-other" placeholder="繰り返しを入れる（例: 3年ごと）" hidden>
+      <p class="field-error" data-error="CYCLE"></p>
+    </div>
+
+    <div class="field" data-field="WHO">
+      <label for="le-who">担当</label>
+      <select id="le-who"></select>
+      <input type="text" id="le-who-other" placeholder="役割の名前（例: 管理者）" hidden>
+      <p class="field-hint" id="le-who-hint"></p>
+      <p class="field-error" data-error="WHO"></p>
+    </div>
+
+    <div class="field" data-field="NOTE">
+      <label for="le-note">備考</label>
+      <textarea id="le-note" rows="2"></textarea>
+      <p class="field-error" data-error="NOTE"></p>
+    </div>
+
+    <div class="field">
+      <label class="switch-row"><input type="checkbox" id="le-show"> 台帳の画面に出す</label>
+    </div>
+
+    <div class="done-box" id="le-done-box" hidden>
+      <button class="btn done" id="le-done" type="button">済んだ</button>
+      <p class="done-hint" id="le-done-hint"></p>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn" id="le-cancel" type="button">閉じる</button>
+      <button class="btn primary" id="le-save" type="button">保存</button>
+    </div>
+    <button class="danger-link" id="le-delete" type="button">この行事を消す</button>
+  </div>
+</div>
+
+<!-- 消す前の確認（2回出す） -->
+<div class="sheet-backdrop confirm-backdrop" id="ledger-confirm" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="lc-text">
+    <p class="dialog-text" id="lc-text"></p>
+    <p class="dialog-sub" id="lc-sub"></p>
+    <div class="dialog-actions">
+      <button class="btn" id="lc-cancel" type="button">やめる</button>
+      <button class="btn danger" id="lc-ok" type="button">消す</button>
+    </div>
+  </div>
+</div>
+
+<!-- 押した直後の「元に戻す」 -->
+<div class="undo-bar" id="undo-bar" role="status" hidden>
+  <span id="undo-text"></span>
+  <button id="undo-btn" type="button">元に戻す</button>
+</div>
+
+<script>
+  var DATA = {}; // 新しい画面: 開いたあとに hishoLoad が受け取る
+
+  var TABS = [
+    { key: 'today',  label: '今日',   path: 'M4 6.5h16M7 3.5v3M17 3.5v3M4.5 6.5h15a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1Z' },
+    { key: 'ledger', label: '台帳',   path: 'M6 3.5h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z M14.5 3.5v4.5H19 M8.5 13h7M8.5 16.5h5' },
+    { key: 'biz',    label: '経営',   path: 'M4 20h16M7.5 20v-7M12 20V6.5M16.5 20v-10' },
+    { key: 'lunch',  label: 'ランチ', path: 'M4 10.5h16a8 8 0 0 1-8 8 8 8 0 0 1-8-8Z M8 6.5c0-1 .8-1.5.8-2.5M12 6.5c0-1 .8-1.5.8-2.5M16 6.5c0-1 .8-1.5.8-2.5' },
+    { key: 'my',     label: 'マイ',   path: 'M12 11.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4.5 20.5c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6' },
+    { key: 'advice', label: '進言',   path: 'M12 3.5a6 6 0 0 1 3.5 10.9c-.6.5-.9 1-.9 1.6v.5h-5.2v-.5c0-.6-.3-1.1-.9-1.6A6 6 0 0 1 12 3.5Z M9.8 20h4.4' }
+  ];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  // タブと画面の対応。ここに無いタブは、押しても「これから作ります」と出るだけ
+  var SCREEN_OF = { today: 'screen-today', ledger: 'screen-ledger', advice: 'screen-advice' };
+  var EYEBROW_OF = { today: 'TODAY', ledger: 'LEDGER', advice: 'ADVICE' };
+
+  // 画面を1つだけ出す。ヘッダーの小さい文字（TODAY など）も合わせて替える
+  function showScreen(key) {
+    Object.keys(SCREEN_OF).forEach(function (k) {
+      var n = document.getElementById(SCREEN_OF[k]);
+      if (n) n.hidden = (k !== key);
+    });
+    var eyebrow = document.querySelector('.eyebrow');
+    if (eyebrow && EYEBROW_OF[key]) eyebrow.textContent = EYEBROW_OF[key];
+    window.scrollTo(0, 0);
+    if (key === 'advice') setupAdvice();
+  }
+
+  function renderNav() {
+    var nav = document.getElementById('nav');
+    // DATA.nav が無いとき（手元の見本）は全部出す。本番は config.js の NAV.READY に書いたものだけ
+    var ready = DATA.nav && DATA.nav.ready;
+    var tabs = ready ? TABS.filter(function (t) { return ready.indexOf(t.key) >= 0; }) : TABS;
+    if (tabs.length < 2) {
+      document.body.classList.add('no-nav');
+      return;
+    }
+    nav.style.gridTemplateColumns = 'repeat(' + tabs.length + ', 1fr)';
+    tabs.forEach(function (t) {
+      var b = el('button', 'tab' + (t.key === 'today' ? ' active' : ''));
+      b.type = 'button';
+      b.setAttribute('data-key', t.key); // 見本づくり・ブラウザの試験から選ぶときの目印
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      t.path.split(' M').forEach(function (d, i) {
+        var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', (i === 0 ? d : 'M' + d).trim());
+        p.setAttribute('stroke', 'currentColor');
+        p.setAttribute('stroke-width', '1.8');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        svg.appendChild(p);
+      });
+      b.appendChild(svg);
+      b.appendChild(el('span', null, t.label));
+      b.addEventListener('click', function () {
+        // まだ作っていないタブは、今までどおり一言だけ出す
+        if (!SCREEN_OF[t.key]) { toast(t.label + 'の画面は、これから作ります'); return; }
+        showScreen(t.key);
+        var all = nav.querySelectorAll('.tab');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('active');
+        b.classList.add('active');
+      });
+      nav.appendChild(b);
+    });
+  }
+
+
+  // ==== 進言の相談（docs/spec.md 5-25）====
+  // 送るのは「相談する」を押したときだけ（adviceAsk）。答えは文字として組み立てる（HTML としては動かさない）。
+  // 見本では DATA.advicePreview = { recent: [...], answer: {...}, waiting: true } で、google が無くても出す。
+  // 書きかけの相談は端末（localStorage）に残さない。名前を書いてしまった文が端末に残り続けないため（10/13 猪八戒の指摘）
+  var ADV = { ready: false, template: null, busy: false, pendingId: null, pendingKey: null, recent: [], recentLoaded: false };
+
+  function advIcon(paths) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    paths.forEach(function (d) {
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', d);
+      p.setAttribute('stroke', 'currentColor');
+      p.setAttribute('stroke-width', '1.8');
+      p.setAttribute('stroke-linecap', 'round');
+      p.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+  var ADV_SPARK = ['M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9L12 3z'];
+
+  // 「■ 見出し」「・ 箇条書き」を見出しと点の並びにする。ほかの行はふつうの段落。すべて textContent で入れる
+  function advFormat(text) {
+    var box = el('div', 'adv-body');
+    var list = null;
+    String(text || '').split('\n').forEach(function (raw) {
+      var line = raw.replace(/\s+$/, '');
+      if (!line.trim()) { list = null; return; }
+      var t = line.trim();
+      if (t.charAt(0) === '■') { list = null; box.appendChild(el('h4', null, t.slice(1).trim())); return; }
+      if (/^[・\-•]/.test(t)) {
+        if (!list) { list = el('ul'); box.appendChild(list); }
+        list.appendChild(el('li', null, t.replace(/^[・\-•]\s*/, '')));
+        return;
+      }
+      list = null;
+      box.appendChild(el('p', null, t));
+    });
+    return box;
+  }
+
+  function advSetError(text) {
+    var box = document.getElementById('adv-error');
+    box.textContent = text || '';
+    box.hidden = !text;
+    document.getElementById('adv-q').classList.toggle('bad', !!text);
+  }
+
+  function advUpdateCount() {
+    var conf = DATA.advice;
+    var q = document.getElementById('adv-q');
+    var n = q.value.trim().length;
+    var c = document.getElementById('adv-count');
+    c.textContent = n + ' / ' + conf.maxChars + '字';
+    c.classList.toggle('over', n > conf.maxChars);
+  }
+
+  function advSetBusy(on) {
+    ADV.busy = on;
+    var btn = document.getElementById('adv-send');
+    btn.disabled = on || !DATA.advice.hasKey;
+    btn.textContent = '';
+    if (on) {
+      btn.appendChild(el('span', 'spin'));
+      btn.appendChild(document.createTextNode('考えています…'));
+    } else {
+      btn.appendChild(advIcon(['M4.5 12h13', 'M12.5 6l6 6-6 6']));
+      btn.appendChild(document.createTextNode('相談する'));
+    }
+    document.getElementById('adv-q').readOnly = on;
+    var chips = document.querySelectorAll('.adv-chip');
+    for (var i = 0; i < chips.length; i++) chips[i].disabled = on;
+  }
+
+  function advPickTemplate(key) {
+    var t = null;
+    DATA.advice.templates.forEach(function (x) { if (x.key === key) t = x; });
+    if (!t) t = DATA.advice.templates[0];
+    ADV.template = t.key;
+    var chips = document.querySelectorAll('.adv-chip');
+    for (var i = 0; i < chips.length; i++) {
+      var on = chips[i].getAttribute('data-key') === t.key;
+      chips[i].setAttribute('aria-checked', on ? 'true' : 'false');
+      chips[i].tabIndex = on ? 0 : -1;
+    }
+    document.getElementById('adv-hint').textContent = t.hint || '';
+  }
+
+  function advShowWaiting() {
+    var box = document.getElementById('adv-answer');
+    box.textContent = '';
+    var head = el('div', 'adv-answer-head');
+    var eb = el('div', 'adv-answer-eyebrow');
+    eb.appendChild(advIcon(ADV_SPARK));
+    eb.appendChild(document.createTextNode('ANSWER'));
+    head.appendChild(eb);
+    box.appendChild(head);
+    var wait = el('div', 'adv-wait');
+    wait.appendChild(el('i')); wait.appendChild(el('i')); wait.appendChild(el('i'));
+    box.appendChild(wait);
+    box.appendChild(el('div', 'adv-wait-text', 'Claude が考えています。30秒ほどかかります。この画面のままお待ちください。'));
+    box.hidden = false;
+  }
+
+  function advShowAnswer(r) {
+    var e = r.entry;
+    var box = document.getElementById('adv-answer');
+    box.textContent = '';
+    var head = el('div', 'adv-answer-head');
+    var eb = el('div', 'adv-answer-eyebrow');
+    eb.appendChild(advIcon(ADV_SPARK));
+    eb.appendChild(document.createTextNode('ANSWER'));
+    head.appendChild(eb);
+    head.appendChild(el('span', 'adv-tag', e.label));
+    box.appendChild(head);
+    box.appendChild(el('div', 'adv-quote', e.question));
+    box.appendChild(advFormat(e.answer));
+    var foot = el('div', 'adv-foot');
+    foot.appendChild(el('span', null, e.at));
+    if (e.costYen !== null && e.costYen !== undefined) foot.appendChild(el('span', null, '費用の目安 約' + e.costYen + '円'));
+    if (typeof r.left === 'number') foot.appendChild(el('span', null, '今日はあと ' + r.left + '回'));
+    box.appendChild(foot);
+    if (r.saved === false) box.appendChild(el('p', 'adv-warn', '答えは出ましたが、記録の表に残せませんでした。必要ならこの画面で控えてください（監視ルームに知らせました）。'));
+    box.hidden = false;
+  }
+
+  function advRenderRecent() {
+    var body = document.getElementById('adv-recent-body');
+    var chip = document.getElementById('adv-recent-count');
+    body.textContent = '';
+    if (!ADV.recentLoaded) { body.appendChild(el('p', 'empty', '読み込んでいます…')); chip.textContent = ''; return; }
+    if (ADV.recentError) { body.appendChild(el('p', 'error', ADV.recentError)); chip.textContent = ''; return; }
+    chip.textContent = ADV.recent.length ? ADV.recent.length + '件' : '';
+    if (!ADV.recent.length) { body.appendChild(el('p', 'empty', 'まだ相談はありません。最初の相談をどうぞ。')); return; }
+    var ul = el('ul', 'adv-list');
+    ADV.recent.forEach(function (it) {
+      var li = el('li', 'adv-item');
+      var btn = el('button', 'adv-item-btn');
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', 'false');
+      var top = el('div', 'adv-item-top');
+      top.appendChild(el('span', null, it.at));
+      if (it.label) top.appendChild(el('span', 'adv-tag', it.label));
+      btn.appendChild(top);
+      btn.appendChild(el('div', 'adv-item-q', it.question));
+      var chev = advIcon(['M9 5l7 7-7 7']);
+      chev.setAttribute('class', 'adv-item-chev');
+      btn.appendChild(chev);
+      var panel = el('div', 'adv-item-panel');
+      panel.hidden = true;
+      btn.addEventListener('click', function () {
+        var open = panel.hidden;
+        if (open && !panel.firstChild) {
+          panel.appendChild(el('div', 'adv-quote', it.question));
+          panel.appendChild(advFormat(it.answer));
+        }
+        panel.hidden = !open;
+        li.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      li.appendChild(btn);
+      li.appendChild(panel);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+
+  function advLoadRecent() {
+    var preview = DATA.advicePreview;
+    if (preview && preview.recent) { ADV.recent = preview.recent; ADV.recentLoaded = true; advRenderRecent(); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      ADV.recent = []; ADV.recentLoaded = true; advRenderRecent(); return;
+    }
+    advRenderRecent();
+    google.script.run
+      .withSuccessHandler(function (r) {
+        ADV.recentLoaded = true;
+        if (r && r.ok) { ADV.recent = r.items || []; ADV.recentError = null; }
+        else { ADV.recentError = (r && r.message) || '最近の相談を読めませんでした。'; }
+        advRenderRecent();
+      })
+      .withFailureHandler(function () {
+        ADV.recentLoaded = true;
+        ADV.recentError = '最近の相談を読めませんでした。少し時間をおいて開き直してください。';
+        advRenderRecent();
+      })
+      .adviceRecent();
+  }
+
+  function advNewId() {
+    var s = 'req_' + Date.now().toString(36);
+    for (var i = 0; i < 10; i++) s += Math.floor(Math.random() * 36).toString(36);
+    return s;
+  }
+
+  function advSend() {
+    if (ADV.busy) return;
+    var conf = DATA.advice;
+    var q = document.getElementById('adv-q');
+    var text = q.value.trim();
+    if (text.length < conf.minChars) { advSetError('相談の文が短すぎます。' + conf.minChars + '字以上で書いてください。'); q.focus(); return; }
+    if (text.length > conf.maxChars) { advSetError('相談の文が長すぎます。' + conf.maxChars + '字までにしてください。'); q.focus(); return; }
+    advSetError('');
+    // 同じ文・同じ考え方で押し直したときは、同じ受付番号を使う（届いていたら2回答えさせない）
+    var key = ADV.template + '\n' + text;
+    if (ADV.pendingKey !== key) { ADV.pendingKey = key; ADV.pendingId = advNewId(); }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので送りません'); return; }
+    advSetBusy(true);
+    advShowWaiting();
+    google.script.run
+      .withSuccessHandler(function (r) {
+        advSetBusy(false);
+        if (!r || !r.ok) {
+          document.getElementById('adv-answer').hidden = true;
+          advSetError((r && r.message) || '答えを出せませんでした。少しおいて、もう一度押してください。');
+          if (r && r.kind === 'advice_interrupted') { ADV.recentLoaded = false; advLoadRecent(); }
+          return;
+        }
+        ADV.pendingKey = null; ADV.pendingId = null;
+        advShowAnswer(r);
+        q.value = '';
+        advUpdateCount();
+        if (r.saved !== false) {
+          ADV.recent.unshift({ at: r.entry.at, label: r.entry.label, question: r.entry.question, answer: r.entry.answer });
+          ADV.recent = ADV.recent.slice(0, 10);
+          ADV.recentLoaded = true; ADV.recentError = null;
+          advRenderRecent();
+        }
+        var box = document.getElementById('adv-answer');
+        if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .withFailureHandler(function () {
+        advSetBusy(false);
+        document.getElementById('adv-answer').hidden = true;
+        advSetError('通信が切れて、答えを受け取れませんでした。もう一度押してください（同じ相談なら2回答えることはありません）。');
+      })
+      .adviceAsk({ template: ADV.template, question: text, requestId: ADV.pendingId });
+  }
+
+  function setupAdvice() {
+    if (ADV.ready) return;
+    var conf = DATA.advice;
+    if (!conf) return;
+    ADV.ready = true;
+    var chips = document.getElementById('adv-chips');
+    conf.templates.forEach(function (t) {
+      var b = el('button', 'adv-chip');
+      b.type = 'button';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('data-key', t.key);
+      b.appendChild(el('span', 'dot'));
+      b.appendChild(el('span', null, t.label));
+      b.addEventListener('click', function () { advPickTemplate(t.key); });
+      chips.appendChild(b);
+    });
+    var q = document.getElementById('adv-q');
+    q.setAttribute('maxlength', String(conf.maxChars + 200)); // 少し超えても数字が赤くなって分かるように
+    q.addEventListener('input', function () { advUpdateCount(); if (!document.getElementById('adv-error').hidden) advSetError(''); });
+    document.getElementById('adv-send').addEventListener('click', advSend);
+    document.getElementById('adv-note').textContent = conf.hasKey
+      ? '押したときだけ Claude に送ります。1回の費用の目安は数円です（1日 ' + conf.dailyLimit + '回まで）。'
+      : 'AI の鍵が設定されていないので、いまは相談できません。';
+    advPickTemplate(conf.templates[0].key);
+    advSetBusy(false);
+    advUpdateCount();
+    var preview = DATA.advicePreview;
+    if (preview && preview.waiting) { advSetBusy(true); advShowWaiting(); }
+    else if (preview && preview.answer) advShowAnswer(preview.answer);
+    if (preview && preview.error) advSetError(preview.error);
+    if (preview && preview.question) { q.value = preview.question; advUpdateCount(); }
+    advLoadRecent();
+  }
+
+  // ==== 新しい画面の合言葉（docs/spec.md 5-26）====
+  // 今の画面（Google のログインで守られている）にだけ出す。合言葉は押したときにだけ取りに行き、画面の HTML には埋め込まない
+  function setupNewPagePanel() {
+    var p = DATA.apiPanel;
+    var card = document.getElementById('np-card');
+    if (!card) return;
+    if (!p || !p.url) { card.hidden = true; return; }
+    card.hidden = false;
+    document.getElementById('np-open').href = p.url;
+    var input = document.getElementById('np-token');
+    var msg = document.getElementById('np-msg');
+    function show(token, text) {
+      input.value = token;
+      input.hidden = false;
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(token).then(function () { msg.textContent = text || 'コピーしました。新しい画面に貼り付けてください。'; },
+            function () { input.select(); msg.textContent = '自動でコピーできませんでした。上の欄を長押しして「コピー」を選んでください。'; });
+          copied = true;
+        }
+      } catch (e) { copied = false; }
+      if (!copied) { input.select(); msg.textContent = '上の欄を長押しして「コピー」を選んでください。'; }
+    }
+    function run(fn, text) {
+      if (typeof google === 'undefined' || !google.script || !google.script.run) { msg.textContent = '見本の画面なので出しません'; return; }
+      msg.textContent = '取りに行っています…';
+      google.script.run
+        .withSuccessHandler(function (r) { if (r && r.ok && r.token) show(r.token, text); else msg.textContent = '合言葉を出せませんでした。'; })
+        .withFailureHandler(function () { msg.textContent = '合言葉を出せませんでした。少しおいてもう一度押してください。'; })[fn]();
+    }
+    document.getElementById('np-copy').addEventListener('click', function () { run('apiTokenReveal'); });
+    document.getElementById('np-rotate').addEventListener('click', function () {
+      if (!window.confirm('合言葉を作り直しますか？\n今の合言葉はすぐ使えなくなり、新しい画面で貼り直しが要ります。')) return;
+      run('apiTokenRotate', '作り直してコピーしました。新しい画面に貼り直してください。');
+    });
+  }
+
+  var toastTimer = null;
+  function toast(message) {
+    var n = document.getElementById('toast');
+    n.textContent = message;
+    n.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { n.classList.remove('show'); }, 1900);
+  }
+
+  function renderRows(items) {
+    var ul = el('ul', 'agenda');
+    var nextMarked = false;
+    items.forEach(function (it) {
+      var li = el('li', 'row');
+      if (it.finished && DATA.dimFinished) li.classList.add('finished');
+      if (!it.finished && !it.allDay && !nextMarked) { li.classList.add('next'); nextMarked = true; }
+
+      var time = el('div', 'row-time' + (it.allDay ? ' allday' : ''));
+      time.appendChild(document.createTextNode(it.time));
+      if (it.endTime) time.appendChild(el('span', 'end', it.endTime));
+      li.appendChild(time);
+
+      var main = el('div');
+      var title = el('div', 'row-title');
+      title.appendChild(document.createTextNode(it.title));
+      if (it.tentative) title.appendChild(el('span', 'tag', '未回答'));
+      main.appendChild(title);
+      if (it.location) main.appendChild(el('span', 'row-place', it.location));
+      li.appendChild(main);
+
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function renderAgenda() {
+    var body = document.getElementById('body');
+    var count = document.getElementById('count');
+
+    if (!DATA.ok) {
+      count.textContent = '—';
+      body.appendChild(el('p', 'error', DATA.errorText));
+      return;
+    }
+
+    count.textContent = DATA.total + '件';
+    if (DATA.total > 0) count.classList.add('has');
+
+    if (!DATA.items.length) {
+      body.appendChild(el('p', 'empty', DATA.emptyMessage));
+    } else {
+      body.appendChild(renderRows(DATA.items));
+      if (DATA.overflow > 0) {
+        body.appendChild(el('p', 'overflow', 'ほか ' + DATA.overflow + '件'));
+      }
+    }
+  }
+
+  // 数字1つぶん。urgent … 目立たせるか / unit … 単位（既定は「件」）
+  // dimZero … 0 を淡くするか（件数と降水確率は淡く、気温の 0℃ は淡くしない）
+  function stat(label, n, urgent, unit, dimZero) {
+    var s = el('span', 'stat');
+    if (n === 0 && dimZero !== false) s.classList.add('zero');
+    else if (urgent) s.classList.add('urgent');
+    s.appendChild(el('span', 'stat-label', label));
+    s.appendChild(el('span', 'stat-num', String(n)));
+    s.appendChild(el('span', 'stat-unit', unit || '件'));
+    return s;
+  }
+
+  function caseRow(label, stats) {
+    var li = el('li', 'case-row');
+    li.appendChild(el('span', 'case-label', label));
+    var right = el('span', 'case-stats');
+    stats.forEach(function (s) { right.appendChild(s); });
+    li.appendChild(right);
+    return li;
+  }
+
+  // 代表がやること。中身は config.js の TODO（Claude が反映のたびに書き替える）
+  function renderTodo() {
+    var card = document.getElementById('todo-card');
+    var body = document.getElementById('todo-body');
+    var chip = document.getElementById('todo-count');
+    var t = DATA.todo;
+    if (!t) { card.style.display = 'none'; return; }
+
+    if (!t.ok) {
+      body.appendChild(el('p', 'error', t.errorText));
+      return;
+    }
+
+    chip.textContent = t.total + '件';
+    // 「今日」の用事があるときだけ目立たせる
+    if (t.urgent > 0) chip.classList.add('has');
+
+    if (!t.items.length) {
+      body.appendChild(el('p', 'empty', t.emptyMessage));
+      return;
+    }
+
+    var ul = el('ul', 'todos');
+    t.items.forEach(function (item) {
+      var li = el('li', 'todo-row');
+      var head = el('div', 'todo-head');
+      head.appendChild(el('span', 'when when-' + item.when, item.whenLabel));
+      head.appendChild(el('span', 'todo-text', item.text));
+      li.appendChild(head);
+
+      if (item.note) li.appendChild(el('div', 'todo-note', item.note));
+      if (item.url) {
+        var a = el('a', 'todo-link', '開く');
+        a.href = item.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        li.appendChild(a);
+      }
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    if (t.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + t.overflow + '件'));
+    if (t.footer) body.appendChild(el('p', 'card-note', t.footer));
+  }
+
+  function renderCases() {
+    var card = document.getElementById('cases-card');
+    var body = document.getElementById('cases-body');
+    var c = DATA.cases;
+    if (!c) { card.style.display = 'none'; return; }
+
+    if (!c.ok) {
+      body.appendChild(el('p', 'error', c.errorText));
+      return;
+    }
+
+    var ul = el('ul', 'cases');
+    ul.appendChild(caseRow('指示書', [
+      stat('今日', c.instruction.today, true),
+      stat('今週', c.instruction.week, false),
+    ]));
+    // 自立支援は出さない設定のとき、数が届かないので行も出さない（config.js の CASES.JIRITSU.SHOW）
+    if (c.jiritsu) {
+      ul.appendChild(caseRow('自立支援', [
+        stat('対象', c.jiritsu.target, false),
+      ]));
+    }
+    body.appendChild(ul);
+    body.appendChild(el('p', 'card-note', c.jiritsu
+      ? 'LINE WORKS の期限チェック（指示書は毎朝・自立支援は月初）と同じ数え方です。'
+      : 'LINE WORKS の毎朝の「指示書期限チェック」と同じ数え方です。'));
+  }
+
+  // 要対応メール。橋渡しの表から来た「差出人・件名・時刻」だけを出す（本文は表に無い）
+  function renderMail() {
+    var card = document.getElementById('mail-card');
+    var body = document.getElementById('mail-body');
+    var chip = document.getElementById('mail-count');
+    var m = DATA.mail;
+    if (!m) { card.style.display = 'none'; return; }
+
+    if (!m.ok) {
+      body.appendChild(el('p', 'error', m.errorText));
+      return;
+    }
+
+    chip.textContent = m.total + '件';
+    if (m.unread > 0) chip.classList.add('has');
+
+    if (!m.items.length) {
+      body.appendChild(el('p', 'empty', '要対応のメールはありません。'));
+      return;
+    }
+
+    var ul = el('ul', 'mails');
+    m.items.forEach(function (item) {
+      var li = el('li', 'mail-row');
+      var head = el('div', 'mail-head');
+      head.appendChild(el('span', 'mail-time', item.timeText));
+      head.appendChild(el('span', 'mail-from', item.from));
+      li.appendChild(head);
+
+      var subject = el('div', 'mail-subject', item.subject);
+      if (item.unread) subject.appendChild(el('span', 'badge unread', '未読'));
+      if (item.unreplied) subject.appendChild(el('span', 'badge unreplied', '未返信'));
+      li.appendChild(subject);
+
+      if (item.note) li.appendChild(el('div', 'mail-note', item.note));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
+    body.appendChild(el('p', 'card-note',
+      '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' 時点）' : '')));
+  }
+
+  // 台帳（年間行事）。表から来た 行事名・期日・繰り返し・担当・備考 を近い順に出す。
+  // 期日が読めない行は一覧に混ぜず、数だけ下に1行で出す（日付の順に並べる一覧に置き場所がないため）。
+  // 書き込みが使えるとき（DATA.ledger.edit がある）は、行を押すと直す画面が開く（docs/spec.md 5-20）。
+  // 保存・済んだ・消す のあとは、返ってきた最新の台帳でこの関数をもう一度呼んで描き直す。
+  function renderLedger() {
+    var card = document.getElementById('ledger-card');
+    var body = document.getElementById('ledger-body');
+    var chip = document.getElementById('ledger-count');
+    var v = DATA.ledger;
+    if (!card || !body) return;
+    body.textContent = '';
+    chip.textContent = '';
+    chip.classList.remove('has');
+    if (!v) { card.style.display = 'none'; renderLedgerView(); return; } // config.js の LEDGER.SHOW が false
+
+    var edit = v.ok && v.edit ? v.edit : null;
+    document.getElementById('ledger-add').hidden = !edit;
+    document.getElementById('ledger-foot').textContent = edit
+      ? '行を押すと直せます。表で直しても同じです。表は代表のアカウントの中にあるので、事務員には見えません。'
+      : '期日は表で直します。表は代表のアカウントの中にあるので、事務員には見えません。';
+
+    if (!v.ok) {
+      // 表をまだ作っていないだけのときは、赤い字にしない（壊れていないので）
+      body.appendChild(el('p', v.needsSetup ? 'card-note' : 'error', v.errorText));
+      renderLedgerAll(null);
+      renderLedgerView();
+      return;
+    }
+
+    chip.textContent = v.total + '件';
+    if (v.urgent > 0) chip.classList.add('has');
+
+    if (!v.items.length) {
+      body.appendChild(el('p', 'empty', v.emptyMessage));
+    } else {
+      var ul = el('ul', 'ledger');
+      v.items.forEach(function (it) {
+        ul.appendChild(ledgerRowEl(it, edit ? ledgerFindItem(it.row) : null));
+      });
+      body.appendChild(ul);
+    }
+
+    if (v.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + v.overflow + '件'));
+    if (v.unreadable > 0) {
+      body.appendChild(el('p', 'card-note',
+        '期日がまだの行が ' + v.unreadable + '件あります。' +
+        (edit ? '下の「すべての行事」から押して日を入れられます。' : '表の「次回の期日」に日を入れると、ここに並びます。')));
+    }
+    if (edit) {
+      var more = el('button', 'ledger-more', LEDGER_UI.allOpen ? 'すべての行事を閉じる' : 'すべての行事を見る・直す（' + edit.list.length + '件）');
+      more.type = 'button';
+      more.id = 'ledger-more';
+      more.addEventListener('click', function () {
+        LEDGER_UI.allOpen = !LEDGER_UI.allOpen;
+        renderLedger();
+        if (LEDGER_UI.allOpen) document.getElementById('ledger-all-card').scrollIntoView({ block: 'start' });
+      });
+      body.appendChild(more);
+    }
+    renderLedgerAll(edit);
+    renderLedgerView();
+  }
+
+
+  // ---- AI の一言（docs/spec.md 5-23）----
+  // 画面が開いたあとに Claude の一言を取りに行く（開くのを遅くしない）。出せないとき・近い行事が無いときは枠ごと隠す。
+  // 見本では DATA.aiPreview に返事の形を入れると、google が無くてもそのまま出す。
+  var AI_NOTE_GEN = {};
+  function loadAiNote(kind) {
+    var box = document.getElementById('ai-note-' + kind);
+    if (!box) return;
+    // 直したあとに呼び直したとき、前の返事があとから届いても使わない
+    var gen = AI_NOTE_GEN[kind] = (AI_NOTE_GEN[kind] || 0) + 1;
+    var preview = DATA.aiPreview && DATA.aiPreview[kind];
+    if (preview) { applyAiNote(kind, preview); return; }
+    if (!DATA.ai || !DATA.ai[kind]) { box.hidden = true; return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { box.hidden = true; return; }
+    var text = document.getElementById('ai-note-' + kind + '-text');
+    text.textContent = '';
+    text.classList.add('loading');
+    text.setAttribute('aria-label', '考えています');
+    document.getElementById('ai-note-' + kind + '-basis').textContent = '';
+    box.hidden = false;
+    google.script.run
+      .withSuccessHandler(function (r) { if (gen === AI_NOTE_GEN[kind]) applyAiNote(kind, r); })
+      .withFailureHandler(function () { if (gen === AI_NOTE_GEN[kind]) applyAiNote(kind, null); })
+      .getAiNote(kind, kind === 'today' ? aiTodayPayload() : null);
+  }
+
+  function applyAiNote(kind, r) {
+    var box = document.getElementById('ai-note-' + kind);
+    var text = document.getElementById('ai-note-' + kind + '-text');
+    var basisBox = document.getElementById('ai-note-' + kind + '-basis');
+    text.classList.remove('loading');
+    text.removeAttribute('aria-label');
+    basisBox.textContent = '';
+    if (!r || !r.ok || r.empty || !r.text) { box.hidden = true; return; }
+    text.textContent = r.text;
+    if (r.basis && r.basis.length) {
+      basisBox.appendChild(el('span', 'ai-note-basis-label', kind === 'ledger' ? 'もとにした行事' : 'もとにした項目'));
+      r.basis.forEach(function (name) {
+        var chip = el('button', 'ai-basis-chip', name);
+        chip.type = 'button';
+        var item = kind === 'ledger' ? aiFindLedgerItem(name) : null;
+        if (item) chip.addEventListener('click', function () { openLedgerEditor(item); });
+        else chip.disabled = true;
+        basisBox.appendChild(chip);
+      });
+    }
+    box.hidden = false;
+  }
+
+  // 今日のまとめに送る数字。**予定の名前・場所は入れない**（時刻と件数だけ）。メールも件数だけ。
+  // 天気と年間行事はサーバーが自分で読むので送らない（画面から来る文字を外へ出さないため。docs/spec.md 5-23-2）
+  function aiTodayPayload() {
+    var p = {};
+    if (DATA.ok && DATA.items) {
+      p.events = DATA.items.slice(0, 20).map(function (it) {
+        return { time: it.allDay ? '' : it.time, end: it.endTime || '', allDay: !!it.allDay, tentative: !!it.tentative };
+      });
+      p.eventTotal = DATA.total;
+    }
+    var c = DATA.cases;
+    if (c && c.ok && c.instruction) p.cases = { instructionToday: c.instruction.today, instructionWeek: c.instruction.week };
+    var m = DATA.mail;
+    if (m && m.ok) p.mail = { total: m.total, unread: m.unread, unreplied: m.unreplied };
+    return p;
+  }
+
+  function aiFindLedgerItem(name) {
+    var edit = DATA.ledger && DATA.ledger.edit;
+    if (!edit) return null;
+    for (var i = 0; i < edit.list.length; i++) if (edit.list[i].name === name) return edit.list[i];
+    return null;
+  }
+
+  // ---- カレンダー（docs/spec.md 5-21）----
+
+  // リストとカレンダーのどちらを出すか。カレンダーが無い（設定で止めた・表を読めない）ときはリストだけ
+  function renderLedgerView() {
+    var v = DATA.ledger;
+    var cal = v && v.ok ? v.calendar : null;
+    var seg = document.getElementById('ledger-seg');
+    var calCard = document.getElementById('ledger-cal-card');
+    seg.hidden = !cal;
+    var view = cal ? LEDGER_UI.view : 'list';
+    ['seg-list', 'seg-cal'].forEach(function (id) {
+      var b = document.getElementById(id);
+      b.setAttribute('aria-selected', b.getAttribute('data-view') === view ? 'true' : 'false');
+    });
+    if (view === 'calendar') {
+      document.getElementById('ledger-card').hidden = true;
+      document.getElementById('ledger-all-card').hidden = true;
+      calCard.hidden = false;
+      renderCalendar(cal);
+    } else {
+      document.getElementById('ledger-card').hidden = false;
+      calCard.hidden = true;
+    }
+  }
+
+  function calIndex(y, m) { return y * 12 + (m - 1); }
+
+  function calBounds(cal) {
+    var min = calIndex(cal.start.y, cal.start.m);
+    return { min: min, max: min + cal.months - 1 };
+  }
+
+  // 重い順（赤 → 黄 → 灰 → 過ぎた予定）。点の並びと、日の一覧の並びに使う
+  var CAL_RANK = { overdue: 0, soon: 1, near: 2, far: 3, past: 4 };
+
+  function renderCalendar(cal) {
+    var st = LEDGER_UI.cal;
+    var b = calBounds(cal);
+    if (!st) {
+      st = LEDGER_UI.cal = { y: cal.today.y, m: cal.today.m, sel: { y: cal.today.y, m: cal.today.m, d: cal.today.d } };
+    }
+    var idx = Math.max(b.min, Math.min(b.max, calIndex(st.y, st.m)));
+    st.y = Math.floor(idx / 12); st.m = idx % 12 + 1;
+    if (st.sel && (st.sel.y !== st.y || st.sel.m !== st.m)) st.sel = null;
+
+    document.getElementById('cal-y').textContent = st.y + '年';
+    document.getElementById('cal-m').textContent = String(st.m);
+    document.getElementById('cal-ym').setAttribute('aria-label', st.y + '年' + st.m + '月');
+    document.getElementById('cal-prev').disabled = idx <= b.min;
+    document.getElementById('cal-next').disabled = idx >= b.max;
+    document.getElementById('cal-today').hidden = st.y === cal.today.y && st.m === cal.today.m &&
+      !!st.sel && st.sel.d === cal.today.d;
+
+    var byDay = {};
+    var monthOnly = [];
+    cal.events.forEach(function (ev) {
+      if (ev.y !== st.y || ev.m !== st.m) return;
+      if (!ev.d) { monthOnly.push(ev); return; }
+      (byDay[ev.d] = byDay[ev.d] || []).push(ev);
+    });
+    var monthCount = monthOnly.length;
+    Object.keys(byDay).forEach(function (d) { monthCount += byDay[d].length; });
+    document.getElementById('cal-count').textContent = monthCount ? 'この月の行事 ' + monthCount + '件' : 'この月の行事はありません';
+
+    var grid = document.getElementById('cal-grid');
+    grid.textContent = '';
+    grid.classList.remove('from-right', 'from-left');
+    if (LEDGER_UI.calAnim) {
+      void grid.offsetWidth; // 動きをやり直すため
+      grid.classList.add(LEDGER_UI.calAnim === 'next' ? 'from-right' : 'from-left');
+      LEDGER_UI.calAnim = '';
+    }
+    var first = new Date(st.y, st.m - 1, 1).getDay();
+    var days = new Date(st.y, st.m, 0).getDate();
+    for (var i = 0; i < first; i++) grid.appendChild(el('span', 'cal-day blank'));
+    for (var d = 1; d <= days; d++) grid.appendChild(calDayEl(cal, st, d, byDay[d] || []));
+
+    renderCalMonthOnly(monthOnly, st);
+    renderCalDay(st.sel ? (byDay[st.sel.d] || []) : null, st);
+  }
+
+  function calDayEl(cal, st, d, evs) {
+    var btn = el('button', 'cal-day');
+    btn.type = 'button';
+    var wd = (new Date(st.y, st.m - 1, d)).getDay();
+    if (wd === 0) btn.classList.add('sun');
+    if (wd === 6) btn.classList.add('sat');
+    if (st.y === cal.today.y && st.m === cal.today.m && d === cal.today.d) btn.classList.add('today');
+    if (st.sel && st.sel.d === d) btn.classList.add('selected');
+    if (evs.length) btn.classList.add('has');
+    btn.setAttribute('data-day', String(d));
+    btn.setAttribute('aria-label', st.m + '月' + d + '日' + (evs.length ? ' 行事' + evs.length + '件' : ''));
+    btn.appendChild(el('span', 'num', String(d)));
+    var dots = el('span', 'cal-dots');
+    evs.slice().sort(function (a, b) { return CAL_RANK[a.level] - CAL_RANK[b.level]; }).slice(0, 3).forEach(function (ev) {
+      dots.appendChild(el('i', 'cal-dot ' + ev.level + (ev.repeat ? ' repeat' : '')));
+    });
+    if (evs.length > 3) dots.appendChild(el('span', 'cal-more', '+'));
+    btn.appendChild(dots);
+    btn.addEventListener('click', function () {
+      st.sel = { y: st.y, m: st.m, d: d };
+      renderCalendar(DATA.ledger.calendar);
+    });
+    return btn;
+  }
+
+  // 日が決まっていない（月だけの）行事は、表の上ではなく下に「この月のいつか」として出す
+  function renderCalMonthOnly(list, st) {
+    var box = document.getElementById('cal-monthonly');
+    box.textContent = '';
+    if (!list.length) return;
+    var sec = el('div', 'cal-section');
+    var head = el('div', 'cal-section-head');
+    head.appendChild(el('h3', 'cal-section-title', st.m + '月のいつか'));
+    sec.appendChild(head);
+    var chips = el('div', 'cal-chips');
+    list.forEach(function (ev) {
+      var item = ledgerFindItem(ev.row);
+      var chip = el('button', 'cal-chip ' + (ev.level === 'past' ? 'far' : ev.level), ev.name + (ev.repeat ? '（予定）' : ''));
+      chip.type = 'button';
+      chip.setAttribute('data-row', String(ev.row));
+      if (item) chip.addEventListener('click', function () { openLedgerEditor(item); });
+      else chip.disabled = true;
+      chips.appendChild(chip);
+    });
+    sec.appendChild(chips);
+    box.appendChild(sec);
+  }
+
+  // 押した日の行事。押すと直す画面。「この日に足す」で、その日を期日に入れて足す画面を開く
+  function renderCalDay(evs, st) {
+    var box = document.getElementById('cal-day');
+    box.textContent = '';
+    var sec = el('div', 'cal-section');
+    if (!evs) {
+      sec.appendChild(el('p', 'cal-empty', '日を押すと、その日の行事が出ます。輪の印は、繰り返しの行事の先の予定です。'));
+      box.appendChild(sec);
+      return;
+    }
+    var edit = DATA.ledger && DATA.ledger.edit;
+    var head = el('div', 'cal-section-head');
+    var date = new Date(st.sel.y, st.sel.m - 1, st.sel.d);
+    head.appendChild(el('h3', 'cal-section-title', st.sel.m + '月' + st.sel.d + '日（' + '日月火水木金土'.charAt(date.getDay()) + '）'));
+    if (edit) {
+      var add = el('button', 'ledger-head-btn', '');
+      add.type = 'button';
+      add.id = 'cal-add';
+      add.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      add.appendChild(document.createTextNode('この日に足す'));
+      add.addEventListener('click', function () {
+        openLedgerEditor(null);
+        fillDue(st.sel.y + '/' + st.sel.m + '/' + st.sel.d);
+      });
+      head.appendChild(add);
+    }
+    sec.appendChild(head);
+    if (!evs.length) {
+      sec.appendChild(el('p', 'cal-empty', 'この日の行事はありません。'));
+    } else {
+      var ul = el('ul', 'ledger');
+      evs.slice().sort(function (a, b) { return CAL_RANK[a.level] - CAL_RANK[b.level]; }).forEach(function (ev) {
+        var it = {
+          name: ev.name,
+          dueText: ev.repeat ? '繰り返しの予定' : ev.dueLabel,
+          cycle: ev.cycle,
+          who: ev.who,
+          daysText: ev.daysText,
+          level: ev.level,
+        };
+        ul.appendChild(ledgerRowEl(it, edit ? ledgerFindItem(ev.row) : null));
+      });
+      sec.appendChild(ul);
+    }
+    box.appendChild(sec);
+  }
+
+  function moveCalendar(step) {
+    var cal = DATA.ledger && DATA.ledger.calendar;
+    var st = LEDGER_UI.cal;
+    if (!cal || !st) return;
+    var b = calBounds(cal);
+    var idx = calIndex(st.y, st.m) + step;
+    if (idx < b.min || idx > b.max) return;
+    st.y = Math.floor(idx / 12); st.m = idx % 12 + 1;
+    st.sel = (st.y === cal.today.y && st.m === cal.today.m) ? { y: st.y, m: st.m, d: cal.today.d } : null;
+    LEDGER_UI.calAnim = step > 0 ? 'next' : 'prev';
+    renderCalendar(cal);
+  }
+
+  function setupLedgerCalendar() {
+    ['seg-list', 'seg-cal'].forEach(function (id) {
+      document.getElementById(id).addEventListener('click', function () {
+        LEDGER_UI.view = this.getAttribute('data-view');
+        storeLedgerView(LEDGER_UI.view);
+        renderLedger();
+      });
+    });
+    document.getElementById('cal-prev').addEventListener('click', function () { moveCalendar(-1); });
+    document.getElementById('cal-next').addEventListener('click', function () { moveCalendar(1); });
+    document.getElementById('cal-today').addEventListener('click', function () {
+      var cal = DATA.ledger && DATA.ledger.calendar;
+      if (!cal) return;
+      var st = LEDGER_UI.cal;
+      var dir = calIndex(cal.today.y, cal.today.m) - calIndex(st.y, st.m);
+      LEDGER_UI.cal = { y: cal.today.y, m: cal.today.m, sel: { y: cal.today.y, m: cal.today.m, d: cal.today.d } };
+      LEDGER_UI.calAnim = dir > 0 ? 'next' : (dir < 0 ? 'prev' : '');
+      renderCalendar(cal);
+    });
+    // 指で左右になぞると月が変わる（縦のなぞりは画面のスクロールのまま）
+    var grid = document.getElementById('cal-grid');
+    var sx = null, sy = null;
+    grid.addEventListener('touchstart', function (e) { var t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+    grid.addEventListener('touchend', function (e) {
+      if (sx === null) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      sx = sy = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) moveCalendar(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+
+  // 1行の見た目。item（直す一覧の行）があれば押せる行にする
+  function ledgerRowEl(it, item) {
+    var li = el('li', 'ledger-row ' + (it.level || 'far'));
+    li.appendChild(el('span', 'ledger-mark'));
+    var main = el('div', 'ledger-main');
+    main.appendChild(el('div', 'ledger-name', it.name));
+    var meta = [it.dueText, it.cycle, it.who].filter(function (s) { return s; }).join('・');
+    if (meta) main.appendChild(el('div', 'ledger-meta', meta));
+    if (it.note) main.appendChild(el('div', 'ledger-note', it.note));
+    li.appendChild(main);
+    if (it.daysText) li.appendChild(el('span', 'ledger-days', it.daysText));
+    if (item) {
+      li.classList.add('tappable');
+      li.setAttribute('role', 'button');
+      li.setAttribute('tabindex', '0');
+      li.setAttribute('aria-label', it.name + 'を直す');
+      li.setAttribute('data-row', String(item.row));
+      li.addEventListener('click', function () { openLedgerEditor(item); });
+      li.addEventListener('keydown', function (e) { if (e.key === 'Enter') openLedgerEditor(item); });
+    }
+    return li;
+  }
+
+  // すべての行事（期日がまだの行・隠した行も）。行を押すと直す画面
+  function renderLedgerAll(edit) {
+    var card = document.getElementById('ledger-all-card');
+    var body = document.getElementById('ledger-all-body');
+    body.textContent = '';
+    if (!edit || !LEDGER_UI.allOpen) { card.hidden = true; return; }
+    card.hidden = false;
+    document.getElementById('ledger-all-count').textContent = edit.list.length + '件';
+    if (!edit.list.length) { body.appendChild(el('p', 'empty', 'まだ行事がありません。「足す」から入れてください。')); return; }
+
+    var groups = [
+      { title: '期日のある行事', pick: function (it) { return it.show && it.due; } },
+      { title: '期日がまだの行事', pick: function (it) { return it.show && !it.due; } },
+      { title: '隠している行事', pick: function (it) { return !it.show; } },
+    ];
+    groups.forEach(function (gr) {
+      var items = edit.list.filter(gr.pick);
+      if (!items.length) return;
+      body.appendChild(el('p', 'ledger-group', gr.title + '（' + items.length + '）'));
+      var ul = el('ul', 'ledger');
+      items.forEach(function (item) {
+        var li = ledgerRowEl({
+          name: item.name,
+          dueText: item.due ? item.dueLabel : '期日まだ',
+          cycle: item.cycle, who: item.who, note: item.note,
+          daysText: item.show ? item.daysText : '隠し中',
+          level: item.show ? item.level : 'far',
+        }, item);
+        if (!item.show) li.classList.add('hidden-row');
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    });
+  }
+
+  // allOpen の初期値は見本づくり用（本番の webapp.js は ledgerAllOpen を渡さない）
+  var LEDGER_UI = { item: null, busy: false, allOpen: !!(DATA && DATA.ledgerAllOpen), undoTimer: null, confirmStep: 0,
+    // 見せ方（list / calendar）。前に選んだほうを覚えておく（この端末だけ。消えてもリストに戻るだけ）
+    view: DATA.ledgerView || readLedgerView() || 'list', cal: null, calAnim: '' };
+
+  function readLedgerView() {
+    try { var v = window.localStorage.getItem('hisho.ledgerView'); return v === 'calendar' || v === 'list' ? v : null; }
+    catch (e) { return null; }
+  }
+  function storeLedgerView(v) {
+    try { window.localStorage.setItem('hisho.ledgerView', v); } catch (e) { /* 覚えられなくても動く */ }
+  }
+
+  function ledgerFindItem(row) {
+    var edit = DATA.ledger && DATA.ledger.edit;
+    if (!edit) return null;
+    for (var i = 0; i < edit.list.length; i++) if (edit.list[i].row === row) return edit.list[i];
+    return null;
+  }
+
+  // 選ぶ欄に選択肢を入れる。options は [[値, 見出し], ...]
+  function fillSelect(sel, options, value) {
+    sel.textContent = '';
+    options.forEach(function (o) {
+      var op = document.createElement('option');
+      op.value = o[0];
+      op.textContent = o[1];
+      sel.appendChild(op);
+    });
+    sel.value = value;
+    if (sel.value !== value) sel.selectedIndex = 0;
+  }
+
+  // 「選択肢＋その他」の欄。選択肢に無い値なら「その他」にして下の入力欄に入れる
+  function fillChoice(sel, other, choices, value, emptyLabel) {
+    var opts = [['', emptyLabel]].concat(choices.map(function (c) { return [c, c]; })).concat([['__other', 'その他（入れる）']]);
+    var known = value === '' || choices.indexOf(value) >= 0;
+    fillSelect(sel, opts, known ? value : '__other');
+    other.value = known ? '' : value;
+    other.hidden = known;
+  }
+
+  function choiceValue(sel, other) {
+    return sel.value === '__other' ? other.value : sel.value;
+  }
+
+  // 期日の3つの欄（年・月・日）。年が「未定」なら月・日は選べない。月を選ぶまで日は選べない
+  function fillDue(dueText) {
+    var y = document.getElementById('le-year');
+    var m = document.getElementById('le-month');
+    var d = document.getElementById('le-day');
+    var parts = (dueText || '').split('/');
+    var thisYear = new Date().getFullYear();
+    var years = [['', '未定']];
+    var from = thisYear - 1, to = thisYear + 10;
+    var givenYear = Number(parts[0]) || 0;
+    if (givenYear && givenYear < from) from = givenYear;
+    if (givenYear && givenYear > to) to = givenYear;
+    for (var yy = from; yy <= to; yy++) years.push([String(yy), yy + '年']);
+    fillSelect(y, years, parts[0] || '');
+    var months = [['', '月']];
+    for (var mm = 1; mm <= 12; mm++) months.push([String(mm), mm + '月']);
+    fillSelect(m, months, parts[1] ? String(Number(parts[1])) : '');
+    var days = [['', '日は決めない']];
+    for (var dd = 1; dd <= 31; dd++) days.push([String(dd), dd + '日']);
+    fillSelect(d, days, parts[2] ? String(Number(parts[2])) : '');
+    syncDue();
+  }
+
+  function syncDue() {
+    var y = document.getElementById('le-year');
+    var m = document.getElementById('le-month');
+    var d = document.getElementById('le-day');
+    m.disabled = !y.value;
+    if (!y.value) m.value = '';
+    d.disabled = !m.value;
+    if (!m.value) d.value = '';
+    // その月に無い日（2月30日など）は選べないようにする
+    var last = (y.value && m.value) ? new Date(Number(y.value), Number(m.value), 0).getDate() : 31;
+    for (var i = 0; i < d.options.length; i++) {
+      var n = Number(d.options[i].value);
+      d.options[i].disabled = n > last;
+    }
+    if (Number(d.value) > last) d.value = '';
+  }
+
+  function dueValue() {
+    var y = document.getElementById('le-year').value;
+    var m = document.getElementById('le-month').value;
+    var d = document.getElementById('le-day').value;
+    if (!y) return { text: '' };
+    if (!m) return { error: '月も選んでください（年だけでは期日になりません）。' };
+    return { text: y + '/' + m + (d ? '/' + d : '') };
+  }
+
+  function setLedgerMsg(text) {
+    var n = document.getElementById('le-msg');
+    n.textContent = text || '';
+    n.hidden = !text;
+  }
+
+  function setFieldErrors(errors) {
+    var fields = document.querySelectorAll('#ledger-editor [data-field]');
+    for (var i = 0; i < fields.length; i++) {
+      var key = fields[i].getAttribute('data-field');
+      var msg = errors && errors[key] ? errors[key] : '';
+      fields[i].classList.toggle('bad', !!msg);
+      fields[i].querySelector('[data-error]').textContent = msg;
+    }
+  }
+
+  // 直す画面を開く。item が無ければ「足す」
+  function openLedgerEditor(item) {
+    var edit = DATA.ledger && DATA.ledger.edit;
+    if (!edit) return;
+    LEDGER_UI.item = item || null;
+    document.getElementById('le-title').textContent = item ? '行事を直す' : '行事を足す';
+    document.getElementById('le-sub').textContent = item
+      ? '保存すると表のこの行が書き替わります。'
+      : '表のあいている行に入ります。';
+    document.getElementById('le-name').value = item ? item.name : '';
+    fillDue(item ? item.due : '');
+    if (item && !item.due && item.dueRaw) {
+      setFieldErrors({ DUE: '表に「' + item.dueRaw + '」と入っていて期日として読めません。選び直すと直ります。' });
+    } else {
+      setFieldErrors(null);
+    }
+    fillChoice(document.getElementById('le-cycle'), document.getElementById('le-cycle-other'), edit.cycles, item ? item.cycle : '', 'なし');
+    fillChoice(document.getElementById('le-who'), document.getElementById('le-who-other'), edit.whoChoices, item ? item.who : '', '決めない');
+    document.getElementById('le-who-hint').textContent = edit.whoHint || '';
+    document.getElementById('le-note').value = item ? item.note : '';
+    document.getElementById('le-show').checked = item ? !!item.show : true;
+    var max = edit.maxLen || {};
+    document.getElementById('le-name').maxLength = max.NAME || 60;
+    document.getElementById('le-note').maxLength = max.NOTE || 200;
+
+    var doneBox = document.getElementById('le-done-box');
+    var hint = document.getElementById('le-done-hint');
+    if (item && item.doneAction === 'advance') {
+      doneBox.hidden = false;
+      hint.textContent = '押すと、次回の期日が ' + item.doneNext + ' に進みます（元の期日から数えます）。';
+    } else if (item && item.doneAction === 'hide') {
+      doneBox.hidden = false;
+      hint.textContent = '「' + item.cycle + '」の行事なので、押すと画面から隠します（表には残ります）。';
+    } else {
+      doneBox.hidden = true;
+    }
+    document.getElementById('le-delete').hidden = !item;
+    setLedgerMsg('');
+    setLedgerBusy(false);
+    document.getElementById('ledger-editor').hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLedgerEditor() {
+    if (LEDGER_UI.busy) return;
+    document.getElementById('ledger-editor').hidden = true;
+    document.body.style.overflow = '';
+    LEDGER_UI.item = null;
+  }
+
+  function setLedgerBusy(busy) {
+    LEDGER_UI.busy = busy;
+    ['le-save', 'le-done', 'le-delete', 'le-cancel'].forEach(function (id) {
+      document.getElementById(id).disabled = busy;
+    });
+    document.getElementById('le-save').textContent = busy ? '保存中…' : '保存';
+  }
+
+  // 入力を集める。画面で分かる間違いはここで止める（Apps Script 側でも同じことを確かめる）
+  function collectLedgerInput() {
+    var errors = {};
+    var name = document.getElementById('le-name').value.trim();
+    if (!name) errors.NAME = '行事名を入れてください。';
+    var due = dueValue();
+    if (due.error) errors.DUE = due.error;
+    var values = {
+      NAME: name,
+      DUE: due.text || '',
+      CYCLE: choiceValue(document.getElementById('le-cycle'), document.getElementById('le-cycle-other')).trim(),
+      WHO: choiceValue(document.getElementById('le-who'), document.getElementById('le-who-other')).trim(),
+      NOTE: document.getElementById('le-note').value.trim(),
+      SHOW: document.getElementById('le-show').checked,
+    };
+    return { values: values, errors: errors };
+  }
+
+  // Apps Script を呼ぶ。見本（google が無い）では呼ばずに一言だけ出す
+  function callLedger(fn, arg) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      setLedgerBusy(false);
+      setLedgerMsg('見本の画面なので保存しません。');
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(onLedgerResult)
+      .withFailureHandler(function () {
+        setLedgerBusy(false);
+        setLedgerMsg('つながりませんでした。入力はそのまま残してあります。もう一度押してください。');
+      })[fn](arg);
+  }
+
+  // 保存・済んだ・消す・元に戻す の返事
+  function onLedgerResult(r) {
+    setLedgerBusy(false);
+    if (r && r.ledger) DATA.ledger = r.ledger;
+    var editorOpen = !document.getElementById('ledger-editor').hidden;
+    if (r && r.ok) {
+      if (editorOpen) closeLedgerEditor();
+      renderLedger();
+      showLedgerUndo(r.message || '保存しました', r.undo);
+      if (r.warning) toast(r.warning);
+      if (r.stale) refreshLedger();
+      else loadAiNote('ledger'); // 台帳が変わったので、一言も今の中身で作り直す（古い行事を根拠に残さない）
+      return;
+    }
+    renderLedger();
+    if (!r) { setLedgerMsg('保存できませんでした。もう一度押してください。'); return; }
+    if (r.partial) refreshLedger(); // 途中まで書いたかもしれないので、表の今の中身を出し直す
+    if (!editorOpen) { toast(r.errorText || '元に戻せませんでした'); return; }
+    if (r.kind === 'ledger_invalid') {
+      setFieldErrors(r.errors || null);
+      setLedgerMsg(r.errorText);
+    } else if (r.kind === 'ledger_conflict' && LEDGER_UI.item) {
+      // 表で先に直されていた。上書きせず、表の今の内容で開き直す。
+      // 同じ行番号に別の行事が来ている（表で行を足し引きした）ときは、別の行を開かずに閉じる
+      var fresh = ledgerFindItem(LEDGER_UI.item.row);
+      if (fresh && fresh.name && fresh.name === LEDGER_UI.item.name) {
+        openLedgerEditor(fresh);
+        setLedgerMsg(r.errorText + ' 直しをもう一度入れてください。');
+      } else {
+        closeLedgerEditor();
+        toast('表でこの行が動いたか消されていました。一覧から選び直してください。');
+      }
+    } else {
+      setLedgerMsg(r.errorText || '保存できませんでした。');
+    }
+  }
+
+  function showLedgerUndo(message, undo) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    var showMs = (undo && undo.showMs) || 4000;
+    var hideLater = function () {
+      clearTimeout(LEDGER_UI.undoTimer);
+      LEDGER_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, showMs);
+    };
+    btn.hidden = !(undo && undo.token);
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled) return;
+      if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので戻しません'); return; }
+      // 通信中はボタンを止めるだけ（バーは消さない）。つながらなければ、同じ札でもう一度押せる
+      clearTimeout(LEDGER_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      var retry = function (text) {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        document.getElementById('undo-text').textContent = text;
+        hideLater();
+      };
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (r && !r.ok && (r.kind === 'ledger_busy' || r.kind === 'ledger_unavailable') && !r.partial) {
+            if (r.ledger) { DATA.ledger = r.ledger; renderLedger(); }
+            retry(r.errorText || 'もう一度押してください。');
+            return;
+          }
+          bar.hidden = true;
+          onLedgerResult(r);
+        })
+        .withFailureHandler(function () { retry('つながりませんでした。もう一度押してください。'); })
+        .ledgerUndo(undo.token);
+    };
+    bar.hidden = false;
+    hideLater();
+  }
+
+  // 書いたあとの読み直しだけ失敗したとき、台帳を読み直して描き直す（失敗しても画面はそのまま）
+  function refreshLedger() {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.ok && r.ledger) { DATA.ledger = r.ledger; renderLedger(); loadAiNote('ledger'); } })
+      .withFailureHandler(function () {})
+      .ledgerFetch();
+  }
+
+  function saveLedger() {
+    if (LEDGER_UI.busy) return;
+    var got = collectLedgerInput();
+    setFieldErrors(got.errors);
+    if (Object.keys(got.errors).length) { setLedgerMsg('入力に直すところがあります。赤い字の欄を見てください。'); return; }
+    setLedgerMsg('');
+    setLedgerBusy(true);
+    var item = LEDGER_UI.item;
+    callLedger('ledgerSave', item ? { row: item.row, version: item.version, values: got.values } : { values: got.values });
+  }
+
+  function completeLedger() {
+    var item = LEDGER_UI.item;
+    if (LEDGER_UI.busy || !item) return;
+    setLedgerMsg('');
+    setLedgerBusy(true);
+    callLedger('ledgerComplete', { row: item.row, version: item.version });
+  }
+
+  // 消す前の確認。1回目「消しますか？」→ 2回目「本当に消しますか？」→ 消す
+  function askDeleteLedger() {
+    var item = LEDGER_UI.item;
+    if (LEDGER_UI.busy || !item) return;
+    LEDGER_UI.confirmStep = 1;
+    document.getElementById('lc-text').textContent = '「' + item.name + '」を消しますか？';
+    document.getElementById('lc-sub').textContent = '隠すだけなら「台帳の画面に出す」を外して保存してください。';
+    document.getElementById('lc-ok').textContent = '消す';
+    document.getElementById('ledger-confirm').hidden = false;
+  }
+
+  function onConfirmOk() {
+    var item = LEDGER_UI.item;
+    if (!item) { closeConfirm(); return; }
+    if (LEDGER_UI.confirmStep === 1) {
+      LEDGER_UI.confirmStep = 2;
+      document.getElementById('lc-text').textContent = '本当に消しますか？';
+      document.getElementById('lc-sub').textContent = '表からこの行がなくなります。中身は履歴のシートに残り、消した直後なら「元に戻す」で戻せます。';
+      document.getElementById('lc-ok').textContent = '消す（2回目）';
+      return;
+    }
+    closeConfirm();
+    setLedgerMsg('');
+    setLedgerBusy(true);
+    callLedger('ledgerDelete', { row: item.row, version: item.version, confirmed: true });
+  }
+
+  function closeConfirm() {
+    LEDGER_UI.confirmStep = 0;
+    document.getElementById('ledger-confirm').hidden = true;
+  }
+
+  function setupLedgerEditor() {
+    setupLedgerCalendar();
+    document.getElementById('ledger-add').addEventListener('click', function () { openLedgerEditor(null); });
+    document.getElementById('le-cancel').addEventListener('click', closeLedgerEditor);
+    document.getElementById('le-save').addEventListener('click', saveLedger);
+    document.getElementById('le-done').addEventListener('click', completeLedger);
+    document.getElementById('le-delete').addEventListener('click', askDeleteLedger);
+    document.getElementById('lc-cancel').addEventListener('click', closeConfirm);
+    document.getElementById('lc-ok').addEventListener('click', onConfirmOk);
+    document.getElementById('le-year').addEventListener('change', syncDue);
+    document.getElementById('le-month').addEventListener('change', syncDue);
+    ['le-cycle', 'le-who'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', function () {
+        var other = document.getElementById(id + '-other');
+        other.hidden = this.value !== '__other';
+        if (!other.hidden) other.focus();
+      });
+    });
+    // 背景（暗いところ）を押したら閉じる。入力の途中で閉じないよう、保存中は閉じない
+    document.getElementById('ledger-editor').addEventListener('click', function (e) {
+      if (e.target === this) closeLedgerEditor();
+    });
+  }
+
+  // 天気。気象庁の公開データなので、そのまま出してよい（利用者・職員の情報は入らない）
+  function renderWeather() {
+    var card = document.getElementById('weather-card');
+    var body = document.getElementById('weather-body');
+    var w = DATA.weather;
+    if (!w) { card.style.display = 'none'; return; }
+
+    if (!w.ok) {
+      body.appendChild(el('p', 'error', w.errorText));
+      return;
+    }
+
+    var ul = el('ul', 'cases');
+    ul.appendChild(caseRow('今日', [el('span', 'weather-text', w.text)]));
+
+    var temps = [];
+    if (w.tempMax !== null && w.tempMax !== undefined) temps.push(stat('最高', w.tempMax, false, '℃', false));
+    if (w.tempMin !== null && w.tempMin !== undefined) temps.push(stat('最低', w.tempMin, false, '℃', false));
+    if (temps.length) ul.appendChild(caseRow('気温', temps));
+    body.appendChild(ul);
+
+    if (w.pops && w.pops.length) {
+      var block = el('div', 'pop-block');
+      block.appendChild(el('span', 'case-label', 'これからの降水確率'));
+      var chips = el('div', 'pops');
+      w.pops.forEach(function (p) {
+        chips.appendChild(stat(p.label, p.value, p.value >= w.popWarnPercent, '%'));
+      });
+      block.appendChild(chips);
+      body.appendChild(block);
+    }
+
+    body.appendChild(el('p', 'card-note', w.noteText));
+  }
+
+  /* ==== 開いたときのお出迎え（docs/spec.md 5-14）====
+     約束: 開いてから1秒以内に、画面を触れる状態にすること。
+     途中で画面を触れば、その場で飛ばして本編に入る。 */
+
+  // 新しい画面（GitHub Pages）では DATA が開いたあとに届くので、render() の頭でもう一度読む（docs/spec.md 5-26）
+  var MOTION = (DATA && DATA.motion) || { show: false };
+
+  /** iPhone の「視差効果を減らす」が入っているか */
+  function prefersCalm() {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (e) { return false; }
+  }
+
+  /** その日の1回目かどうかを覚えておく（覚えられない場合は毎回出す） */
+  function firstTimeToday() {
+    var key = 'hisho-welcome-' + String(DATA.date || '');
+    try {
+      if (window.localStorage.getItem(key)) return false;
+      window.localStorage.setItem(key, '1');
+      return true;
+    } catch (e) { return true; }
+  }
+
+  /** お出迎えに出す一言。予定・やること・メールの件数を並べる（名前は出さない） */
+  function welcomeSummary() {
+    var parts = [];
+    if (DATA.ok && DATA.total > 0) parts.push('予定 ' + DATA.total + '件');
+    if (DATA.todo && DATA.todo.ok && DATA.todo.total > 0) parts.push('やること ' + DATA.todo.total + '件');
+    if (DATA.mail && DATA.mail.ok && DATA.mail.total > 0) parts.push('要対応メール ' + DATA.mail.total + '件');
+    if (!parts.length) return MOTION.calmText || '';
+    return parts.join('　・　');
+  }
+
+  /** あいさつを1文字ずつ出す。読み上げのために、文そのものも残しておく */
+  function setChars(box, text) {
+    box.textContent = '';
+    box.setAttribute('aria-label', text);
+    for (var i = 0; i < text.length; i++) {
+      var sp = el('span', 'ch', text.charAt(i));
+      sp.setAttribute('aria-hidden', 'true');
+      sp.style.setProperty('--i', String(i));
+      box.appendChild(sp);
+    }
+  }
+
+  /**
+   * ヘッダーに常駐するモリー。今日の中身に合わせて、印と一言が変わる。
+   * 「急ぎ」＝今日じゅうのやること＋未返信のメール。「雨」＝降水確率が警戒の値を超えた帯がある日。
+   */
+  function mollyMood() {
+    var urgent = 0;
+    if (DATA.todo && DATA.todo.ok) urgent += Number(DATA.todo.urgent) || 0;
+    if (DATA.mail && DATA.mail.ok) urgent += Number(DATA.mail.unreplied) || 0;
+    if (urgent > 0) return { kind: 'urgent', text: '急ぎが ' + urgent + '件 あります' };
+
+    var w = DATA.weather;
+    if (w && w.ok && w.pops && w.pops.length) {
+      var warn = Number(w.popWarnPercent);
+      for (var i = 0; i < w.pops.length; i++) {
+        if (Number(w.pops[i].value) >= warn) {
+          return { kind: 'rain', text: '今日は雨が降りそうです。傘をお忘れなく' };
+        }
+      }
+    }
+    var summary = welcomeSummary();
+    return { kind: 'calm', text: summary ? ('今日は ' + summary + ' です') : 'お手伝いできることがあれば、いつでも' };
+  }
+
+  function setupMolly() {
+    var box = document.getElementById('molly');
+    if (!MOTION.mascot || !MOTION.iconUri) return;   // 絵が無いときは出さない（枠だけ残さない）
+
+    document.getElementById('molly-img').src = MOTION.iconUri;
+    var mood = mollyMood();
+    box.classList.add('is-on', 'is-' + mood.kind);
+    box.setAttribute('aria-label', 'モリー: ' + mood.text);
+
+    var dot = document.getElementById('molly-dot');
+    if (mood.kind === 'calm') dot.hidden = true;
+    else dot.hidden = false;
+
+    box.addEventListener('click', function () { toast(mood.text); });
+  }
+
+  /** カードの中の一覧の行を、順に出す用意をする（この時点では伏せておく） */
+  function markRows() {
+    var lists = document.querySelectorAll('.agenda, .todos, .cases, .mails');
+    for (var i = 0; i < lists.length; i++) {
+      var rows = lists[i].children;
+      for (var j = 0; j < rows.length; j++) rows[j].classList.add('stagger-row');
+    }
+  }
+
+  /**
+   * 数字を 0 から回して止める。
+   * 途中でどうなっても、**最後は必ず元の文字に戻す**（数え間違いを画面に残さないため）。
+   * 0 のものは回さない（動かないので、ちらつくだけ）。
+   */
+  function startNumbers() {
+    var nodes = document.querySelectorAll('.count-chip, .stat-num');
+    var list = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var text = nodes[i].textContent;
+      var m = /^(\d+)(.*)$/.exec(text);
+      if (!m) continue;
+      var to = Number(m[1]);
+      if (!(to > 0)) continue;
+      list.push({ node: nodes[i], to: to, tail: m[2], text: text });
+      nodes[i].textContent = '0' + m[2];
+    }
+    if (!list.length) { document.body.classList.add('numbers-done'); return; }
+
+    var DUR = 560;
+    var start = null;
+    function step(now) {
+      if (start === null) start = now;
+      var p = Math.min(1, (now - start) / DUR);
+      var eased = 1 - Math.pow(1 - p, 3);   // 最後にゆっくり止まる
+      for (var k = 0; k < list.length; k++) {
+        var it = list[k];
+        it.node.textContent = p < 1 ? (String(Math.round(it.to * eased)) + it.tail) : it.text;
+      }
+      if (p < 1) requestAnimationFrame(step);
+      else document.body.classList.add('numbers-done');
+    }
+    requestAnimationFrame(step);
+  }
+
+  /** ヘッダー・カード・タブを順に立ち上げ、そのカードの中の行を続けて出す */
+  function startStagger() {
+    var list = document.querySelectorAll('.stagger');
+    for (var i = 0; i < list.length; i++) {
+      var base = i * 48;
+      list[i].style.animationDelay = base + 'ms';
+      list[i].classList.add('anim-in');
+
+      var rows = list[i].querySelectorAll('.stagger-row');
+      for (var j = 0; j < rows.length; j++) {
+        // 行が多い日でも、待たされすぎないように頭打ちにする
+        rows[j].style.animationDelay = (base + 90 + Math.min(j, 7) * 32) + 'ms';
+        rows[j].classList.add('anim-in');
+      }
+    }
+    startNumbers();
+  }
+
+  function playWelcome() {
+    var box = document.getElementById('welcome');
+    var wantWelcome = MOTION.show && MOTION.welcome !== 'off' && !prefersCalm() &&
+      (MOTION.welcome !== 'once-a-day' || firstTimeToday());
+
+    if (MOTION.show && !prefersCalm()) {
+      document.body.classList.add('motion');
+      markRows();
+    }
+
+    if (!wantWelcome) {
+      // お出迎えは出さない。カードの動きだけ、すぐ始める
+      if (MOTION.show) startStagger();
+      return;
+    }
+
+    var icon = document.getElementById('welcome-icon');
+    if (MOTION.iconUri) {
+      icon.src = MOTION.iconUri;
+    } else {
+      // 絵が無くても、文字だけで出す（光の帯と輪も一緒に引っ込める）
+      document.getElementById('welcome-badge').style.display = 'none';
+    }
+    setChars(document.getElementById('welcome-greeting'), DATA.greeting || '');
+    document.getElementById('welcome-summary').textContent = welcomeSummary();
+    document.getElementById('welcome-hint').textContent = MOTION.hint || '';
+    box.classList.remove('is-off');
+
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      box.classList.add('is-gone');
+      setTimeout(function () { box.classList.add('is-off'); }, 260);
+      startStagger();
+    }
+    box.addEventListener('click', finish);
+    setTimeout(finish, Number(MOTION.holdMs) || 760);
+  }
+
+  /* ==== 天竺の様子（docs/spec.md 5-18）====
+     天竺の寺院の広間（112×64 のドット絵）を1枚の canvas に描き、4人がその中を動く（2026-10-07 代表の選択 A）。
+       待機中 ＝ 部屋を歩き回る（ときどき誰かのそばに寄って立ち話）
+       作業中 ＝ 自分の文机へ歩いて行って座り、腕を動かす
+       報告済み ＝ 三蔵法師の文机のそばへ行って「報告」の吹き出し（三蔵法師自身は手前を向いて立つ）
+       孫悟空は筋斗雲に乗って2倍の速さ、猪八戒は待機中だけ半分の速さ（呼ばれたら急ぐ）。
+     状態は getTenjikuState（Drive の state.json）を、開いている間 pollSec ごとに読み直す。
+     絵の動きは、画面の動きの設定（MOTION.SHOW）と iPhone の「視差効果を減らす」に従って止める。
+     止めたときは歩かずに決まった場所に立つので、見本の撮影は毎回同じ絵になる。
+     ここに来る中身は 誰・状態・更新時刻 だけ（仕事の中身も名前も無い）。 */
+  // fails: 読めない返事が続いた回数。good: 一度でも読めたか（読めていたなら、失敗が続いても1分ほどは絵を変えない）
+  var TENJIKU = { tick: 0, people: [], timer: null, poll: null, ctx: null, bg: null, motion: false, fails: 0, good: false };
+  var TENJIKU_W = 112, TENJIKU_H = 64, TENJIKU_WALL_H = 20;
+  var TENJIKU_DESK_X = [6, 32, 58, 84], TENJIKU_DESK_Y = 29, TENJIKU_SEAT_Y = 18;
+  // 歩き回れる範囲（人物の左上の座標）。左下の蓮鉢・右下の香炉の上は歩かない
+  var TENJIKU_FLOOR = { x1: 12, x2: 88, y1: 28, y2: 46 };
+  // 待機中に立つ決まった場所（動きを止めているとき用。歩かないので毎回同じ絵になる）
+  var TENJIKU_START = [{ x: 20, y: 40 }, { x: 44, y: 44 }, { x: 68, y: 36 }, { x: 86, y: 42 }];
+  // 12×16 のドット。記号→色は人物ごと。'.' は透明
+  var TENJIKU_BODY = [
+    '....HHHH....', '...HHHHHH...', '...SSSSSS...', '...SESSES...', '...SSSSSS...', '....SSSS....',
+    '...CCCCCC...', '..SCCTTCCS..', '..SCCTTCCS..', '...CCCCCC...', '...CCCCCC...', '...LLLLLL...',
+    '...LL..LL...', '...LL..LL...', '...LL..LL...', '..LLL..LLL..'
+  ];
+  var TENJIKU_WALK_L = TENJIKU_BODY.slice(); TENJIKU_WALK_L[14] = '..LLL..LL...'; TENJIKU_WALK_L[15] = '.......LLL..';
+  var TENJIKU_WALK_R = TENJIKU_BODY.slice(); TENJIKU_WALK_R[14] = '...LL..LLL..'; TENJIKU_WALK_R[15] = '..LLL.......';
+  var TENJIKU_WORK_A = TENJIKU_BODY.slice(); TENJIKU_WORK_A[7] = '..SCCTTCCS..'; TENJIKU_WORK_A[8] = '...CCTTCC...';
+  var TENJIKU_WORK_B = TENJIKU_BODY.slice(); TENJIKU_WORK_B[7] = '...CCTTCC...'; TENJIKU_WORK_B[8] = '..SCCTTCCS..';
+  var TENJIKU_CLOUD = ['.WWWWWWWW.', 'WWWWWWWWWW', '.GG.GG.GG.']; // 筋斗雲（孫悟空が動くときだけ足もとに出る）
+  var TENJIKU_LOOK = {
+    sanzo: { speed: 1, pal: { H: '#b8323a', S: '#f1c9a5', E: '#2b2a26', C: '#e8dcc0', T: '#c9a24a', L: '#c9bca0' },
+      tweak: function (r) { r[1] = '...HTTTTH...'; return r; } },
+    goku: { speed: 2, pal: { H: '#8a5a2b', S: '#f1c9a5', E: '#2b2a26', C: '#c0392b', T: '#e6b422', L: '#8a5a2b' },
+      tweak: function (r) { r[1] = '..HHHHHHHH..'; r[2] = '...TTTTTT...'; return r; } },
+    hakkai: { speed: 0.5, pal: { H: '#f2a7b8', S: '#f2a7b8', E: '#2b2a26', C: '#3a3a3a', T: '#4a7bb7', L: '#4a7bb7', N: '#e38ba0' },
+      tweak: function (r) { r[0] = '..HH....HH..'; r[1] = '..HHHHHHHH..'; r[4] = '...SNNNNS...'; return r; } },
+    sagojo: { speed: 1, pal: { H: '#7a2e2e', S: '#5aa7a0', E: '#2b2a26', C: '#2c3e6b', T: '#f4f4f4', L: '#2c3e6b' },
+      tweak: function (r) { r[2] = '..HSSSSSSH..'; r[5] = '...HHHHHH...'; r[6] = '..TCTCTCTC..'; return r; } }
+  };
+  // 部屋の色（代表が 2026-10-07 に見本で承認した配色。アプリ全体は暗い色なので、部屋は明るい絵として浮かぶ）
+  var TENJIKU_ROOM = {
+    beam: '#9e2f27', stud: '#e0b63c', wall: '#ead9b6', wallBand: '#dcc89f', skirt: '#7a2a22',
+    pillar: '#b23a2f', pillarHi: '#d2534a', pillarDk: '#7a2a22',
+    lantern: '#c8392f', lanternHi: '#f0867d', gold: '#e0b63c', goldDk: '#c2912a', goldHi: '#f6dc8c', string: '#3a2a1a',
+    wood: '#7a4a2a', woodIn: '#c9a978', paper: '#f3e6c8', red: '#b23a2f', blue: '#5b7fa6',
+    alcove: '#4a1a1a', lotus: '#e38ba0', lotusDk: '#c5607e', lotusHi: '#f6b8c8', flame: '#ff9f3f',
+    sky: '#bfe0f0', skyHi: '#e8f6fb', mount: '#7b8f99', mountDk: '#5f737d', cloud: '#ffffff',
+    tileA: '#d9c9a9', tileB: '#cfbe9c', seam: '#bba989',
+    carpet: '#b0453d', carpetEdge: '#d4a63a', carpetIn: '#e38ba0', carpetDot: '#f3e6c8',
+    pot: '#3d7d7a', potDk: '#2c5f5c', leaf: '#4f8a4a', leafHi: '#7fbf72',
+    bronze: '#8a7a3a', bronzeDk: '#6b5e2c', smoke: '#b9b2a6', steel: '#a9b4bd',
+    deskTop: '#8b2e26', deskFront: '#5e1f1a', ink: '#2b2a26',
+    nimbus: '#fff4d6', nimbusDk: '#e0b63c'
+  };
+  var TENJIKU_STATE_LABEL = { idle: '待機中', work: '作業中', done: '報告済み' };
+
+  function tenjikuPx(g, color, x, y, w, h) { g.fillStyle = color; g.fillRect(x, y, w || 1, h || 1); }
+
+  /** 部屋の背景（動かないもの）を1回だけ描いておく */
+  function tenjikuBuildBg() {
+    var room = TENJIKU_ROOM, W = TENJIKU_W, H = TENJIKU_H;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d'), x, y;
+    // 壁と梁
+    tenjikuPx(g, room.wall, 0, 0, W, TENJIKU_WALL_H);
+    tenjikuPx(g, room.wallBand, 0, 16, W, 2);
+    tenjikuPx(g, room.skirt, 0, 18, W, 2);
+    tenjikuPx(g, room.beam, 0, 0, W, 2);
+    for (x = 2; x < W; x += 8) tenjikuPx(g, room.stud, x, 1);
+    // 柱（2本）
+    [30, 79].forEach(function (cx) {
+      tenjikuPx(g, room.pillar, cx, 2, 3, 18); tenjikuPx(g, room.pillarHi, cx, 2, 1, 18); tenjikuPx(g, room.pillarDk, cx + 2, 2, 1, 18);
+      tenjikuPx(g, room.gold, cx, 2, 3, 1); tenjikuPx(g, room.gold, cx, 19, 3, 1);
+    });
+    // 提灯（両端）
+    [3, 103].forEach(function (lx) {
+      tenjikuPx(g, room.string, lx + 2, 2, 2, 1);
+      tenjikuPx(g, room.gold, lx + 1, 3, 4, 1);
+      tenjikuPx(g, room.lantern, lx, 4, 6, 6); tenjikuPx(g, room.lanternHi, lx + 1, 5, 1, 3);
+      tenjikuPx(g, room.gold, lx + 1, 10, 4, 1);
+      tenjikuPx(g, room.gold, lx + 2, 11, 2, 1);
+    });
+    // 経蔵（左）: 枠と3段の棚に経巻
+    tenjikuPx(g, room.woodIn, 13, 5, 15, 12);
+    tenjikuPx(g, room.wood, 12, 4, 17, 1); tenjikuPx(g, room.wood, 12, 4, 1, 14); tenjikuPx(g, room.wood, 28, 4, 1, 14);
+    [8, 12, 16].forEach(function (sy) { tenjikuPx(g, room.wood, 13, sy, 15, 1); });
+    [[14, 6, room.paper], [19, 6, room.blue], [24, 6, room.paper], [14, 10, room.blue], [19, 10, room.paper], [24, 10, room.paper],
+      [14, 14, room.paper], [19, 14, room.paper], [24, 14, room.blue]]
+      .forEach(function (sc) { tenjikuPx(g, sc[2], sc[0], sc[1], 4, 2); tenjikuPx(g, room.red, sc[0], sc[1], 1, 2); });
+    // 仏龕（中央）: 金色の枠、蓮台の上の仏、光背、灯明
+    tenjikuPx(g, room.alcove, 45, 3, 22, 15);
+    tenjikuPx(g, room.gold, 46, 2, 20, 1); tenjikuPx(g, room.gold, 44, 3, 2, 1); tenjikuPx(g, room.gold, 66, 3, 2, 1);
+    tenjikuPx(g, room.gold, 44, 4, 1, 14); tenjikuPx(g, room.gold, 67, 4, 1, 14);
+    tenjikuPx(g, room.goldHi, 53, 5, 6, 6);
+    tenjikuPx(g, room.alcove, 53, 5); tenjikuPx(g, room.alcove, 58, 5); tenjikuPx(g, room.alcove, 53, 10); tenjikuPx(g, room.alcove, 58, 10);
+    tenjikuPx(g, room.goldDk, 55, 5, 2, 1);
+    tenjikuPx(g, room.gold, 54, 6, 4, 4); tenjikuPx(g, room.goldDk, 55, 8, 2, 1);
+    tenjikuPx(g, room.gold, 52, 10, 8, 1); tenjikuPx(g, room.gold, 51, 11, 10, 3); tenjikuPx(g, room.gold, 50, 14, 12, 1);
+    tenjikuPx(g, room.goldHi, 55, 13, 2, 1);
+    tenjikuPx(g, room.lotus, 49, 15, 14, 1); tenjikuPx(g, room.lotusDk, 50, 16, 12, 1);
+    tenjikuPx(g, room.lotusHi, 51, 15); tenjikuPx(g, room.lotusHi, 55, 15); tenjikuPx(g, room.lotusHi, 59, 15);
+    tenjikuPx(g, room.wood, 48, 17, 16, 1);
+    [47, 64].forEach(function (cx) { tenjikuPx(g, room.paper, cx, 13, 1, 3); tenjikuPx(g, room.flame, cx, 12); tenjikuPx(g, room.wood, cx - 1, 16, 3, 1); });
+    // 丸窓（右）: 空と五行山と雲
+    for (y = 2; y <= 18; y++) {
+      for (x = 85; x <= 101; x++) {
+        var d = Math.sqrt((x - 93) * (x - 93) + (y - 10) * (y - 10));
+        if (d > 7.6) continue;
+        if (d > 6.5) { tenjikuPx(g, room.wood, x, y); continue; }
+        var col = room.sky;
+        if (y <= 5 && x <= 92) col = room.skyHi;
+        if (y >= 8 + Math.abs(x - 92) * 0.8) col = y >= 12 ? room.mountDk : room.mount;
+        tenjikuPx(g, col, x, y);
+      }
+    }
+    tenjikuPx(g, room.cloud, 95, 6, 3, 1); tenjikuPx(g, room.cloud, 94, 7, 5, 1);
+    // 床: 石畳
+    tenjikuPx(g, room.tileA, 0, TENJIKU_WALL_H, W, H - TENJIKU_WALL_H);
+    for (y = TENJIKU_WALL_H; y < H; y += 4) {
+      var band = (y - TENJIKU_WALL_H) / 4, off = (band % 2) ? 4 : 0;
+      for (x = -off; x < W; x += 8) {
+        var tileNo = (x + off) / 8;
+        tenjikuPx(g, ((tileNo + band) % 2) ? room.tileB : room.tileA, Math.max(x, 0), y, Math.min(8, x + 8) - Math.max(x, 0), 4);
+        tenjikuPx(g, room.seam, x < 0 ? 0 : x, y, 1, 4);
+      }
+      tenjikuPx(g, room.seam, 0, y, W, 1);
+    }
+    // 絨毯: 金の縁、朱の地、中央に蓮の文様
+    tenjikuPx(g, room.carpetEdge, 31, 38, 50, 20); tenjikuPx(g, room.carpetEdge, 30, 39, 52, 18);
+    tenjikuPx(g, room.carpet, 31, 39, 50, 18);
+    tenjikuPx(g, room.carpetIn, 33, 41, 46, 1); tenjikuPx(g, room.carpetIn, 33, 55, 46, 1);
+    tenjikuPx(g, room.carpetIn, 33, 41, 1, 15); tenjikuPx(g, room.carpetIn, 78, 41, 1, 15);
+    for (y = 43; y <= 52; y++) {
+      for (x = 50; x <= 61; x++) {
+        var dd = Math.abs(x - 55.5) + Math.abs(y - 47.5);
+        if (dd <= 2.5) tenjikuPx(g, room.carpetIn, x, y); else if (dd <= 4.5) tenjikuPx(g, room.carpetEdge, x, y);
+      }
+    }
+    tenjikuPx(g, room.carpetDot, 55, 47, 2, 2);
+    [38, 73].forEach(function (cx) {
+      tenjikuPx(g, room.carpetEdge, cx, 47, 2, 2); tenjikuPx(g, room.carpetEdge, cx + 1, 46); tenjikuPx(g, room.carpetEdge, cx + 1, 49);
+      tenjikuPx(g, room.carpetEdge, cx - 1, 48); tenjikuPx(g, room.carpetEdge, cx + 2, 48);
+    });
+    // 蓮の鉢（左下）
+    tenjikuPx(g, room.leaf, 2, 50, 9, 5); tenjikuPx(g, room.leafHi, 3, 51, 2, 1); tenjikuPx(g, room.leafHi, 8, 52, 2, 1);
+    tenjikuPx(g, room.leaf, 6, 48, 1, 2);
+    tenjikuPx(g, room.lotus, 4, 45, 5, 4); tenjikuPx(g, room.lotusHi, 5, 45, 3, 1); tenjikuPx(g, room.lotusDk, 4, 48, 5, 1); tenjikuPx(g, room.gold, 6, 47);
+    tenjikuPx(g, room.potDk, 2, 55, 9, 1); tenjikuPx(g, room.pot, 3, 56, 7, 5); tenjikuPx(g, room.potDk, 3, 60, 7, 1);
+    // 香炉（右下）。煙は動くので tenjikuRender で描く
+    tenjikuPx(g, room.bronzeDk, 100, 54, 10, 1); tenjikuPx(g, room.bronze, 101, 55, 8, 5);
+    tenjikuPx(g, room.bronzeDk, 101, 60, 1, 2); tenjikuPx(g, room.bronzeDk, 104, 60, 2, 2); tenjikuPx(g, room.bronzeDk, 108, 60, 1, 2);
+    tenjikuPx(g, room.gold, 104, 57, 2, 1);
+    [103, 105, 107].forEach(function (ix) { tenjikuPx(g, room.bronzeDk, ix, 52, 1, 3); tenjikuPx(g, room.flame, ix, 51); });
+    return c;
+  }
+
+  function tenjikuDrawSprite(ctx, rows, pal, x, y, flip) {
+    for (var r = 0; r < rows.length; r++) {
+      var line = flip ? rows[r].split('').reverse().join('') : rows[r];
+      for (var c = 0; c < 12; c++) {
+        var col = pal[line[c]];
+        if (!col) continue;
+        ctx.fillStyle = col; ctx.fillRect(x + c, y + r, 1, 1);
+      }
+    }
+  }
+
+  /** 文机と、その脇に立てかけた持ち物（三蔵法師: 錫杖、孫悟空: 如意棒、猪八戒: 釘鈀、沙悟浄: 月牙鏟） */
+  function tenjikuDrawDesk(ctx, i) {
+    var room = TENJIKU_ROOM, x = TENJIKU_DESK_X[i], y = TENJIKU_DESK_Y;
+    tenjikuPx(ctx, room.deskTop, x - 1, y, 14, 1); tenjikuPx(ctx, room.gold, x - 1, y); tenjikuPx(ctx, room.gold, x + 12, y);
+    tenjikuPx(ctx, room.deskFront, x - 1, y + 1, 14, 2);
+    tenjikuPx(ctx, room.deskFront, x - 1, y + 3); tenjikuPx(ctx, room.deskFront, x + 12, y + 3);
+    tenjikuPx(ctx, room.paper, x + 6, y - 2, 4, 2); tenjikuPx(ctx, room.red, x + 6, y - 2, 1, 2); // 経巻
+    tenjikuPx(ctx, room.ink, x + 2, y - 1, 2, 1); // 硯
+    var w = x + 13;
+    if (i === 0) { tenjikuPx(ctx, room.gold, w, y - 6, 1, 9); tenjikuPx(ctx, room.gold, w - 1, y - 7, 3, 1); tenjikuPx(ctx, room.gold, w - 1, y - 6); tenjikuPx(ctx, room.gold, w + 1, y - 6); }
+    if (i === 1) { tenjikuPx(ctx, room.gold, w, y - 5, 1, 7); tenjikuPx(ctx, room.red, w, y - 7, 1, 2); tenjikuPx(ctx, room.red, w, y + 2, 1, 1); }
+    if (i === 2) { tenjikuPx(ctx, room.wood, w, y - 4, 1, 7); tenjikuPx(ctx, room.steel, w - 2, y - 5, 5, 1); tenjikuPx(ctx, room.steel, w - 2, y - 6); tenjikuPx(ctx, room.steel, w, y - 6); tenjikuPx(ctx, room.steel, w + 2, y - 6); }
+    if (i === 3) { tenjikuPx(ctx, room.wood, w, y - 4, 1, 7); tenjikuPx(ctx, room.steel, w - 1, y - 7, 3, 1); tenjikuPx(ctx, room.steel, w - 2, y - 6); tenjikuPx(ctx, room.steel, w + 2, y - 6); tenjikuPx(ctx, room.steel, w, y - 5); }
+  }
+
+  function tenjikuDrawNimbus(ctx, x, y) {
+    for (var r = 0; r < TENJIKU_CLOUD.length; r++) {
+      for (var c = 0; c < TENJIKU_CLOUD[r].length; c++) {
+        var ch = TENJIKU_CLOUD[r][c];
+        if (ch === '.') continue;
+        tenjikuPx(ctx, ch === 'W' ? TENJIKU_ROOM.nimbus : TENJIKU_ROOM.nimbusDk, x + 1 + c, y + 14 + r);
+      }
+    }
+  }
+
+  function tenjikuDrawSmoke(ctx, tick) {
+    for (var k = 0; k < 3; k++) {
+      var t = ((tick >> 2) + k * 3) % 9;
+      tenjikuPx(ctx, TENJIKU_ROOM.smoke, 105 + (((k + (tick >> 3)) % 2) ? 1 : 0) - (t > 5 ? 1 : 0), 49 - t);
+    }
+  }
+
+  function tenjikuRand(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function tenjikuClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function tenjikuToward(from, to, step) { var d = to - from; return from + Math.max(-step, Math.min(step, d)); }
+
+  /** 作業中・報告済みのとき向かう場所。待機中は null（歩き回る） */
+  function tenjikuGoal(m) {
+    if (m.mode === 'work') return { x: TENJIKU_DESK_X[m.i], y: TENJIKU_SEAT_Y };
+    if (m.mode === 'done') {
+      if (m.i === 0) return { x: 50, y: 44 }; // 三蔵法師は手前（代表の方）を向いて報告
+      var k = 0;
+      TENJIKU.people.forEach(function (o) { if (o.mode === 'done' && o.i !== 0 && o.i < m.i) k++; });
+      var spots = [{ x: 22, y: 28 }, { x: 36, y: 32 }, { x: 22, y: 40 }];
+      return spots[Math.min(k, 2)];
+    }
+    return null;
+  }
+
+  /** 待機中の次の行き先。3割ほどは、ほかの待機中の人のそばへ寄る（立ち話） */
+  function tenjikuPickTarget(m) {
+    var F = TENJIKU_FLOOR;
+    var others = TENJIKU.people.filter(function (o) { return o !== m && !o.seated && o.mode === 'idle'; });
+    if (others.length && Math.random() < 0.35) {
+      var o = others[tenjikuRand(0, others.length - 1)];
+      m.tx = tenjikuClamp(o.x + (Math.random() < 0.5 ? -18 : 18), F.x1, F.x2);
+      m.ty = tenjikuClamp(o.y + tenjikuRand(-3, 3), F.y1, F.y2);
+    } else {
+      m.tx = tenjikuRand(F.x1, F.x2); m.ty = tenjikuRand(F.y1, F.y2);
+    }
+    // 同じ場所に重ならないように（2人が互いのそばを目指すと、同じ点に立ってしまうことがあった）
+    for (var tries = 0; tries < 3; tries++) {
+      var crowded = TENJIKU.people.some(function (o) {
+        if (o === m) return false;
+        var ox = o.tx == null ? o.x : o.tx, oy = o.ty == null ? o.y : o.ty;
+        return Math.abs(ox - m.tx) < 18 && Math.abs(oy - m.ty) < 10;
+      });
+      if (!crowded) break;
+      m.tx = tenjikuClamp(m.tx + (m.tx + 18 <= F.x2 ? 18 : -18), F.x1, F.x2);
+    }
+    m.wait = tenjikuRand(12, 40);
+  }
+
+  function tenjikuStep(m, tx, ty) {
+    m.moving = true;
+    if (m.speed < 1 && m.mode === 'idle' && (TENJIKU.tick & 1)) return; // のんびり屋は、待機中だけ2回に1回進む
+    var step = Math.max(1, Math.floor(m.speed)), F = TENJIKU_FLOOR;
+    var nx = m.x, ny = m.y;
+    if (ty < F.y1 && m.x !== tx) nx = tenjikuToward(m.x, tx, step);            // 文机へ: まず横に動き、机の前まで来てから奥へ
+    else if (m.y < F.y1 && ty >= F.y1) ny = tenjikuToward(m.y, ty, step);     // 文机から: まず手前に出てから横へ（他の机の前を横切らない）
+    else { nx = tenjikuToward(m.x, tx, step); ny = tenjikuToward(m.y, ty, step); }
+    if (nx !== m.x) m.flip = nx < m.x;
+    m.x = nx; m.y = ny;
+  }
+
+  function tenjikuUpdate(m) {
+    if (m.mode === 'idle') {
+      if (m.tx == null) tenjikuPickTarget(m);
+      if (m.x === m.tx && m.y === m.ty) {
+        m.moving = false;
+        if (m.wait > 0) m.wait--; else tenjikuPickTarget(m);
+        return;
+      }
+      tenjikuStep(m, m.tx, m.ty);
+      return;
+    }
+    var g = tenjikuGoal(m);
+    if (m.x === g.x && m.y === g.y) {
+      m.moving = false; m.arrived = true; m.flip = false;
+      if (m.mode === 'work') m.seated = true;
+      return;
+    }
+    tenjikuStep(m, g.x, g.y);
+  }
+
+  function tenjikuRows(m) {
+    var base = TENJIKU_BODY, t = TENJIKU.tick;
+    if (m.seated) base = ((t >> 2) & 1) ? TENJIKU_WORK_B : TENJIKU_WORK_A;
+    else if (m.moving && TENJIKU.motion && m.i !== 1) {
+      base = [TENJIKU_BODY, TENJIKU_WALK_L, TENJIKU_BODY, TENJIKU_WALK_R][(t >> (m.speed < 1 && m.mode === 'idle' ? 2 : 1)) & 3];
+    }
+    return m.look.tweak(base.slice());
+  }
+
+  function tenjikuBob(m) {
+    var t = TENJIKU.tick;
+    if (!TENJIKU.motion || m.seated) return 0;
+    if (m.moving) return (m.i === 1) ? -((t >> 2) & 1) : 0; // 筋斗雲はふわふわ
+    if (m.mode === 'done' && m.arrived) return ((t >> 2) & 1) ? -1 : 0;
+    return ((t >> 3) & 1) ? 1 : 0;
+  }
+
+  function tenjikuRender() {
+    var ctx = TENJIKU.ctx;
+    if (!ctx) return;
+    ctx.clearRect(0, 0, TENJIKU_W, TENJIKU_H);
+    ctx.drawImage(TENJIKU.bg, 0, 0);
+    if (TENJIKU.motion) tenjikuDrawSmoke(ctx, TENJIKU.tick);
+    // 手前のものが上に重なるように、足もとの位置で並べて描く。座っている人は文机より先に描く（机が体の前に来る）
+    var ents = [];
+    TENJIKU.people.forEach(function (m) {
+      if (m.seated) {
+        ents.push({ z: TENJIKU_DESK_Y + 3, draw: function () { tenjikuDrawSprite(ctx, tenjikuRows(m), m.look.pal, m.x, m.y, false); tenjikuDrawDesk(ctx, m.i); } });
+      } else {
+        ents.push({ z: TENJIKU_DESK_Y + 3, draw: function () { tenjikuDrawDesk(ctx, m.i); } });
+        ents.push({ z: m.y + 16, draw: function () {
+          var dy = tenjikuBob(m);
+          if (m.i === 1 && m.moving && TENJIKU.motion) tenjikuDrawNimbus(ctx, m.x, m.y + dy);
+          tenjikuDrawSprite(ctx, tenjikuRows(m), m.look.pal, m.x, m.y + dy, m.flip);
+        } });
+      }
+    });
+    ents.sort(function (a, b) { return a.z - b.z; });
+    ents.forEach(function (e) { e.draw(); });
+    TENJIKU.people.forEach(function (m) {
+      var cx = ((m.x + 6) / TENJIKU_W * 100) + '%';
+      m.tag.style.left = cx; m.tag.style.top = ((m.y - 1) / TENJIKU_H * 100) + '%';
+      m.tag.className = 'tenjiku-tag' + (m.mode === 'idle' ? '' : ' ' + m.mode);
+      var showBubble = m.mode === 'done' && m.arrived;
+      m.bubble.hidden = !showBubble;
+      if (showBubble) { m.bubble.style.left = cx; m.bubble.style.top = ((m.y - 8) / TENJIKU_H * 100) + '%'; }
+    });
+  }
+
+  /** 1人の状態を変える。動きを止めているときは、歩かずにその場所へ置く */
+  function tenjikuSet(m, mode) {
+    m.mode = mode; m.seated = false; m.arrived = false; m.tx = null; m.ty = null; m.wait = 0;
+    m.pill.textContent = TENJIKU_STATE_LABEL[mode];
+    m.pill.className = 'tenjiku-pill' + (mode === 'idle' ? '' : ' ' + mode);
+    if (!TENJIKU.motion) {
+      var g = tenjikuGoal(m) || TENJIKU_START[m.i] || TENJIKU_START[0];
+      m.x = g.x; m.y = g.y; m.moving = false; m.flip = false;
+      if (mode === 'work') m.seated = true;
+      if (mode !== 'idle') m.arrived = true;
+    }
+  }
+
+  function tenjikuLoop() {
+    if (document.visibilityState !== 'visible') return;
+    TENJIKU.tick++;
+    TENJIKU.people.forEach(tenjikuUpdate);
+    tenjikuRender();
+  }
+
+  function tenjikuMotionOn() {
+    if (DATA.motion && DATA.motion.show === false) return false;
+    return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function setupTenjiku() {
+    var card = document.getElementById('tenjiku-card');
+    var body = document.getElementById('tenjiku-body');
+    var t = DATA.tenjiku;
+    if (!t || !t.show || !t.members || !t.members.length) { card.style.display = 'none'; return; }
+
+    TENJIKU.motion = tenjikuMotionOn();
+    var stage = el('div', 'tenjiku-stage');
+    var cv = document.createElement('canvas');
+    cv.width = TENJIKU_W; cv.height = TENJIKU_H;
+    cv.setAttribute('aria-label', '天竺の寺院の広間。4人が部屋の中にいる');
+    stage.appendChild(cv);
+    var labels = el('div', 'tenjiku-labels');
+    TENJIKU.people = t.members.slice(0, 4).map(function (m, i) {
+      var tag = el('span', 'tenjiku-tag', m.name);
+      var bubble = el('span', 'tenjiku-bubble', '報告');
+      bubble.hidden = true;
+      stage.appendChild(tag); stage.appendChild(bubble);
+      var lb = el('div');
+      lb.appendChild(el('span', 'tenjiku-name', m.name));
+      var pill = el('span', 'tenjiku-pill', TENJIKU_STATE_LABEL.idle);
+      lb.appendChild(pill);
+      labels.appendChild(lb);
+      var look = TENJIKU_LOOK[m.key] || TENJIKU_LOOK.goku;
+      var start = TENJIKU_START[i];
+      return { key: m.key, i: i, look: look, speed: look.speed, mode: 'idle', x: start.x, y: start.y, tx: null, ty: null, wait: 0,
+        seated: false, moving: false, arrived: false, flip: false, tag: tag, bubble: bubble, pill: pill };
+    });
+    body.appendChild(stage);
+    body.appendChild(labels);
+    TENJIKU.ctx = cv.getContext('2d');
+    TENJIKU.bg = tenjikuBuildBg();
+    document.getElementById('tenjiku-chip').textContent = '読み込み中';
+    tenjikuRender();
+
+    if (TENJIKU.motion) TENJIKU.timer = setInterval(tenjikuLoop, 100);
+    if (t.initial) applyTenjikuState(t.initial); // 手元の見本用（本番では無い）
+    // 本番（Apps Script の中）でだけ読みに行く。見本では google が無いので何もしない
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      pollTenjiku();
+      TENJIKU.poll = setInterval(function () {
+        if (document.visibilityState === 'visible') pollTenjiku();
+      }, (Number(t.pollSec) || 20) * 1000);
+    }
+  }
+
+  function pollTenjiku() {
+    google.script.run
+      .withSuccessHandler(applyTenjikuState)
+      .withFailureHandler(function () {
+        applyTenjikuState({ ok: false, errorText: 'つながりません' });
+      })
+      .getTenjikuState();
+  }
+
+  function applyTenjikuState(v) {
+    var chip = document.getElementById('tenjiku-chip');
+    if (!v || !v.ok) {
+      TENJIKU.fails++;
+      // 直前まで読めていたなら、続けて3回（20秒×3＝1分ほど）失敗するまでは絵を変えず「読み直し中」とだけ出す
+      // （Google 側の一時的な不調で、そのたびに「読めません」と出さない。2026-10-07）
+      if (TENJIKU.good && TENJIKU.fails < 3) { chip.textContent = '読み直し中'; chip.classList.remove('has'); return; }
+      chip.textContent = (v && v.errorText) ? v.errorText : '読めませんでした';
+      chip.classList.remove('has');
+      return;
+    }
+    TENJIKU.fails = 0;
+    TENJIKU.good = true;
+    var byKey = {};
+    (v.members || []).forEach(function (m) { byKey[m.key] = m.state; });
+    TENJIKU.people.forEach(function (m) {
+      var s = v.stale ? 'idle' : (byKey[m.key] || 'idle');
+      if (!TENJIKU_STATE_LABEL[s]) s = 'idle';
+      if (s !== m.mode) tenjikuSet(m, s); // 同じ状態の読み直しでは、歩いている途中を戻さない
+    });
+    var text = v.stale ? '記録が止まっています' : (v.working ? v.working + '人 作業中' : '全員 待機中');
+    if (v.updatedText) text += '・' + v.updatedText;
+    // 今は読めず、Apps Script 側がとっておいた直前の記録で描いているとき
+    if (v.cached) text = '読み直し中・' + text;
+    chip.textContent = text;
+    chip.classList.toggle('has', !v.stale && v.working > 0 && !v.cached);
+    tenjikuRender();
+  }
+
+  function render() {
+    MOTION = DATA.motion || { show: false };
+    LEDGER_UI.allOpen = !!DATA.ledgerAllOpen;
+    if (DATA.ledgerView) LEDGER_UI.view = DATA.ledgerView;
+    document.getElementById('greeting').textContent = DATA.greeting;
+    document.getElementById('date').textContent = DATA.date;
+    renderAgenda();
+    renderTodo();
+    renderCases();
+    renderMail();
+    renderLedger();
+    setupLedgerEditor();
+    if (DATA.ledger && DATA.ledger.ok) loadAiNote('ledger');
+    loadAiNote('today');
+    // 見本づくり用: 最初から直す画面を開く（本番の webapp.js は ledgerOpenRow を渡さない）
+    if (DATA.ledgerOpenRow) openLedgerEditor(DATA.ledgerOpenRow === 'new' ? null : ledgerFindItem(DATA.ledgerOpenRow));
+    renderWeather();
+    setupTenjiku();
+    setupNewPagePanel();
+    renderNav();
+    // 見本づくりのときだけ、最初から別の画面を出す（本番の webapp.js は screen を渡さない）。
+    // タブを押すのと同じ道を通すので、画面の出し方が見本と本番でずれない
+    if (DATA.screen) {
+      var start = document.querySelector('.tab[data-key="' + DATA.screen + '"]');
+      if (start) start.click();
+    }
+    setupMolly();
+    playWelcome();
+  }
+
+  hishoBoot();
+</script>
+</body>
+</html>
