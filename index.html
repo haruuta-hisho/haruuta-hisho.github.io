@@ -623,6 +623,19 @@
   .todo-link::after { content: '›'; margin-left: 4px; font-size: 16px; }
 
   .weather-text { font-weight: 600; font-size: 15px; }
+  /* 警報・注意報（docs/spec.md 5-32）。天気のカードの一番上。レベルで色を変える */
+  .alerts { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .alert-row { padding: 8px 10px; border-radius: 10px; background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .alert-row.lv30 { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .alert-row.lv40, .alert-row.lv50 { background: #5B1F7A; color: #FFFFFF; }
+  .alert-row.lv50 { background: #1A1A1A; box-shadow: inset 0 0 0 2px #B44DFF; }
+  .alert-name { font-weight: 700; font-size: 14px; line-height: 1.45; }
+  .alert-towns { font-size: 12px; line-height: 1.5; opacity: .9; overflow-wrap: anywhere; }
+  .alert-none { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+  .alert-link {
+    display: inline-flex; align-items: center; min-height: 44px; color: var(--lime); font-size: 13px; text-decoration: none;
+  }
+  .alert-link::after { content: '›'; margin-left: 4px; font-size: 16px; }
   /* 降水確率は「見出しの下に帯を並べる」。狭い画面では折り返す */
   .pop-block { margin: 10px 0 0; }
   .pop-block .case-label { display: block; margin-bottom: 6px; }
@@ -3522,6 +3535,9 @@
     var w = DATA.weather;
     if (!w) { card.style.display = 'none'; return; }
 
+    // 警報・注意報は予報が読めなくても出す（一番上。5-32）
+    renderAlerts(body, w.alerts);
+
     if (!w.ok) {
       body.appendChild(el('p', 'error', w.errorText));
       return;
@@ -3548,6 +3564,41 @@
     }
 
     body.appendChild(el('p', 'card-note', w.noteText));
+    if (w.alerts && w.alerts.noteText) body.appendChild(el('p', 'card-note', w.alerts.noteText));
+  }
+
+  /** 警報・注意報の行。出ていなければ「なし」の一言。どちらでも気象庁のページへのリンクを付ける */
+  function renderAlerts(body, a) {
+    if (!a) return;
+    if (!a.ok) {
+      body.appendChild(el('p', 'error', a.errorText));
+    } else if (!a.items || !a.items.length) {
+      body.appendChild(el('p', 'alert-none', '警報・注意報　なし（福岡地方）'));
+    } else {
+      var ul = el('ul', 'alerts');
+      a.items.forEach(function (it) {
+        var li = el('li', 'alert-row lv' + (Number(it.level) || 20));
+        li.appendChild(el('div', 'alert-name', it.name));
+        li.appendChild(el('div', 'alert-towns', it.towns));
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    if (a.url) {
+      var link = el('a', 'alert-link', '気象庁の警報のページ');
+      link.href = a.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      body.appendChild(link);
+    }
+  }
+
+  /** 訪問の安全に関わる警報（警報以上）のうち、いちばん重いもの。無ければ null */
+  function topAlert() {
+    var a = DATA.weather && DATA.weather.alerts;
+    if (!a || !a.ok || !a.items || !a.items.length) return null;
+    var top = a.items[0];
+    return Number(top.level) >= Number(a.warnLevel || 30) ? top : null;
   }
 
   /* ==== 開いたときのお出迎え（docs/spec.md 5-14）====
@@ -3601,6 +3652,8 @@
    * 「急ぎ」＝今日じゅうのやること＋未返信のメール。「雨」＝降水確率が警戒の値を超えた帯がある日。
    */
   function mollyMood() {
+    var alert = topAlert();
+    if (alert) return { kind: 'urgent', text: alert.name + 'が出ています。訪問の安全を確かめてください' };
     var urgent = 0;
     if (DATA.todo && DATA.todo.ok) urgent += Number(DATA.todo.urgent) || 0;
     if (DATA.mail && DATA.mail.ok) urgent += Number(DATA.mail.unreplied) || 0;
