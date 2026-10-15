@@ -551,6 +551,22 @@
   .mail-row.tap:active { opacity: .7; }
   .mail-row.tap:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }
   .mail-reply-hint { margin: 4px 0 0; font-size: 12px; color: var(--lime); }
+  /* 返信不要（docs/spec.md 5-30） */
+  .mail-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 0; }
+  .mail-foot .mail-reply-hint { margin: 0; }
+  .mail-skip {
+    flex: 0 0 auto; min-height: 36px; margin-left: auto; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: transparent; color: var(--muted);
+    font-family: inherit; font-size: 12px; cursor: pointer;
+  }
+  .mail-skip:disabled { opacity: .5; cursor: default; }
+  .mail-skipped-toggle {
+    display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin: 12px 0 0;
+    padding: 0 14px; border: 1px dashed var(--line); border-radius: 12px; background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .mails.skipped { margin-top: 4px; }
+  .mails.skipped .mail-subject, .mails.skipped .mail-from { color: var(--muted); }
   .badge.replied { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
   .mr-thread { margin: 12px 0 0; display: grid; gap: 8px; }
   .mr-loading { margin: 12px 0 0; font-size: 13px; color: var(--weak); }
@@ -1242,7 +1258,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","getNews"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","getNews"].forEach(function (fn) {
       runner[fn] = function () { hishoCall(fn, Array.prototype.slice.call(arguments), ok, ng); };
     });
     return runner;
@@ -1621,6 +1637,7 @@
       <button class="btn primary wide" id="mr-draft" type="button" disabled>文案を作る</button>
       <p class="field-hint" id="mr-draft-note">押したときだけ、このメールを Claude に送って文案を作ります（1回 数円）。</p>
       <button class="mr-self" id="mr-self" type="button" hidden>文案を使わず、自分で書く</button>
+      <button class="mr-self" id="mr-skip" type="button" hidden>返信しない（このメールを返信不要にする）</button>
     </div>
 
     <div id="mr-compose" hidden>
@@ -2206,6 +2223,10 @@
     var chip = document.getElementById('mail-count');
     var m = DATA.mail;
     if (!m) { card.style.display = 'none'; return; }
+    // 返信不要・戻すのあとに描き直すので、前の中身を消してから描く
+    body.textContent = '';
+    chip.textContent = '';
+    chip.classList.remove('has');
 
     if (!m.ok) {
       body.appendChild(el('p', 'error', m.errorText));
@@ -2217,11 +2238,22 @@
 
     if (!m.items.length) {
       body.appendChild(el('p', 'empty', '要対応のメールはありません。'));
+      renderMailSkipped(body, m); // 全部を返信不要にしても、ここから戻せる
       return;
     }
 
     var ul = el('ul', 'mails');
-    m.items.forEach(function (item) {
+    m.items.forEach(function (item) { ul.appendChild(mailRow(item, false)); });
+    body.appendChild(ul);
+
+    if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
+    renderMailSkipped(body, m);
+    body.appendChild(el('p', 'card-note',
+      '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' 時点）' : '')));
+  }
+
+  // 要対応メールの1行。skipped は「返信不要にしたもの」の行（右のボタンが「戻す」になる）
+  function mailRow(item, skipped) {
       var li = el('li', 'mail-row');
       var head = el('div', 'mail-head');
       head.appendChild(el('span', 'mail-time', item.timeText));
@@ -2234,25 +2266,107 @@
       li.appendChild(subject);
 
       if (item.note) li.appendChild(el('div', 'mail-note', item.note));
+      var m = DATA.mail;
+      var foot = el('div', 'mail-foot');
       // 返信できる行は押せる（docs/spec.md 5-27）。橋渡しの住所が無いとき（m.reply が null）は今までどおり
       if (m.reply && item.threadId) {
         li.classList.add('tap');
         li.setAttribute('role', 'button');
         li.tabIndex = 0;
         li.setAttribute('aria-label', item.from + '「' + item.subject + '」を開いて返信する');
-        li.appendChild(el('div', 'mail-reply-hint', '開いて返信する ›'));
+        foot.appendChild(el('span', 'mail-reply-hint', '開いて返信する ›'));
         li.addEventListener('click', function () { openMailReply(item, li); });
         li.addEventListener('keydown', function (e) {
+          if (e.target !== li) return;
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMailReply(item, li); }
         });
       }
-      ul.appendChild(li);
-    });
-    body.appendChild(ul);
+      // 返信不要・戻す（docs/spec.md 5-30）。行を開かずに押せる
+      if (item.threadId) {
+        var skip = el('button', 'mail-skip', skipped ? '戻す' : '返信不要');
+        skip.type = 'button';
+        skip.setAttribute('aria-label', '「' + item.subject + '」を' + (skipped ? '一覧に戻す' : '返信不要にする'));
+        skip.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (skipped) mailRestoreTap(item, skip); else mailSkipTap(item, skip);
+        });
+        foot.appendChild(skip);
+      }
+      if (foot.childNodes.length) li.appendChild(foot);
+      return li;
+  }
 
-    if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
-    body.appendChild(el('p', 'card-note',
-      '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' 時点）' : '')));
+  // 「返信不要にしたもの（n件）」。押すと開いて、戻したり返信したりできる
+  var MAIL_UI = { showSkipped: false, busy: false, undoTimer: null };
+  function renderMailSkipped(body, m) {
+    if (!m.dismissedTotal) return;
+    var toggle = el('button', 'mail-skipped-toggle');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', MAIL_UI.showSkipped ? 'true' : 'false');
+    toggle.appendChild(el('span', null, '返信不要にしたもの（' + m.dismissedTotal + '件）'));
+    toggle.appendChild(el('span', null, MAIL_UI.showSkipped ? '閉じる ▴' : '見る ▾'));
+    toggle.addEventListener('click', function () { MAIL_UI.showSkipped = !MAIL_UI.showSkipped; renderMail(); });
+    body.appendChild(toggle);
+    if (!MAIL_UI.showSkipped) return;
+    var ul = el('ul', 'mails skipped');
+    (m.dismissed || []).forEach(function (item) { ul.appendChild(mailRow(item, true)); });
+    body.appendChild(ul);
+    if (m.dismissedTotal > (m.dismissed || []).length) body.appendChild(el('p', 'overflow', 'ほか ' + (m.dismissedTotal - m.dismissed.length) + '件'));
+  }
+
+  function mailCall(fn, threadId, onOk, onFail) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); onFail(); return; }
+    MAIL_UI.busy = true;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        MAIL_UI.busy = false;
+        if (r && r.mail) { DATA.mail = r.mail; renderMail(); }
+        if (!r || !r.ok) { toast((r && r.message) || 'できませんでした。もう一度押してください。'); onFail(); return; }
+        onOk(r);
+      })
+      .withFailureHandler(function () { MAIL_UI.busy = false; toast('つながりませんでした。もう一度押してください。'); onFail(); })[fn](threadId);
+  }
+
+  function mailSkipTap(item, btn) {
+    if (MAIL_UI.busy) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    mailCall('mailDismiss', item.threadId, function () {
+      mailShowUndo('「' + item.subject + '」を返信不要にしました', item);
+    }, function () { btn.disabled = false; btn.textContent = '返信不要'; });
+  }
+
+  function mailRestoreTap(item, btn) {
+    if (MAIL_UI.busy) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    mailCall('mailRestore', item.threadId, function () { toast('一覧に戻しました'); },
+      function () { btn.disabled = false; btn.textContent = '戻す'; });
+  }
+
+  // 押した直後の「元に戻す」（台帳と同じ帯を使う。8秒で消える）
+  function mailShowUndo(message, item) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    clearTimeout(MAIL_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled || MAIL_UI.busy) return;
+      clearTimeout(MAIL_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      mailCall('mailRestore', item.threadId, function () { bar.hidden = true; toast('一覧に戻しました'); }, function () {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        MAIL_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+      });
+    };
+    bar.hidden = false;
+    MAIL_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
   // ==== メールの返信（docs/spec.md 5-27）====
@@ -2325,6 +2439,7 @@
     mrEl('mr-draft').disabled = true;
     mrEl('mr-draft').textContent = '文案を作る';
     mrEl('mr-self').hidden = true;
+    mrEl('mr-skip').hidden = !item.threadId;
     mrEl('mr-compose').hidden = true;
     mrEl('mr-body').value = '';
     mrUpdateSend();
@@ -2479,6 +2594,13 @@
     MR.setup = true;
     mrEl('mr-draft').addEventListener('click', mrDraft);
     mrEl('mr-self').addEventListener('click', mrSelfWrite);
+    mrEl('mr-skip').addEventListener('click', function () {
+      var item = MR.item;
+      if (!item || MR.busy) return;
+      MR.item = null;
+      mrEl('mail-reply').hidden = true;
+      mailSkipTap(item, document.createElement('button')); // 画面は閉じたので、押した印は一覧の側で出す
+    });
     mrEl('mr-send').addEventListener('click', mrAskSend);
     mrEl('mr-close').addEventListener('click', mrClose);
     mrEl('mc-cancel').addEventListener('click', function () { if (!MR.busy) mrEl('mail-confirm').hidden = true; });
@@ -3174,6 +3296,7 @@
     var bar = document.getElementById('undo-bar');
     var btn = document.getElementById('undo-btn');
     clearTimeout(LEDGER_UI.undoTimer);
+    if (typeof MAIL_UI !== 'undefined' && MAIL_UI) clearTimeout(MAIL_UI.undoTimer); // 返信不要の帯の残り時間で、台帳の帯を消さない
     document.getElementById('undo-text').textContent = message;
     var showMs = (undo && undo.showMs) || 4000;
     var hideLater = function () {
@@ -4048,6 +4171,7 @@
     renderAgenda();
     renderTodo();
     renderCases();
+    if (DATA.mailSkippedOpen) MAIL_UI.showSkipped = true; // 見本づくり用（本番の webapp.js は渡さない）
     renderMail();
     renderLedger();
     setupLedgerEditor();
