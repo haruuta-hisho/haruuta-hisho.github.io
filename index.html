@@ -1099,6 +1099,11 @@
     content: '注目'; display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; vertical-align: 1px;
     background: var(--badge-lime-bg); color: var(--lime); font-size: 11px; font-weight: 700;
   }
+  /* 行政のお知らせ（docs/spec.md 5-31）。「注目」より先に「行政」を出す */
+  .news-row.official .news-title::before {
+    content: '行政'; display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; vertical-align: 1px;
+    background: var(--badge-yellow-bg, #38301A); color: var(--badge-yellow-fg, #F0C75E); font-size: 11px; font-weight: 700;
+  }
   .news-meta { margin-top: 3px; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .news-loading { margin: 12px 0 4px; color: var(--weak); font-size: 13px; }
   .adv-step.second { margin-top: 18px; }
@@ -3496,7 +3501,7 @@
     } else {
       var ul = el('ul', 'news-list');
       cur.items.forEach(function (it) {
-        var li = el('li', 'news-row' + (it.hot ? ' hot' : ''));
+        var li = el('li', 'news-row' + (it.official ? ' official' : (it.hot ? ' hot' : '')));
         var a = el('a', 'news-link');
         // 外の記事は、この画面の外に開く（http/https の住所だけ）
         if (/^https?:\/\//.test(it.url)) { a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
@@ -3507,7 +3512,7 @@
       });
       body.appendChild(ul);
     }
-    note.textContent = 'NHK・Google ニュースの見出し（' + r.updatedText + ' 時点）。押すと記事が開きます。' +
+    note.textContent = 'NHK・Google ニュース・九州厚生局の見出し（' + r.updatedText + ' 時点）。押すと記事が開きます。' +
       (r.partial && r.partial.length ? '「' + r.partial.join('・') + '」は一部読めませんでした。' : '');
   }
 
