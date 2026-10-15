@@ -546,6 +546,44 @@
   }
   .badge.unread { background: var(--lime); color: #131311; font-weight: 700; }
   .badge.unreplied { border: 1px solid var(--line); color: var(--soft); }
+  /* メールの返信（docs/spec.md 5-27） */
+  .mail-row.tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .mail-row.tap:active { opacity: .7; }
+  .mail-row.tap:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }
+  .mail-reply-hint { margin: 4px 0 0; font-size: 12px; color: var(--lime); }
+  .badge.replied { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+  .mr-thread { margin: 12px 0 0; display: grid; gap: 8px; }
+  .mr-loading { margin: 12px 0 0; font-size: 13px; color: var(--weak); }
+  .mr-box { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--bg); }
+  .mr-box.me { border-style: dashed; }
+  .mr-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 12px; color: var(--muted); }
+  .mr-head b { color: var(--text); font-weight: 700; word-break: break-all; }
+  .mr-tag { padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; }
+  .mr-body {
+    margin: 6px 0 0; max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.7; color: var(--text-soft);
+  }
+  .btn.wide { display: block; width: 100%; margin: 14px 0 0; }
+  .mr-self {
+    display: block; width: 100%; min-height: 44px; margin: 4px 0 0; background: none; border: none;
+    color: var(--muted); font-family: inherit; font-size: 13px; text-decoration: underline; cursor: pointer;
+  }
+  .mr-self[hidden], #mr-compose[hidden] { display: none; }
+  .mr-to {
+    margin: 16px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--badge-lime-bg);
+    color: var(--badge-lime-fg); font-size: 13px; line-height: 1.6; word-break: break-all;
+  }
+  .field textarea.mr-text { min-height: 340px; font-size: 15px; line-height: 1.7; }
+  .dialog-sub.lines { white-space: pre-line; word-break: break-all; }
+  /* 長い返信を書いていても「閉じる」「送る」に指が届くよう、下に貼り付ける */
+  .sheet-actions.stick {
+    position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom, 0px)); z-index: 1;
+    margin: 18px -18px calc(-18px - env(safe-area-inset-bottom, 0px));
+    padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--card); border-top: 1px solid var(--line);
+  }
+  .sheet-actions.one { grid-template-columns: 1fr; }
+  .sheet-actions [hidden] { display: none; }
   /* 代表がやること */
   .todos { margin: 10px 0 0; padding: 0; list-style: none; }
   .todo-row { padding: 12px 0; border-top: 1px solid var(--line); }
@@ -1025,6 +1063,28 @@
     display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
     background: var(--badge-lime-bg); color: var(--lime); font-size: 11px; font-weight: 700;
   }
+  /* 今日のニュース（docs/spec.md 5-29） */
+  .news-chips { display: flex; gap: 6px; overflow-x: auto; margin: 10px -4px 0; padding: 2px 4px 4px; scrollbar-width: none; }
+  .news-chips::-webkit-scrollbar { display: none; }
+  .news-chip {
+    flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .news-chip .n { margin-left: 4px; color: var(--weak); font-size: 11px; }
+  .news-chip.hot { border-color: var(--badge-lime-fg); }
+  .news-chip[aria-selected="true"] { border-color: var(--lime); background: var(--badge-lime-bg); color: var(--text); font-weight: 700; }
+  .news-list { margin: 6px 0 0; padding: 0; list-style: none; }
+  .news-row { border-top: 1px solid var(--line); }
+  .news-row:first-child { border-top: none; }
+  .news-link { display: block; padding: 10px 0; color: var(--text); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .news-link:active { opacity: .7; }
+  .news-title { font-size: 15px; line-height: 1.45; }
+  .news-row.hot .news-title::before {
+    content: '注目'; display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; vertical-align: 1px;
+    background: var(--badge-lime-bg); color: var(--lime); font-size: 11px; font-weight: 700;
+  }
+  .news-meta { margin-top: 3px; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .news-loading { margin: 12px 0 4px; color: var(--weak); font-size: 13px; }
   .adv-step.second { margin-top: 18px; }
   .adv-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .adv-chip {
@@ -1182,7 +1242,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","getNews"].forEach(function (fn) {
       runner[fn] = function () { hishoCall(fn, Array.prototype.slice.call(arguments), ok, ng); };
     });
     return runner;
@@ -1317,6 +1377,16 @@
       <h2 class="card-title">天気</h2>
     </div>
     <div id="weather-body"></div>
+  </section>
+
+  <!-- 今日のニュース（docs/spec.md 5-29）。中身は画面が開いたあとに getNews で読む -->
+  <section class="card stagger" id="news-card" hidden>
+    <div class="card-head">
+      <h2 class="card-title">今日のニュース</h2>
+    </div>
+    <div class="news-chips" id="news-chips" role="tablist" aria-label="ニュースのカテゴリー"></div>
+    <div id="news-body"></div>
+    <p class="card-note" id="news-note"></p>
   </section>
 
   <!-- 新しい画面（GitHub Pages）の合言葉。Google のログインで守られた今の画面にだけ出る（docs/spec.md 5-26） -->
@@ -1530,6 +1600,53 @@
     <div class="dialog-actions">
       <button class="btn" id="lc-cancel" type="button">やめる</button>
       <button class="btn danger" id="lc-ok" type="button">消す</button>
+    </div>
+  </div>
+</div>
+
+<!-- メールの返信（docs/spec.md 5-27）。行を押すと開く -->
+<div class="sheet-backdrop" id="mail-reply" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mr-title">
+    <h3 id="mr-title">メール</h3>
+    <p class="sheet-sub" id="mr-sub"></p>
+    <p class="sheet-msg" id="mr-msg" role="alert" hidden></p>
+    <p class="mr-loading" id="mr-loading" hidden>本文を読み込んでいます…</p>
+    <div class="mr-thread" id="mr-thread"></div>
+
+    <div id="mr-start">
+      <div class="field">
+        <label for="mr-hint">返事の方針（書かなくてもよい）</label>
+        <textarea id="mr-hint" rows="2" placeholder="例: 来週の火曜なら受けられる／今回はお断りする"></textarea>
+      </div>
+      <button class="btn primary wide" id="mr-draft" type="button" disabled>文案を作る</button>
+      <p class="field-hint" id="mr-draft-note">押したときだけ、このメールを Claude に送って文案を作ります（1回 数円）。</p>
+      <button class="mr-self" id="mr-self" type="button" hidden>文案を使わず、自分で書く</button>
+    </div>
+
+    <div id="mr-compose" hidden>
+      <div class="mr-to" id="mr-to"></div>
+      <div class="field">
+        <label for="mr-body">返信（直してから送れます）</label>
+        <textarea class="mr-text" id="mr-body"></textarea>
+        <p class="field-hint" id="mr-count"></p>
+      </div>
+    </div>
+
+    <div class="sheet-actions stick" id="mr-actions">
+      <button class="btn" id="mr-close" type="button">閉じる</button>
+      <button class="btn primary" id="mr-send" type="button" disabled>送る</button>
+    </div>
+  </div>
+</div>
+
+<!-- 送る前の確認（代表「念のため『本当に送りますか？』と表示」） -->
+<div class="sheet-backdrop confirm-backdrop" id="mail-confirm" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="mc-text">
+    <p class="dialog-text" id="mc-text">本当に送りますか？</p>
+    <p class="dialog-sub lines" id="mc-sub"></p>
+    <div class="dialog-actions">
+      <button class="btn" id="mc-cancel" type="button">やめる</button>
+      <button class="btn primary" id="mc-ok" type="button">送る</button>
     </div>
   </div>
 </div>
@@ -2117,6 +2234,18 @@
       li.appendChild(subject);
 
       if (item.note) li.appendChild(el('div', 'mail-note', item.note));
+      // 返信できる行は押せる（docs/spec.md 5-27）。橋渡しの住所が無いとき（m.reply が null）は今までどおり
+      if (m.reply && item.threadId) {
+        li.classList.add('tap');
+        li.setAttribute('role', 'button');
+        li.tabIndex = 0;
+        li.setAttribute('aria-label', item.from + '「' + item.subject + '」を開いて返信する');
+        li.appendChild(el('div', 'mail-reply-hint', '開いて返信する ›'));
+        li.addEventListener('click', function () { openMailReply(item, li); });
+        li.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMailReply(item, li); }
+        });
+      }
       ul.appendChild(li);
     });
     body.appendChild(ul);
@@ -2124,6 +2253,250 @@
     if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
     body.appendChild(el('p', 'card-note',
       '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' 時点）' : '')));
+  }
+
+  // ==== メールの返信（docs/spec.md 5-27）====
+  // 行を押す → 本文（mailOpen）→「文案を作る」（mailDraft）→ 直す →「送る」→「本当に送りますか？」→「送る」（mailSend）。
+  // 送る受付番号は確認で「送る」を押したときに決め、本文を直すまで同じ番号を使う（通信が切れて押し直しても二重に送らない）。
+  var MR = { item: null, li: null, thread: null, to: null, sendId: null, draftId: null, draftKey: '', busy: false, locked: false, setup: false };
+
+  function mrNewId(prefix) {
+    var s = prefix + Date.now().toString(36);
+    for (var i = 0; i < 10; i++) s += Math.floor(Math.random() * 36).toString(36);
+    return s;
+  }
+  function mrEl(id) { return document.getElementById(id); }
+  function mrMsg(text) { var m = mrEl('mr-msg'); m.textContent = text || ''; m.hidden = !text; }
+  function mrToText(to) { return to ? (to.name ? to.name + ' <' + to.address + '>' : to.address) : ''; }
+  function mrReSubject(subject) {
+    var s = String(subject || '').trim();
+    return /^re\s*[:：]/i.test(s) ? s : 'Re: ' + (s || '（件名なし）');
+  }
+  function mrHasRun() { return typeof google !== 'undefined' && google.script && google.script.run; }
+
+  function mrRenderThread(t) {
+    var box = mrEl('mr-thread');
+    box.textContent = '';
+    if (t.total > t.messages.length) box.appendChild(el('p', 'field-hint', '前の ' + (t.total - t.messages.length) + '通は省いています（Gmail で見られます）'));
+    t.messages.forEach(function (m) {
+      var b = el('div', 'mr-box' + (m.fromMe ? ' me' : ''));
+      var head = el('div', 'mr-head');
+      head.appendChild(el('b', null, m.fromMe ? 'はるうた（こちら）' : (m.fromName || m.fromAddress)));
+      if (!m.fromMe && m.fromName) head.appendChild(el('span', null, m.fromAddress));
+      head.appendChild(el('span', null, m.date));
+      head.appendChild(el('span', 'mr-tag', m.fromMe ? '送った' : '届いた'));
+      b.appendChild(head);
+      b.appendChild(el('div', 'mr-body', m.body || '（本文なし）'));
+      box.appendChild(b);
+    });
+  }
+
+  function mrUpdateSend() {
+    var v = mrEl('mr-body').value;
+    var max = (DATA.mail && DATA.mail.reply && DATA.mail.reply.bodyMax) || 10000;
+    var count = mrEl('mr-count');
+    count.textContent = v.length + ' / ' + max + '字' + (MR.locked ? '　（この返信はもう送りません）' : '');
+    count.classList.toggle('field-error', v.length > max);
+    var composing = !mrEl('mr-compose').hidden;
+    mrEl('mr-send').hidden = !composing;
+    mrEl('mr-actions').classList.toggle('one', !composing);
+    mrEl('mr-send').disabled = MR.locked || MR.busy || !composing || !v.trim() || v.length > max;
+  }
+
+  function mrShowCompose(text) {
+    mrEl('mr-compose').hidden = false;
+    mrEl('mr-to').textContent = '宛先: ' + mrToText(MR.to) + '\n件名: ' + mrReSubject(MR.thread ? MR.thread.subject : MR.item.subject);
+    mrEl('mr-to').style.whiteSpace = 'pre-line';
+    mrEl('mr-body').value = text;
+    mrEl('mr-self').hidden = true;
+    MR.sendId = null;
+    mrUpdateSend();
+  }
+
+  function openMailReply(item, li) {
+    mrSetup();
+    MR.item = item; MR.li = li || null; MR.thread = null; MR.to = null; MR.sendId = null; MR.locked = false; MR.busy = false;
+    MR.draftId = null; MR.draftKey = '';
+    mrEl('mr-title').textContent = item.subject;
+    mrEl('mr-sub').textContent = item.from + ' ・ ' + item.timeText;
+    mrMsg('');
+    mrEl('mr-thread').textContent = '';
+    mrEl('mr-hint').value = '';
+    mrEl('mr-draft').disabled = true;
+    mrEl('mr-draft').textContent = '文案を作る';
+    mrEl('mr-self').hidden = true;
+    mrEl('mr-compose').hidden = true;
+    mrEl('mr-body').value = '';
+    mrUpdateSend();
+    mrEl('mail-reply').hidden = false;
+    var conf = DATA.mail && DATA.mail.reply;
+    if (!conf || !conf.ready) {
+      mrMsg('返信の準備がまだです（橋渡しの合言葉が秘書に入っていません）。Claude に伝えてください。');
+      return;
+    }
+    if (!mrHasRun() || DATA.mailReplyPreview) return; // 見本では取りに行かない
+    mrEl('mr-loading').hidden = false;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (MR.item !== item) return;
+        mrEl('mr-loading').hidden = true;
+        if (!r || !r.ok) { mrMsg((r && r.message) || '本文を読めませんでした。'); return; }
+        mrLoaded(r.thread);
+      })
+      .withFailureHandler(function () {
+        if (MR.item !== item) return;
+        mrEl('mr-loading').hidden = true;
+        mrMsg('本文を読めませんでした。電波を確かめて、開き直してください。');
+      })
+      .mailOpen(item.threadId);
+  }
+
+  function mrLoaded(thread) {
+    MR.thread = thread;
+    MR.to = thread.to;
+    mrRenderThread(thread);
+    if (!MR.to) { mrMsg('返す相手がいないメールです（自動配信など）。返信はできません。'); return; }
+    mrEl('mr-draft').disabled = false;
+    mrEl('mr-self').hidden = false;
+  }
+
+  function mrDraft() {
+    if (MR.busy || !MR.thread || !MR.to) return;
+    var item = MR.item;
+    MR.busy = true;
+    var btn = mrEl('mr-draft');
+    btn.disabled = true;
+    btn.textContent = '文案を作っています…';
+    mrEl('mr-draft-note').textContent = '20〜40秒ほどかかります。この画面のままお待ちください。';
+    mrMsg('');
+    mrUpdateSend();
+    var done = function () { MR.busy = false; btn.disabled = false; btn.textContent = '文案を作り直す'; mrUpdateSend(); };
+    // 通信が切れて押し直したときは同じ受付番号（サーバーが作り終えていれば、その文案を返す＝2回分の費用にしない）。
+    // 文案を受け取れたとき・方針を変えたときは新しい番号
+    var hint = mrEl('mr-hint').value;
+    var draftKey = item.threadId + '\n' + hint;
+    if (!MR.draftId || MR.draftKey !== draftKey) { MR.draftId = mrNewId('d_'); MR.draftKey = draftKey; }
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (MR.item !== item) return;
+        done();
+        if (!r || !r.ok) {
+          mrEl('mr-draft-note').textContent = '押したときだけ、このメールを Claude に送って文案を作ります（1回 数円）。';
+          mrMsg((r && r.message) || '文案を作れませんでした。');
+          return;
+        }
+        MR.draftId = null;
+        if (r.to) MR.to = r.to;
+        mrShowCompose(r.draft);
+        mrEl('mr-draft-note').textContent = '文案ができました' +
+          (r.costYen != null ? '（費用の目安 約' + r.costYen + '円・今日あと ' + r.left + '回）' : '（今日あと ' + r.left + '回）') +
+          '。「［要確認：…］」があれば書き入れてください。';
+        mrEl('mr-compose').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .withFailureHandler(function () {
+        if (MR.item !== item) return;
+        done();
+        mrMsg('通信が切れました。もう一度「文案を作る」を押してください。');
+      })
+      .mailDraft({ threadId: item.threadId, hint: hint, requestId: MR.draftId });
+  }
+
+  function mrSelfWrite() {
+    if (!MR.to) return;
+    var sig = (DATA.mail && DATA.mail.reply && DATA.mail.reply.signature) || '';
+    var name = MR.to.name ? MR.to.name + ' 様' : '';
+    mrShowCompose((name ? name + '\n\n' : '') + 'お世話になっております。訪問看護ステーションはるうたの大久保でございます。\n\n\n\n' + sig);
+    mrEl('mr-body').focus();
+  }
+
+  function mrAskSend() {
+    if (MR.locked || MR.busy) return;
+    var v = mrEl('mr-body').value;
+    if (!v.trim()) return;
+    if (/［要確認[：:][^］]*］/.test(v)) {
+      mrMsg('「［要確認：…］」が残っています。中身を書き入れてから送ってください。');
+      mrEl('mr-body').focus();
+      return;
+    }
+    mrMsg('');
+    mrEl('mc-sub').textContent = '宛先: ' + mrToText(MR.to) + '\n件名: ' + mrReSubject(MR.thread ? MR.thread.subject : MR.item.subject) +
+      '\n送り主: houkan.haru.uta@gmail.com（事務の「送信済み」にも残ります）\n相手のメールを下に引用して送ります。';
+    mrEl('mc-ok').disabled = false;
+    mrEl('mc-ok').textContent = '送る';
+    mrEl('mail-confirm').hidden = false;
+    mrEl('mc-cancel').focus();
+  }
+
+  function mrSend() {
+    if (MR.busy || MR.locked) return;
+    var item = MR.item;
+    MR.busy = true;
+    if (!MR.sendId) MR.sendId = mrNewId('s_');
+    var ok = mrEl('mc-ok');
+    ok.disabled = true;
+    ok.textContent = '送っています…';
+    mrUpdateSend();
+    var finish = function () { MR.busy = false; mrEl('mail-confirm').hidden = true; mrUpdateSend(); };
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (MR.item !== item) return;
+        finish();
+        if (r && r.ok) {
+          mrEl('mail-reply').hidden = true;
+          toast('送りました（' + r.to + '）');
+          mrMarkSent(MR.li);
+          return;
+        }
+        if (r && (r.kind === 'unknown' || r.kind === 'duplicate')) { MR.locked = true; mrUpdateSend(); }
+        mrMsg((r && r.message) || '送れませんでした。');
+      })
+      .withFailureHandler(function () {
+        if (MR.item !== item) return;
+        finish();
+        mrMsg('通信が切れました。もう一度「送る」を押すと、送れていたかを確かめます（同じ返信を二重には送りません）。');
+      })
+      .mailSend({ threadId: item.threadId, body: mrEl('mr-body').value, requestId: MR.sendId, expectTo: MR.to ? MR.to.address : '' });
+  }
+
+  function mrMarkSent(li) {
+    if (!li) return;
+    var b = li.querySelector('.badge.unreplied') || li.querySelector('.badge.unread');
+    if (b) { b.className = 'badge replied'; b.textContent = '返信済み'; }
+    else li.querySelector('.mail-subject').appendChild(el('span', 'badge replied', '返信済み'));
+  }
+
+  function mrClose() {
+    if (MR.busy && !mrEl('mail-confirm').hidden) return;
+    var composing = !mrEl('mr-compose').hidden && mrEl('mr-body').value.trim();
+    if (composing && !window.confirm('書きかけの返信を閉じますか？（まだ送っていません）')) return;
+    MR.item = null;
+    MR.busy = false;
+    mrEl('mail-reply').hidden = true;
+  }
+
+  function mrSetup() {
+    if (MR.setup) return;
+    MR.setup = true;
+    mrEl('mr-draft').addEventListener('click', mrDraft);
+    mrEl('mr-self').addEventListener('click', mrSelfWrite);
+    mrEl('mr-send').addEventListener('click', mrAskSend);
+    mrEl('mr-close').addEventListener('click', mrClose);
+    mrEl('mc-cancel').addEventListener('click', function () { if (!MR.busy) mrEl('mail-confirm').hidden = true; });
+    mrEl('mc-ok').addEventListener('click', mrSend);
+    mrEl('mr-body').addEventListener('input', function () { MR.sendId = null; mrUpdateSend(); });
+  }
+
+  // 見本づくり用: 最初から返信の画面を開いた形にする（本番の webapp.js は mailReplyPreview を渡さない）
+  function mrPreview(p) {
+    var m = DATA.mail;
+    if (!m || !m.items || !m.items[p.index || 0]) return;
+    var li = document.querySelectorAll('#mail-body .mail-row')[p.index || 0];
+    openMailReply(m.items[p.index || 0], li);
+    if (p.thread) mrLoaded(p.thread);
+    if (p.hint) mrEl('mr-hint').value = p.hint;
+    if (p.draft) { mrShowCompose(p.draft); mrEl('mr-draft').textContent = '文案を作り直す'; mrEl('mr-draft-note').textContent = '文案ができました（費用の目安 約1.1円・今日あと 39回）。「［要確認：…］」があれば書き入れてください。'; }
+    if (p.error) mrMsg(p.error);
+    if (p.confirm) mrAskSend();
   }
 
   // 台帳（年間行事）。表から来た 行事名・期日・繰り返し・担当・備考 を近い順に出す。
@@ -2952,6 +3325,69 @@
   }
 
   // 天気。気象庁の公開データなので、そのまま出してよい（利用者・職員の情報は入らない）
+  // ==== 今日のニュース（docs/spec.md 5-29）====
+  // 開いたあとに getNews で読む（開くのを遅くしない）。見本では DATA.newsPreview に返事の形を入れると、google が無くてもそのまま出す。
+  // カテゴリーのボタンで切り替える。最初は「医療・訪問看護」（無ければ次のカテゴリー）。見出しを押すと記事が別に開く
+  var NEWS = { data: null, key: '', chosen: false };
+  function loadNews() {
+    var card = document.getElementById('news-card');
+    if (!DATA.news) { card.hidden = true; return; }
+    card.hidden = false;
+    var body = document.getElementById('news-body');
+    body.textContent = '';
+    if (DATA.newsPreview) { applyNews(DATA.newsPreview); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { card.hidden = true; return; }
+    body.appendChild(el('p', 'news-loading', 'ニュースを読み込んでいます…'));
+    google.script.run
+      .withSuccessHandler(applyNews)
+      .withFailureHandler(function () { applyNews({ ok: false, errorText: 'ニュースを読めませんでした。電波を確かめて、開き直してください。' }); })
+      .getNews();
+  }
+
+  function applyNews(r) {
+    var body = document.getElementById('news-body');
+    var chips = document.getElementById('news-chips');
+    var note = document.getElementById('news-note');
+    body.textContent = '';
+    chips.textContent = '';
+    note.textContent = '';
+    if (!r || !r.ok) { body.appendChild(el('p', 'error', (r && r.errorText) || 'ニュースを読めませんでした。')); return; }
+    NEWS.data = r;
+    var withItems = r.categories.filter(function (c) { return c.items.length; });
+    // 最初は見出しのあるカテゴリー（医療が空なら次）。押したあとは、空でも押したものを出す
+    if (!NEWS.chosen || !r.categories.some(function (c) { return c.key === NEWS.key; })) NEWS.key = withItems.length ? withItems[0].key : (r.categories[0] ? r.categories[0].key : '');
+    r.categories.forEach(function (c) {
+      var b = el('button', 'news-chip' + (c.items.some(function (it) { return it.hot; }) ? ' hot' : ''));
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('data-key', c.key);
+      b.setAttribute('aria-selected', c.key === NEWS.key ? 'true' : 'false');
+      b.appendChild(document.createTextNode(c.label));
+      b.appendChild(el('span', 'n', String(c.items.length)));
+      b.addEventListener('click', function () { NEWS.key = c.key; NEWS.chosen = true; applyNews(NEWS.data); });
+      chips.appendChild(b);
+    });
+    var cur = r.categories.filter(function (c) { return c.key === NEWS.key; })[0];
+    if (!cur || !cur.items.length) {
+      body.appendChild(el('p', 'empty', '今はありません。'));
+    } else {
+      var ul = el('ul', 'news-list');
+      cur.items.forEach(function (it) {
+        var li = el('li', 'news-row' + (it.hot ? ' hot' : ''));
+        var a = el('a', 'news-link');
+        // 外の記事は、この画面の外に開く（http/https の住所だけ）
+        if (/^https?:\/\//.test(it.url)) { a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+        a.appendChild(el('div', 'news-title', it.title));
+        a.appendChild(el('div', 'news-meta', [it.source, it.timeText].filter(function (s) { return s; }).join('・')));
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    note.textContent = 'NHK・Google ニュースの見出し（' + r.updatedText + ' 時点）。押すと記事が開きます。' +
+      (r.partial && r.partial.length ? '「' + r.partial.join('・') + '」は一部読めませんでした。' : '');
+  }
+
   function renderWeather() {
     var card = document.getElementById('weather-card');
     var body = document.getElementById('weather-body');
@@ -3619,7 +4055,9 @@
     loadAiNote('today');
     // 見本づくり用: 最初から直す画面を開く（本番の webapp.js は ledgerOpenRow を渡さない）
     if (DATA.ledgerOpenRow) openLedgerEditor(DATA.ledgerOpenRow === 'new' ? null : ledgerFindItem(DATA.ledgerOpenRow));
+    if (DATA.mailReplyPreview) mrPreview(DATA.mailReplyPreview);
     renderWeather();
+    loadNews();
     setupTenjiku();
     setupNewPagePanel();
     renderNav();
