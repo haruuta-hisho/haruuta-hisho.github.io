@@ -623,6 +623,11 @@
   .todo-link::after { content: '›'; margin-left: 4px; font-size: 16px; }
 
   .weather-text { font-weight: 600; font-size: 15px; }
+  /* 健康診断（5-34）。今日の画面の一番上。何も無い日は出さない */
+  .health-bar { margin: 0 0 14px; padding: 12px 14px; border-radius: 16px; background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .health-title { margin: 0 0 4px; font-weight: 700; font-size: 14px; }
+  .health-bar ul { margin: 0; padding-left: 1.1em; }
+  .health-bar li { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
   /* 警報・注意報（docs/spec.md 5-32）。天気のカードの一番上。レベルで色を変える */
   .alerts { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .alert-row { padding: 8px 10px; border-radius: 10px; background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
@@ -1355,6 +1360,9 @@
   <!-- 画面は下のタブで入れ替える（config.js の NAV.READY に書いたタブだけ出る）。
        ヘッダーはどの画面でも出したままにする -->
   <div class="screen" id="screen-today">
+
+  <!-- 健康診断（docs/spec.md 5-34）。読めていない・古いまま止まっているものがあるときだけ出す -->
+  <section class="health-bar" id="health-bar" hidden role="status"></section>
 
   <!-- AI の一言（今日のまとめ。docs/spec.md 5-23-2）。予定の名前は送らず、時刻と件数・天気・件数だけで作る -->
   <section class="ai-note stagger" id="ai-note-today" hidden aria-live="polite">
@@ -3575,6 +3583,19 @@
     if (w.alerts && w.alerts.noteText) body.appendChild(el('p', 'card-note', w.alerts.noteText));
   }
 
+  /** 健康診断（5-34）。読めていない・古いものがあるときだけ、今日の画面の一番上に出す */
+  function renderHealth() {
+    var bar = document.getElementById('health-bar');
+    var h = DATA.health;
+    bar.textContent = '';
+    if (!h || h.ok || !h.items || !h.items.length) { bar.hidden = true; return; }
+    bar.appendChild(el('p', 'health-title', '止まっているかもしれないもの'));
+    var ul = el('ul', '');
+    h.items.forEach(function (it) { ul.appendChild(el('li', '', it.text)); });
+    bar.appendChild(ul);
+    bar.hidden = false;
+  }
+
   /** 警報・注意報の行。出ていなければ「なし」の一言。どちらでも気象庁のページへのリンクを付ける */
   function renderAlerts(body, a) {
     if (!a) return;
@@ -4247,6 +4268,7 @@
     if (DATA.ledgerOpenRow) openLedgerEditor(DATA.ledgerOpenRow === 'new' ? null : ledgerFindItem(DATA.ledgerOpenRow));
     if (DATA.mailReplyPreview) mrPreview(DATA.mailReplyPreview);
     renderWeather();
+    renderHealth();
     loadNews();
     setupTenjiku();
     setupNewPagePanel();
