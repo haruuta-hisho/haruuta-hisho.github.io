@@ -566,6 +566,21 @@
     color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer;
   }
   .mails.skipped { margin-top: 4px; }
+  /* まとめて返信不要（docs/spec.md 5-36） */
+  .mail-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+  .mail-tool {
+    min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--text-soft, var(--muted)); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .mail-tool.warn { color: var(--badge-red-fg); border-color: var(--badge-red-fg); }
+  .mail-tool:disabled { opacity: .5; cursor: default; }
+  .mail-pick { flex: 0 0 auto; min-width: 44px; min-height: 36px; margin-left: auto; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: transparent; color: var(--muted); font-family: inherit; font-size: 12px; cursor: pointer; }
+  .mail-pick.on { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .mail-row.picked { background: var(--badge-lime-bg); border-radius: 10px; }
+  .mail-pickbar { display: flex; gap: 8px; margin: 10px 0 0; }
+  .mail-pickbar .mail-tool { flex: 1 1 0; }
+  .mail-pickbar .mail-tool.go { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
   .mails.skipped .mail-subject, .mails.skipped .mail-from { color: var(--muted); }
   .badge.replied { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
   .mr-thread { margin: 12px 0 0; display: grid; gap: 8px; }
@@ -1281,7 +1296,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","getNews"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews"].forEach(function (fn) {
       runner[fn] = function () { hishoCall(fn, Array.prototype.slice.call(arguments), ok, ng); };
     });
     return runner;
@@ -2268,9 +2283,11 @@
       return;
     }
 
+    renderMailTools(body, m);
     var ul = el('ul', 'mails');
     m.items.forEach(function (item) { ul.appendChild(mailRow(item, false)); });
     body.appendChild(ul);
+    if (MAIL_UI.select) renderMailPickBar(body, m);
 
     if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
     renderMailSkipped(body, m);
@@ -2294,6 +2311,27 @@
       if (item.note) li.appendChild(el('div', 'mail-note', item.note));
       var m = DATA.mail;
       var foot = el('div', 'mail-foot');
+      // まとめて選んでいるあいだは、行を押すと選ぶ（開かない）。右のボタンも「選ぶ」になる
+      if (MAIL_UI.select && !skipped && item.threadId) {
+        var on = !!MAIL_UI.picked[item.threadId];
+        if (on) li.classList.add('picked');
+        li.classList.add('tap');
+        li.setAttribute('role', 'checkbox');
+        li.setAttribute('aria-checked', on ? 'true' : 'false');
+        li.tabIndex = 0;
+        var pick = el('button', 'mail-pick' + (on ? ' on' : ''), on ? '✓ 選んだ' : '選ぶ');
+        pick.type = 'button';
+        pick.tabIndex = -1;
+        foot.appendChild(pick);
+        var toggle = function () { mailTogglePick(item.threadId); };
+        li.addEventListener('click', toggle);
+        li.addEventListener('keydown', function (e) {
+          if (e.target !== li) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+        li.appendChild(foot);
+        return li;
+      }
       // 返信できる行は押せる（docs/spec.md 5-27）。橋渡しの住所が無いとき（m.reply が null）は今までどおり
       if (m.reply && item.threadId) {
         li.classList.add('tap');
@@ -2323,7 +2361,90 @@
   }
 
   // 「返信不要にしたもの（n件）」。押すと開いて、戻したり返信したりできる
-  var MAIL_UI = { showSkipped: false, busy: false, undoTimer: null };
+  var MAIL_UI = { showSkipped: false, busy: false, undoTimer: null, select: false, picked: {}, confirmBefore: false, confirmTimer: null };
+
+  // 一覧の上の道具（docs/spec.md 5-36）: まとめて選ぶ ／ 昨日までを全部返信不要（2回押しで実行）
+  function renderMailTools(body, m) {
+    if (!m.items.some(function (it) { return it.threadId; })) return;
+    var bar = el('div', 'mail-tools');
+    var sel = el('button', 'mail-tool', MAIL_UI.select ? '選ぶのをやめる' : 'まとめて選ぶ');
+    sel.type = 'button';
+    sel.id = 'mail-select';
+    sel.addEventListener('click', function () {
+      MAIL_UI.select = !MAIL_UI.select;
+      MAIL_UI.picked = {};
+      renderMail();
+    });
+    bar.appendChild(sel);
+    if (!MAIL_UI.select) {
+      var all = el('button', 'mail-tool' + (MAIL_UI.confirmBefore ? ' warn' : ''),
+        MAIL_UI.confirmBefore ? 'もう一度押すと、昨日までを全部返信不要にします' : '昨日までを全部返信不要');
+      all.type = 'button';
+      all.id = 'mail-before';
+      all.addEventListener('click', function () { mailBeforeTap(all); });
+      bar.appendChild(all);
+    }
+    body.appendChild(bar);
+  }
+
+  function renderMailPickBar(body, m) {
+    // いま一覧に出ている分だけを数える（読み直しで消えたものは数えない）
+    var shown = {};
+    m.items.forEach(function (it) { if (it.threadId) shown[it.threadId] = true; });
+    var ids = Object.keys(MAIL_UI.picked).filter(function (k) { return MAIL_UI.picked[k] && shown[k]; });
+    var bar = el('div', 'mail-pickbar');
+    var allBtn = el('button', 'mail-tool', '表示中を全部選ぶ');
+    allBtn.type = 'button';
+    allBtn.id = 'mail-pick-all';
+    allBtn.addEventListener('click', function () {
+      m.items.forEach(function (it) { if (it.threadId) MAIL_UI.picked[it.threadId] = true; });
+      renderMail();
+    });
+    var go = el('button', 'mail-tool go', ids.length ? '選んだ ' + ids.length + '件を返信不要' : '選んでください');
+    go.type = 'button';
+    go.id = 'mail-pick-go';
+    go.disabled = !ids.length;
+    go.addEventListener('click', function () { mailManyTap(ids, go); });
+    bar.appendChild(allBtn);
+    bar.appendChild(go);
+    body.appendChild(bar);
+  }
+
+  function mailTogglePick(id) {
+    MAIL_UI.picked[id] = !MAIL_UI.picked[id];
+    renderMail();
+  }
+
+  function mailManyTap(ids, btn) {
+    if (MAIL_UI.busy || !ids.length) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    mailCall('mailDismissMany', ids, function (r) {
+      MAIL_UI.select = false;
+      MAIL_UI.picked = {};
+      renderMail();
+      mailShowUndoWith((r.count || ids.length) + '件を返信不要にしました', 'mailRestoreMany', { ids: r.ids || ids, at: r.at });
+    }, function () { btn.disabled = false; btn.textContent = '選んだ ' + ids.length + '件を返信不要'; });
+  }
+
+  // 1回目で文字が変わり、5秒以内にもう一度押すと実行（間違えて押しても何も起きない）
+  function mailBeforeTap(btn) {
+    if (MAIL_UI.busy) return;
+    if (!MAIL_UI.confirmBefore) {
+      MAIL_UI.confirmBefore = true;
+      renderMail();
+      clearTimeout(MAIL_UI.confirmTimer);
+      MAIL_UI.confirmTimer = setTimeout(function () { MAIL_UI.confirmBefore = false; renderMail(); }, 5000);
+      return;
+    }
+    clearTimeout(MAIL_UI.confirmTimer);
+    MAIL_UI.confirmBefore = false;
+    btn.disabled = true;
+    btn.textContent = '…';
+    mailCall('mailDismissBefore', null, function (r) {
+      mailShowUndoWith('昨日までの ' + (r.count || 0) + '件を返信不要にしました', 'mailDismissBeforeUndo', r.set || '');
+    }, function () { renderMail(); });
+  }
   function renderMailSkipped(body, m) {
     if (!m.dismissedTotal) return;
     var toggle = el('button', 'mail-skipped-toggle');
@@ -2370,8 +2491,13 @@
       function () { btn.disabled = false; btn.textContent = '戻す'; });
   }
 
+  // まとめて・昨日までの「元に戻す」（fn に arg を渡して戻す）
+  function mailShowUndoWith(message, fn, arg) {
+    mailShowUndo(message, null, fn, arg);
+  }
+
   // 押した直後の「元に戻す」（台帳と同じ帯を使う。8秒で消える）
-  function mailShowUndo(message, item) {
+  function mailShowUndo(message, item, undoFn, undoArg) {
     var bar = document.getElementById('undo-bar');
     var btn = document.getElementById('undo-btn');
     clearTimeout(LEDGER_UI.undoTimer);
@@ -2385,7 +2511,7 @@
       clearTimeout(MAIL_UI.undoTimer);
       btn.disabled = true;
       btn.textContent = '戻しています…';
-      mailCall('mailRestore', item.threadId, function () { bar.hidden = true; toast('一覧に戻しました'); }, function () {
+      mailCall(undoFn || 'mailRestore', undoFn ? undoArg : item.threadId, function () { bar.hidden = true; toast('一覧に戻しました'); }, function () {
         btn.disabled = false;
         btn.textContent = '元に戻す';
         MAIL_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
@@ -2680,7 +2806,7 @@
     if (v.urgent > 0) chip.classList.add('has');
 
     if (!v.items.length) {
-      body.appendChild(el('p', 'empty', v.emptyMessage));
+      body.appendChild(el('p', 'empty', v.later > 0 && v.emptySoonMessage ? v.emptySoonMessage : v.emptyMessage));
     } else {
       var ul = el('ul', 'ledger');
       v.items.forEach(function (it) {
@@ -2690,6 +2816,11 @@
     }
 
     if (v.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + v.overflow + '件'));
+    // 3か月より先の行事は数だけ（docs/spec.md 5-35）
+    if (v.later > 0) {
+      body.appendChild(el('p', 'card-note', '3か月より先の行事が ' + v.later + '件あります。' +
+        (edit ? '下の「すべての行事」とカレンダーで見られます。' : 'カレンダーで見られます。')));
+    }
     if (v.unreadable > 0) {
       body.appendChild(el('p', 'card-note',
         '期日がまだの行が ' + v.unreadable + '件あります。' +
