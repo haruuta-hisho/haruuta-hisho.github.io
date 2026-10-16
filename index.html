@@ -636,6 +636,41 @@
     color: var(--lime); font-size: 13px; text-decoration: none;
   }
   .todo-link::after { content: '›'; margin-left: 4px; font-size: 16px; }
+  /* 書き足す・済んだ・Claude にお願い（docs/spec.md 5-38） */
+  .todo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 0; }
+  .todo-btn {
+    min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--text-soft, var(--muted)); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .todo-btn.ask { border-color: var(--lime); color: var(--lime); }
+  .todo-btn:disabled { opacity: .5; cursor: default; }
+  /* お願い済みの印は1行に置き、ボタンを次の行にそろえる（2つのボタンが折り返さない） */
+  .todo-asked { flex: 0 0 100%; color: var(--lime); font-size: 12px; line-height: 1.6; }
+  .todo-add {
+    display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin: 10px 0 0;
+    border: 1px dashed var(--line); border-radius: 12px; background: transparent; color: var(--lime);
+    font-family: inherit; font-size: 14px; cursor: pointer;
+  }
+  .todo-form { margin: 10px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+  .todo-form input[type="text"] {
+    width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-family: inherit; font-size: 16px; box-sizing: border-box;
+  }
+  .todo-when { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+  .todo-when button { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .todo-when button.on { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .todo-form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 0; }
+  .todo-form-actions button { min-height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .todo-form-actions button.go { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .todo-form-actions button:disabled { opacity: .5; cursor: default; }
+  .todo-count-left { margin: 6px 0 0; font-size: 11px; color: var(--weak); text-align: right; }
+  .todo-claude { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--badge-lime-bg); }
+  .todo-claude-title { margin: 0 0 6px; font-size: 12px; color: var(--badge-lime-fg); font-weight: 700; }
+  .todo-claude ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .todo-claude li { font-size: 13px; line-height: 1.6; color: var(--text-soft); }
+  .todo-claude .reply { display: block; color: var(--muted); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
 
   .weather-text { font-weight: 600; font-size: 15px; }
   /* 健康診断（5-34）。今日の画面の一番上。何も無い日は出さない */
@@ -1367,7 +1402,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2299,12 +2334,18 @@
   }
 
   // 代表がやること。中身は config.js の TODO（Claude が反映のたびに書き替える）
+  var TODO_UI = { busy: false, adding: false, draft: '', when: '', undoTimer: null };
+
   function renderTodo() {
     var card = document.getElementById('todo-card');
     var body = document.getElementById('todo-body');
     var chip = document.getElementById('todo-count');
     var t = DATA.todo;
     if (!t) { card.style.display = 'none'; return; }
+    // 書き足す・印のあとに描き直すので、前の中身を消してから描く
+    body.textContent = '';
+    chip.textContent = '';
+    chip.classList.remove('has');
 
     if (!t.ok) {
       body.appendChild(el('p', 'error', t.errorText));
@@ -2317,31 +2358,176 @@
 
     if (!t.items.length) {
       body.appendChild(el('p', 'empty', t.emptyMessage));
-      return;
+    } else {
+      var ul = el('ul', 'todos');
+      t.items.forEach(function (item) {
+        var li = el('li', 'todo-row');
+        var head = el('div', 'todo-head');
+        head.appendChild(el('span', 'when when-' + item.when, item.whenLabel));
+        head.appendChild(el('span', 'todo-text', item.text));
+        li.appendChild(head);
+
+        if (item.note) li.appendChild(el('div', 'todo-note', item.note));
+        if (item.url) {
+          var a = el('a', 'todo-link', '開く');
+          a.href = item.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          li.appendChild(a);
+        }
+        if (t.editable && item.id) li.appendChild(todoActions(item));
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
     }
 
-    var ul = el('ul', 'todos');
-    t.items.forEach(function (item) {
-      var li = el('li', 'todo-row');
-      var head = el('div', 'todo-head');
-      head.appendChild(el('span', 'when when-' + item.when, item.whenLabel));
-      head.appendChild(el('span', 'todo-text', item.text));
-      li.appendChild(head);
-
-      if (item.note) li.appendChild(el('div', 'todo-note', item.note));
-      if (item.url) {
-        var a = el('a', 'todo-link', '開く');
-        a.href = item.url;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        li.appendChild(a);
-      }
-      ul.appendChild(li);
-    });
-    body.appendChild(ul);
-
     if (t.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + t.overflow + '件'));
+    if (t.editable) renderTodoAdd(body, t);
+    if (t.claudeDone && t.claudeDone.length) {
+      var box = el('div', 'todo-claude');
+      box.appendChild(el('p', 'todo-claude-title', 'Claude が済ませたもの'));
+      var dl = el('ul', '');
+      t.claudeDone.forEach(function (d) {
+        var li2 = el('li', '', d.doneText + '　' + d.text);
+        if (d.reply) li2.appendChild(el('span', 'reply', d.reply));
+        dl.appendChild(li2);
+      });
+      box.appendChild(dl);
+      body.appendChild(box);
+    }
     if (t.footer) body.appendChild(el('p', 'card-note', t.footer));
+  }
+
+  // 1件の下のボタン（まだ: 済んだ・Claude にお願い／お願い済み: 済んだ・取り消す）
+  function todoActions(item) {
+    var row = el('div', 'todo-actions');
+    if (item.state === 'ask') row.appendChild(el('span', 'todo-asked', 'Claude にお願い済み' + (item.askedText ? '（' + item.askedText + '）' : '')));
+    var done = el('button', 'todo-btn', '済んだ');
+    done.type = 'button';
+    done.setAttribute('data-act', 'done');
+    done.addEventListener('click', function () { todoMarkTap(item, 'done', done); });
+    row.appendChild(done);
+    var other = el('button', 'todo-btn' + (item.state === 'ask' ? '' : ' ask'), item.state === 'ask' ? '取り消す' : 'Claude にお願い');
+    other.type = 'button';
+    other.setAttribute('data-act', item.state === 'ask' ? 'open' : 'ask');
+    other.addEventListener('click', function () { todoMarkTap(item, item.state === 'ask' ? 'open' : 'ask', other); });
+    row.appendChild(other);
+    return row;
+  }
+
+  function renderTodoAdd(body, t) {
+    if (!TODO_UI.adding) {
+      var add = el('button', 'todo-add', '＋ 書き足す');
+      add.type = 'button';
+      add.id = 'todo-add';
+      add.addEventListener('click', function () { TODO_UI.adding = true; renderTodo(); var i = document.getElementById('todo-input'); if (i) i.focus(); });
+      body.appendChild(add);
+      return;
+    }
+    var levels = t.levels || [];
+    if (!TODO_UI.when && levels.length) TODO_UI.when = levels[levels.length - 1].key;
+    var form = el('div', 'todo-form');
+    var input = el('input', '');
+    input.type = 'text';
+    input.id = 'todo-input';
+    input.maxLength = t.maxText || 100;
+    input.placeholder = '例: 名刺を作る';
+    input.setAttribute('aria-label', '何をするか');
+    input.value = TODO_UI.draft;
+    var left = el('p', 'todo-count-left', '');
+    var sync = function () { TODO_UI.draft = input.value; left.textContent = input.value.length + ' / ' + (t.maxText || 100) + '字'; };
+    input.addEventListener('input', sync);
+    form.appendChild(input);
+    sync();
+    form.appendChild(left);
+    var whenBox = el('div', 'todo-when');
+    levels.forEach(function (l) {
+      var b = el('button', l.key === TODO_UI.when ? 'on' : '', l.label);
+      b.type = 'button';
+      b.setAttribute('data-when', l.key);
+      b.setAttribute('aria-pressed', l.key === TODO_UI.when ? 'true' : 'false');
+      b.addEventListener('click', function () { TODO_UI.when = l.key; TODO_UI.draft = input.value; renderTodo(); });
+      whenBox.appendChild(b);
+    });
+    form.appendChild(whenBox);
+    var actions = el('div', 'todo-form-actions');
+    var cancel = el('button', '', 'やめる');
+    cancel.type = 'button';
+    cancel.id = 'todo-cancel';
+    cancel.addEventListener('click', function () { TODO_UI.adding = false; TODO_UI.draft = ''; renderTodo(); });
+    var go = el('button', 'go', '書き足す');
+    go.type = 'button';
+    go.id = 'todo-save';
+    go.addEventListener('click', function () { todoAddTap(input.value, go); });
+    actions.appendChild(cancel);
+    actions.appendChild(go);
+    form.appendChild(actions);
+    body.appendChild(form);
+  }
+
+  function todoCall(fn, arg, onOk, onFail) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); onFail(); return; }
+    TODO_UI.busy = true;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        TODO_UI.busy = false;
+        if (r && r.todo) DATA.todo = r.todo;
+        if (!r || !r.ok) { renderTodo(); toast((r && r.message) || 'できませんでした。もう一度押してください。'); onFail(); return; }
+        onOk(r);
+      })
+      .withFailureHandler(function () { TODO_UI.busy = false; toast('つながりませんでした。もう一度押してください。'); onFail(); })[fn](arg);
+  }
+
+  function todoAddTap(text, btn) {
+    if (TODO_UI.busy) return;
+    if (!String(text || '').trim()) { toast('何をするかを書いてください'); return; }
+    btn.disabled = true;
+    btn.textContent = '…';
+    todoCall('todoAdd', { text: text, when: TODO_UI.when }, function () {
+      TODO_UI.adding = false;
+      TODO_UI.draft = '';
+      renderTodo();
+      toast('書き足しました');
+    }, function () { btn.disabled = false; btn.textContent = '書き足す'; });
+  }
+
+  function todoMarkTap(item, state, btn) {
+    if (TODO_UI.busy) return;
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '…';
+    todoCall('todoMark', { id: item.id, state: state }, function (r) {
+      renderTodo();
+      if (state === 'done') todoShowUndo('「' + item.text + '」を済んだにしました', item.id, r.previous, r.at);
+      else if (state === 'ask') toast('Claude にお願いしました。次に Claude を開いて「再開」と言えば進めます');
+      else toast('お願いを取り消しました');
+    }, function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  // 「済んだ」の直後の「元に戻す」（台帳・メールと同じ帯。8秒で消える）
+  function todoShowUndo(message, id, previous, at) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    clearTimeout(MAIL_UI.undoTimer);
+    clearTimeout(TODO_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled || TODO_UI.busy) return;
+      clearTimeout(TODO_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      todoCall('todoMark', { id: id, state: previous || 'open', expect: { state: 'done', at: at } }, function () { bar.hidden = true; renderTodo(); toast('元に戻しました'); }, function () {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        TODO_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+      });
+    };
+    bar.hidden = false;
+    TODO_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
   function renderCases() {
@@ -2617,6 +2803,7 @@
     var btn = document.getElementById('undo-btn');
     clearTimeout(LEDGER_UI.undoTimer);
     clearTimeout(MAIL_UI.undoTimer);
+    clearTimeout(TODO_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -3579,6 +3766,7 @@
     var btn = document.getElementById('undo-btn');
     clearTimeout(LEDGER_UI.undoTimer);
     if (typeof MAIL_UI !== 'undefined' && MAIL_UI) clearTimeout(MAIL_UI.undoTimer); // 返信不要の帯の残り時間で、台帳の帯を消さない
+    if (typeof TODO_UI !== 'undefined' && TODO_UI) clearTimeout(TODO_UI.undoTimer); // やることの帯も同じ
     document.getElementById('undo-text').textContent = message;
     var showMs = (undo && undo.showMs) || 4000;
     var hideLater = function () {
