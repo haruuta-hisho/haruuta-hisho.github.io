@@ -487,6 +487,18 @@
   .field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
   .field select:disabled { opacity: .45; }
   .due-row { display: grid; grid-template-columns: 1.3fr 1fr 1.3fr; gap: 6px; }
+  /* 時間（spec 5-43）。iPhone では時刻のくるくるが出る */
+  .time-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+  .time-row .time-sep { color: var(--muted); font-size: 14px; }
+  .field input[type=time] {
+    width: 100%; min-height: 44px; padding: 10px 12px; -webkit-appearance: none; appearance: none;
+    background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 12px;
+    font-family: inherit; font-size: 16px; color-scheme: dark;
+  }
+  .field.bad input[type=time] { border-color: var(--badge-red-fg); }
+  .time-clear { margin-top: 6px; min-height: 44px; padding: 0 2px; background: none; border: 0; color: var(--muted);
+    font-family: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+  .time-clear[hidden] { display: none; }
   .field-hint { margin: 6px 0 0; font-size: 11px; line-height: 1.6; color: var(--weak); }
   .field-error { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--badge-red-fg); }
   .field-error:empty { display: none; }
@@ -1846,6 +1858,18 @@
       <p class="field-error" data-error="DUE"></p>
     </div>
 
+    <div class="field" data-field="TIME">
+      <span class="field-label">時間（なくてもよい）</span>
+      <div class="time-row">
+        <input type="time" id="le-time-start" step="300" aria-label="始まりの時刻">
+        <span class="time-sep">〜</span>
+        <input type="time" id="le-time-end" step="300" aria-label="終わりの時刻">
+      </div>
+      <p class="field-hint" id="le-time-hint">終わりは空でもよいです。</p>
+      <button class="time-clear" id="le-time-clear" type="button">時間を消す</button>
+      <p class="field-error" data-error="TIME"></p>
+    </div>
+
     <div class="field" data-field="CYCLE">
       <label for="le-cycle">繰り返し</label>
       <select id="le-cycle"></select>
@@ -1853,12 +1877,17 @@
       <p class="field-error" data-error="CYCLE"></p>
     </div>
 
-    <div class="field" data-field="WHO">
-      <label for="le-who">担当</label>
-      <select id="le-who"></select>
-      <input type="text" id="le-who-other" placeholder="役割の名前（例: 管理者）" hidden>
-      <p class="field-hint" id="le-who-hint"></p>
-      <p class="field-error" data-error="WHO"></p>
+    <div class="field" data-field="PLACE">
+      <label for="le-place">場所（なくてもよい）</label>
+      <input type="text" id="le-place" autocomplete="off" enterkeyhint="done">
+      <p class="field-error" data-error="PLACE"></p>
+    </div>
+
+    <div class="field" data-field="MEMBERS">
+      <label for="le-members">参加者（なくてもよい）</label>
+      <input type="text" id="le-members" autocomplete="off" enterkeyhint="done">
+      <p class="field-hint" id="le-members-hint"></p>
+      <p class="field-error" data-error="MEMBERS"></p>
     </div>
 
     <div class="field" data-field="NOTE">
@@ -3887,8 +3916,9 @@
         var it = {
           name: ev.name,
           dueText: ev.repeat ? '繰り返しの予定' : ev.dueLabel,
+          time: ev.time,
+          place: ev.place,
           cycle: ev.cycle,
-          who: ev.who,
           daysText: ev.daysText,
           level: ev.level,
         };
@@ -3965,8 +3995,12 @@
     }
     var main = el('div', 'ledger-main');
     main.appendChild(el('div', 'ledger-name', it.name));
-    var meta = [it.dueText, it.cycle, it.who].filter(function (s) { return s; }).join('・');
+    var when = [it.dueText, it.time].filter(function (s) { return s; }).join(' ');
+    var meta = [when, it.cycle].filter(function (s) { return s; }).join('・');
     if (meta) main.appendChild(el('div', 'ledger-meta', meta));
+    // 場所・参加者（spec 5-43）。どちらも無ければ出さない
+    var where = [it.place ? '場所 ' + it.place : '', it.members ? '参加 ' + it.members : ''].filter(function (s) { return s; }).join('・');
+    if (where) main.appendChild(el('div', 'ledger-meta ledger-where', where));
     if (it.note) main.appendChild(el('div', 'ledger-note', it.note));
     li.appendChild(main);
     if (it.daysText) li.appendChild(el('span', 'ledger-days', it.daysText));
@@ -4006,7 +4040,7 @@
         var li = ledgerRowEl({
           name: item.name,
           dueText: item.due ? item.dueLabel : '期日まだ',
-          cycle: item.cycle, who: item.who, note: item.note,
+          cycle: item.cycle, time: item.time, place: item.place, members: item.members, note: item.note,
           daysText: item.show ? item.daysText : '隠し中',
           level: item.show ? item.level : 'far',
         }, item);
@@ -4120,6 +4154,43 @@
     return { text: text };
   }
 
+  // 時間の欄（spec 5-43）。「14:00」「14:00〜16:00」を2つの時刻の欄に分ける。
+  // 時刻の形でない文字（表に「午後」などと書いたもの）は欄に入れず、選び直さなければそのまま残す
+  function fillTime(timeText) {
+    var start = document.getElementById('le-time-start');
+    var end = document.getElementById('le-time-end');
+    var hint = document.getElementById('le-time-hint');
+    var text = String(timeText || '').trim();
+    var m = /^(\d{1,2}):(\d{2})(?:\s*[〜~～\-ー－]\s*(\d{1,2}):(\d{2}))?$/.exec(text);
+    var pad = function (n) { n = Number(n); return (n < 10 ? '0' : '') + n; };
+    LEDGER_UI.timeKeep = '';
+    if (m) {
+      start.value = pad(m[1]) + ':' + m[2];
+      end.value = m[3] !== undefined ? pad(m[3]) + ':' + m[4] : '';
+      hint.textContent = '終わりは空でもよいです。';
+    } else {
+      start.value = '';
+      end.value = '';
+      LEDGER_UI.timeKeep = text;
+      hint.textContent = text ? '表に「' + text + '」と入っています。時刻を選ぶと置き換わります（選ばなければそのまま）。' : '終わりは空でもよいです。';
+    }
+    syncTime();
+  }
+
+  function syncTime() {
+    var any = !!(document.getElementById('le-time-start').value || document.getElementById('le-time-end').value || LEDGER_UI.timeKeep);
+    document.getElementById('le-time-clear').hidden = !any;
+  }
+
+  function timeValue() {
+    var a = document.getElementById('le-time-start').value;
+    var b = document.getElementById('le-time-end').value;
+    if (!a && !b) return { text: LEDGER_UI.timeKeep || '' };
+    if (!a) return { error: '始まりの時刻も選んでください（終わりだけでは時間になりません）。' };
+    if (b && b < a) return { error: '終わりの時刻が、始まりより前になっています。' };
+    return { text: a + (b && b !== a ? '〜' + b : '') };
+  }
+
   function setLedgerMsg(text) {
     var n = document.getElementById('le-msg');
     n.textContent = text || '';
@@ -4155,12 +4226,16 @@
       setFieldErrors(null);
     }
     fillChoice(document.getElementById('le-cycle'), document.getElementById('le-cycle-other'), edit.cycles, item ? item.cycle : '', 'なし');
-    fillChoice(document.getElementById('le-who'), document.getElementById('le-who-other'), edit.whoChoices, item ? item.who : '', '決めない');
-    document.getElementById('le-who-hint').textContent = edit.whoHint || '';
+    fillTime(item ? item.time : '');
+    document.getElementById('le-place').value = item ? (item.place || '') : '';
+    document.getElementById('le-members').value = item ? (item.members || '') : '';
+    document.getElementById('le-members-hint').textContent = edit.membersHint || '';
     document.getElementById('le-note').value = item ? item.note : '';
     document.getElementById('le-show').checked = item ? !!item.show : true;
     var max = edit.maxLen || {};
     document.getElementById('le-name').maxLength = max.NAME || 60;
+    document.getElementById('le-place').maxLength = max.PLACE || 60;
+    document.getElementById('le-members').maxLength = max.MEMBERS || 100;
     document.getElementById('le-note').maxLength = max.NOTE || 200;
 
     var doneBox = document.getElementById('le-done-box');
@@ -4203,11 +4278,15 @@
     if (!name) errors.NAME = '行事名を入れてください。';
     var due = dueValue();
     if (due.error) errors.DUE = due.error;
+    var time = timeValue();
+    if (time.error) errors.TIME = time.error;
     var values = {
       NAME: name,
       DUE: due.text || '',
+      TIME: time.text || '',
       CYCLE: choiceValue(document.getElementById('le-cycle'), document.getElementById('le-cycle-other')).trim(),
-      WHO: choiceValue(document.getElementById('le-who'), document.getElementById('le-who-other')).trim(),
+      PLACE: document.getElementById('le-place').value.trim(),
+      MEMBERS: document.getElementById('le-members').value.trim(),
       NOTE: document.getElementById('le-note').value.trim(),
       SHOW: document.getElementById('le-show').checked,
     };
@@ -4410,7 +4489,18 @@
     document.getElementById('lc-ok').addEventListener('click', onConfirmOk);
     document.getElementById('le-year').addEventListener('change', syncDue);
     document.getElementById('le-month').addEventListener('change', syncDue);
-    ['le-cycle', 'le-who'].forEach(function (id) {
+    ['le-time-start', 'le-time-end'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', syncTime);
+      document.getElementById(id).addEventListener('change', syncTime);
+    });
+    document.getElementById('le-time-clear').addEventListener('click', function () {
+      document.getElementById('le-time-start').value = '';
+      document.getElementById('le-time-end').value = '';
+      LEDGER_UI.timeKeep = '';
+      document.getElementById('le-time-hint').textContent = '終わりは空でもよいです。';
+      syncTime();
+    });
+    ['le-cycle'].forEach(function (id) {
       document.getElementById(id).addEventListener('change', function () {
         var other = document.getElementById(id + '-other');
         other.hidden = this.value !== '__other';
