@@ -1241,7 +1241,17 @@
   .hb-dots i:nth-child(2) { animation-delay: .2s; } .hb-dots i:nth-child(3) { animation-delay: .4s; }
   @keyframes hbDot { 50% { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .hb-dots i { animation: none; opacity: .8; } }
+  .hb-stale { position: fixed; z-index: 9000; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 8px);
+    max-width: calc(100% - 32px); display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border-radius: 999px;
+    background: var(--card, #1D1D1A); border: 1px solid var(--line, #2C2C27); color: var(--muted, #A09B8E);
+    font-family: "Zen Kaku Gothic New", system-ui, sans-serif; font-size: 12px; line-height: 1.5; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+  .hb-stale[hidden] { display: none; }
+  .hb-stale button { flex: none; min-height: 32px; padding: 0 12px; border-radius: 999px; border: none; background: var(--lime, #C9F158);
+    color: #131311; font-weight: 700; font-size: 12px; font-family: inherit; cursor: pointer; }
+  .hb-stale button[hidden] { display: none; }
+  .hb-load { margin: 18px 0 8px; text-align: center; font-size: 11px; line-height: 1.6; color: var(--muted, #A09B8E); opacity: .7; }
 </style>
+<div class="hb-stale" id="hb-stale" role="status" hidden><span id="hb-stale-text"></span><button id="hb-stale-retry" type="button" hidden>もう一度</button></div>
 <div class="hb" id="hb-setup" hidden>
   <div class="hb-box">
     <img class="hb-icon" src="icon-180.png" alt="">
@@ -1261,7 +1271,68 @@
   </div>
 </div>
 <script>
-  var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', timeoutMs: 90000 };
+  var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
+  // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen'];
+  window.HISHO_STALE = false;
+  var hishoPending = [];
+  var hishoShown = false;   // 画面を一度でも出したか
+  var hishoShownAt = 0;     // 出している内容を受け取った時刻
+  function hishoDay(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  // 前回の内容（この端末の中だけ）。同じ日のものだけ使う（前の日の予定を今日のものと見間違えないように）。
+  // 前の日のもの・形の違うものは、読んだ時点で消す（端末に残しておかない）。
+  // 日付は「取りに行き始めた時刻」で付ける（23:59 に取りに行って 0:00 に届いた前の日の分を、今日の分として残さない）
+  function hishoSaved(v, startedAt) {
+    try {
+      if (v === undefined) {
+        var raw = window.localStorage.getItem(HISHO_PAGES.lastKey);
+        if (!raw) return null;
+        var o = null;
+        try { o = JSON.parse(raw); } catch (e) { o = null; }
+        if (o && o.v === 1 && o.day === hishoDay(new Date()) && o.data && typeof o.data === 'object' && typeof o.at === 'number') return o;
+        window.localStorage.removeItem(HISHO_PAGES.lastKey);
+        return null;
+      }
+      if (v) window.localStorage.setItem(HISHO_PAGES.lastKey, JSON.stringify({ v: 1, day: hishoDay(new Date(startedAt)), at: startedAt, data: v }));
+      else window.localStorage.removeItem(HISHO_PAGES.lastKey);
+    } catch (e) { /* 残せない端末では、毎回「読み込んでいます」から */ }
+    return null;
+  }
+  function hishoHm(t) { var d = new Date(t); return d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function hishoStaleBar(kind, at) {
+    var bar = document.getElementById('hb-stale');
+    if (!kind) { bar.hidden = true; return; }
+    document.getElementById('hb-stale-text').textContent = kind === 'wait'
+      ? hishoHm(at) + ' の内容です。最新にしています…'
+      : hishoHm(at) + ' の内容のままです（最新にできませんでした）';
+    document.getElementById('hb-stale-retry').hidden = kind === 'wait';
+    bar.hidden = false;
+  }
+  // 待たせた操作を、待たせた順に1つずつ送る（前の返事が来てから次）
+  function hishoFlush() {
+    var list = hishoPending;
+    hishoPending = [];
+    var next = function () {
+      var p = list.shift();
+      if (!p) return;
+      hishoCall(p.fn, p.args, function (r) { try { p.ok(r); } finally { next(); } }, function (e) { try { p.ng(e); } finally { next(); } });
+    };
+    next();
+  }
+  // 待たせた操作を取りやめる（合言葉が通らないとき）。それぞれの失敗の知らせを呼ぶ
+  function hishoDropPending() {
+    var list = hishoPending;
+    hishoPending = [];
+    list.forEach(function (p) { try { p.ng(new Error('auth')); } catch (e) { /* 次へ */ } });
+  }
+  // 今日の画面のいちばん下に、読み込みにかかった秒数を小さく出す（中身は入らない）
+  function hishoLoadNote(ms, timing) {
+    var host = document.getElementById('screen-today');
+    if (!host) return;
+    var p = document.getElementById('hb-load');
+    if (!p) { p = document.createElement('p'); p.id = 'hb-load'; p.className = 'hb-load'; host.appendChild(p); }
+    p.textContent = '読み込み ' + (ms / 1000).toFixed(1) + '秒' + (typeof timing === 'string' && timing ? '（' + timing + '）' : '');
+  }
   function hishoToken(v) {
     try {
       if (v === undefined) return window.localStorage.getItem(HISHO_PAGES.key) || '';
@@ -1297,29 +1368,72 @@
       withFailureHandler: function (f) { ng = f; return runner; },
     };
     ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews"].forEach(function (fn) {
-      runner[fn] = function () { hishoCall(fn, Array.prototype.slice.call(arguments), ok, ng); };
+      runner[fn] = function () {
+        var args = Array.prototype.slice.call(arguments);
+        if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
+        else hishoCall(fn, args, ok, ng);
+      };
     });
     return runner;
   } } };
   function hishoNeedToken(message) {
     hishoToken(null); hishoMemToken = '';
+    hishoSaved(null); window.HISHO_STALE = false; hishoDropPending(); hishoStaleBar('');
     document.getElementById('hb-wait').hidden = true;
     document.getElementById('hb-setup').hidden = false;
     document.getElementById('hb-setup-msg').textContent = message || '';
   }
+  // 開くとき: 同じ日に受け取った内容があれば、まずそれを出して（上に「◯時の内容です。最新にしています…」）、裏で最新を受け取ったら描き直す
   function hishoLoad() {
     var wait = document.getElementById('hb-wait');
+    var started = Date.now();
     document.getElementById('hb-setup').hidden = true;
-    wait.hidden = false;
-    document.getElementById('hb-wait-text').textContent = '読み込んでいます';
-    document.getElementById('hb-dots').hidden = false;
-    document.getElementById('hb-retry').hidden = true;
-    hishoCall('page', [], function (data) {
-      DATA = data;
+    var saved = hishoShown ? null : hishoSaved();
+    if (saved) {
+      DATA = saved.data;
+      window.HISHO_STALE = true;
       wait.hidden = true;
-      render();
+      try {
+        render();
+      } catch (e) {
+        // 前の版で残した形などで描けない → 残した内容を消して、いつもの開き方でやり直す
+        hishoSaved(null);
+        window.location.reload();
+        return;
+      }
+      hishoShown = true;
+      hishoShownAt = saved.at;
+    }
+    if (hishoShown) {
+      window.HISHO_STALE = true; // 「もう一度」で読み直すあいだも、書き込みは最新が届いてから
+      hishoStaleBar('wait', hishoShownAt);
+    } else {
+      wait.hidden = false;
+      document.getElementById('hb-wait-text').textContent = '読み込んでいます';
+      document.getElementById('hb-dots').hidden = false;
+      document.getElementById('hb-retry').hidden = true;
+    }
+    hishoCall('page', [], function (data) {
+      var first = !hishoShown;
+      DATA = data;
+      window.HISHO_STALE = false;
+      wait.hidden = true;
+      if (first) render(); else refreshData();
+      hishoShown = true;
+      hishoShownAt = started;
+      hishoSaved(data, started);
+      hishoStaleBar('');
+      hishoLoadNote(Date.now() - started, data && data.timing);
+      hishoFlush(); // 待たせていた操作（返信不要など）を、最新の内容のあとで送る
     }, function (e) {
       if (e && e.message === 'auth') return; // 貼り付ける画面に切り替え済み
+      if (hishoShown) {
+        // 前回の内容は出したまま。待たせていた操作はそのまま送る（どれもアプリ側で今の表を読み直して確かめる）
+        window.HISHO_STALE = false;
+        hishoStaleBar('fail', hishoShownAt);
+        hishoFlush();
+        return;
+      }
       document.getElementById('hb-wait-text').textContent = '読み込めませんでした。電波の良いところで「もう一度」を押してください。';
       document.getElementById('hb-dots').hidden = true;
       document.getElementById('hb-retry').hidden = false;
@@ -1327,6 +1441,7 @@
   }
   function hishoBoot() {
     document.getElementById('hb-retry').addEventListener('click', hishoLoad);
+    document.getElementById('hb-stale-retry').addEventListener('click', hishoLoad);
     document.getElementById('hb-save').addEventListener('click', function () {
       var v = document.getElementById('hb-token').value.replace(/\s+/g, '');
       if (!/^h[0-9a-f]{64}$/.test(v)) {
@@ -2849,6 +2964,8 @@
   function loadAiNote(kind) {
     var box = document.getElementById('ai-note-' + kind);
     if (!box) return;
+    // 新しい画面で前回の内容を先に出しているあいだは呼ばない（最新が届いてから refreshData で呼ぶ）
+    if (window.HISHO_STALE) { box.hidden = true; return; }
     // 直したあとに呼び直したとき、前の返事があとから届いても使わない
     var gen = AI_NOTE_GEN[kind] = (AI_NOTE_GEN[kind] || 0) + 1;
     var preview = DATA.aiPreview && DATA.aiPreview[kind];
@@ -3832,20 +3949,25 @@
     return { kind: 'calm', text: summary ? ('今日は ' + summary + ' です') : 'お手伝いできることがあれば、いつでも' };
   }
 
+  var MOLLY_MOOD = null;
   function setupMolly() {
     var box = document.getElementById('molly');
     if (!MOTION.mascot || !MOTION.iconUri) return;   // 絵が無いときは出さない（枠だけ残さない）
 
     document.getElementById('molly-img').src = MOTION.iconUri;
-    var mood = mollyMood();
+    updateMolly();
+    box.addEventListener('click', function () { if (MOLLY_MOOD) toast(MOLLY_MOOD.text); });
+  }
+
+  /** モリーの様子を今の DATA に合わせる（最新が届いて描き直すときにも呼ぶ） */
+  function updateMolly() {
+    var box = document.getElementById('molly');
+    if (!box || !MOTION.mascot || !MOTION.iconUri) return;
+    var mood = MOLLY_MOOD = mollyMood();
+    Array.prototype.slice.call(box.classList).forEach(function (c) { if (/^is-/.test(c) && c !== 'is-on') box.classList.remove(c); });
     box.classList.add('is-on', 'is-' + mood.kind);
     box.setAttribute('aria-label', 'モリー: ' + mood.text);
-
-    var dot = document.getElementById('molly-dot');
-    if (mood.kind === 'calm') dot.hidden = true;
-    else dot.hidden = false;
-
-    box.addEventListener('click', function () { toast(mood.text); });
+    document.getElementById('molly-dot').hidden = mood.kind === 'calm';
   }
 
   /** カードの中の一覧の行を、順に出す用意をする（この時点では伏せておく） */
@@ -4378,6 +4500,38 @@
     chip.textContent = text;
     chip.classList.toggle('has', !v.stale && v.working > 0 && !v.cached);
     tenjikuRender();
+  }
+
+  /**
+   * 新しい画面で、前回の内容を先に出したあとに最新が届いたときの描き直し（2026-10-16 代表「立ち上がりが遅い」）。
+   * 中身で変わるカードだけを描き直す。タブ・台帳の直す画面・天竺・ニュース・お出迎えは render() で1回だけ用意したものを使う。
+   */
+  function refreshData() {
+    document.getElementById('greeting').textContent = DATA.greeting;
+    document.getElementById('date').textContent = DATA.date;
+    ['body', 'todo-body', 'cases-body', 'weather-body'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) b.textContent = '';
+    });
+    ['count', 'todo-count'].forEach(function (id) {
+      var c = document.getElementById(id);
+      if (c) { c.textContent = ''; c.classList.remove('has'); }
+    });
+    ['todo-card', 'cases-card', 'weather-card', 'mail-card', 'ledger-card'].forEach(function (id) {
+      var card = document.getElementById(id);
+      if (card) card.style.display = '';
+    });
+    renderAgenda();
+    renderTodo();
+    renderCases();
+    renderMail();
+    renderLedger();
+    if (DATA.ledger && DATA.ledger.ok) loadAiNote('ledger');
+    loadAiNote('today');
+    renderWeather();
+    renderHealth();
+    MOTION = DATA.motion || { show: false };
+    updateMolly();
   }
 
   function render() {
