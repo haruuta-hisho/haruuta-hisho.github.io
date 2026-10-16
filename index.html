@@ -1133,6 +1133,44 @@
 
   /* ==== 進言の相談（docs/spec.md 5-25）==== */
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  /* 水曜ランチ（docs/spec.md 5-39） */
+  .lu-list { margin: 6px 0 0; padding: 0; list-style: none; }
+  .lu-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 0; border: none;
+    border-top: 1px solid var(--line); background: transparent; color: var(--text); font-family: inherit; text-align: left; cursor: pointer; }
+  .lu-list li:first-child .lu-row { border-top: none; }
+  .lu-row-main { flex: 1 1 auto; min-width: 0; }
+  .lu-name { display: block; font-size: 15px; line-height: 1.45; }
+  .lu-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+  .lu-good { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: var(--badge-lime-bg); color: var(--badge-lime-fg); font-size: 11px; }
+  .lu-row::after { content: '›'; flex: 0 0 auto; color: var(--weak); font-size: 18px; }
+  .lu-back { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: none; background: none;
+    color: var(--lime); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .lu-title { margin: 4px 0 2px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 22px; line-height: 1.4; }
+  .lu-people { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; }
+  .lu-people button { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--text); font-size: 20px; font-family: inherit; cursor: pointer; }
+  .lu-people b { min-width: 64px; text-align: center; font-size: 18px; }
+  .lu-base { font-size: 12px; color: var(--muted); }
+  .lu-h { margin: 16px 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .lu-ings { margin: 0; padding: 0; list-style: none; }
+  .lu-ings li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .lu-ings li:first-child { border-top: none; }
+  .lu-ings .q { flex: 0 0 auto; color: var(--text-soft); text-align: right; }
+  .lu-steps { margin: 0; padding-left: 1.4em; font-size: 14px; line-height: 1.75; color: var(--text-soft); }
+  .lu-steps li { margin: 0 0 6px; }
+  .lu-memo { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+  .lu-form { margin: 14px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); display: grid; gap: 10px; }
+  .lu-form label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .lu-form input, .lu-form textarea { min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-family: inherit; font-size: 16px; box-sizing: border-box; width: 100%; }
+  .lu-react { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lu-react button { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .lu-react button.on { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .lu-hist { margin: 6px 0 0; padding: 0; list-style: none; }
+  .lu-hist li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
+  .lu-hist li:first-child { border-top: none; }
+  .lu-hist .meta { display: block; font-size: 12px; color: var(--muted); }
   .adv-hero { padding: 4px 2px 14px; }
   .adv-hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--lime); }
   .adv-hero-title { margin: 6px 0 4px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 24px; color: var(--text); }
@@ -1308,7 +1346,7 @@
 <script>
   var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
   // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
-  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen'];
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch'];
   window.HISHO_STALE = false;
   var hishoPending = [];
   var hishoShown = false;   // 画面を一度でも出したか
@@ -1402,7 +1440,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -1694,6 +1732,25 @@
   </div><!-- /screen-ledger -->
 
   <!-- 進言の相談（docs/spec.md 5-25）。押したときだけ adviceAsk を呼ぶ。最近の相談は画面を出したときに adviceRecent で読む -->
+  <!-- 水曜ランチ（docs/spec.md 5-39）。タブを開いたときに lunchFetch で読む -->
+  <div class="screen" id="screen-lunch" hidden>
+    <section class="adv-hero stagger">
+      <h2 class="adv-hero-title">水曜ランチ</h2>
+      <p class="adv-hero-lead">しばらく作っていない順に並べています。レシピを足すときは、リンク・写真・メモを Claude に渡してください。</p>
+    </section>
+    <section class="card" id="lunch-card">
+      <div class="card-head">
+        <h2 class="card-title" id="lunch-card-title">レシピ</h2>
+        <span class="count-chip" id="lunch-count"></span>
+      </div>
+      <div id="lunch-body"><p class="empty">読み込んでいます…</p></div>
+    </section>
+    <section class="card" id="lunch-hist-card" hidden>
+      <div class="card-head"><h2 class="card-title">作った記録</h2></div>
+      <div id="lunch-hist-body"></div>
+    </section>
+  </div>
+
   <div class="screen" id="screen-advice" hidden>
     <section class="adv-hero stagger">
       <div class="adv-hero-eyebrow">ADVISOR</div>
@@ -1885,8 +1942,8 @@
   }
 
   // タブと画面の対応。ここに無いタブは、押しても「これから作ります」と出るだけ
-  var SCREEN_OF = { today: 'screen-today', ledger: 'screen-ledger', advice: 'screen-advice' };
-  var EYEBROW_OF = { today: 'TODAY', ledger: 'LEDGER', advice: 'ADVICE' };
+  var SCREEN_OF = { today: 'screen-today', ledger: 'screen-ledger', lunch: 'screen-lunch', advice: 'screen-advice' };
+  var EYEBROW_OF = { today: 'TODAY', ledger: 'LEDGER', lunch: 'LUNCH', advice: 'ADVICE' };
 
   // 画面を1つだけ出す。ヘッダーの小さい文字（TODAY など）も合わせて替える
   function showScreen(key) {
@@ -1898,6 +1955,284 @@
     if (eyebrow && EYEBROW_OF[key]) eyebrow.textContent = EYEBROW_OF[key];
     window.scrollTo(0, 0);
     if (key === 'advice') setupAdvice();
+    if (key === 'lunch') setupLunch();
+  }
+
+  // ==== 水曜ランチ（docs/spec.md 5-39）====
+  var LUNCH_UI = { loaded: false, loading: false, open: '', people: 0, recording: false, reaction: '', busy: false, undoTimer: null };
+
+  function setupLunch() {
+    if (LUNCH_UI.loaded || LUNCH_UI.loading) return;
+    // 見本づくり用（本番の webapp.js は渡さない）
+    if (DATA.lunchPreview) {
+      DATA.lunch = DATA.lunchPreview;
+      LUNCH_UI.loaded = true;
+      if (DATA.lunchOpenPreview) { LUNCH_UI.open = DATA.lunchOpenPreview; LUNCH_UI.people = DATA.lunch.defaultPeople; }
+      renderLunch();
+      return;
+    }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    LUNCH_UI.loading = true;
+    google.script.run
+      .withSuccessHandler(function (r) { LUNCH_UI.loading = false; LUNCH_UI.loaded = !!(r && r.ok); DATA.lunch = r; renderLunch(); })
+      .withFailureHandler(function () { LUNCH_UI.loading = false; DATA.lunch = { ok: false, errorText: 'つながりませんでした。タブを押し直してください。' }; renderLunch(); })
+      .lunchFetch();
+  }
+
+  function lunchRecipe(id) {
+    var list = (DATA.lunch && DATA.lunch.recipes) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  function renderLunch() {
+    var body = document.getElementById('lunch-body');
+    var chip = document.getElementById('lunch-count');
+    var title = document.getElementById('lunch-card-title');
+    var v = DATA.lunch;
+    body.textContent = '';
+    chip.textContent = '';
+    if (!v || !v.ok) { body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); renderLunchHistory(); return; }
+    var r = LUNCH_UI.open ? lunchRecipe(LUNCH_UI.open) : null;
+    if (r) { title.textContent = 'レシピ'; renderLunchDetail(body, r, v); renderLunchHistory(); return; }
+    LUNCH_UI.open = '';
+    title.textContent = 'レシピ';
+    chip.textContent = v.recipes.length + '品';
+    if (!v.recipes.length) { body.appendChild(el('p', 'empty', v.emptyMessage)); renderLunchHistory(); return; }
+    var ul = el('ul', 'lu-list');
+    v.recipes.forEach(function (rc) {
+      var li = el('li', '');
+      var b = el('button', 'lu-row');
+      b.type = 'button';
+      b.setAttribute('data-recipe', rc.id);
+      var main = el('span', 'lu-row-main');
+      main.appendChild(el('span', 'lu-name', rc.name));
+      main.appendChild(el('span', 'lu-sub', rc.lastText ? '前回 ' + rc.lastText + '・' + rc.count + '回' : 'まだ作っていない'));
+      b.appendChild(main);
+      if (rc.good > 0) b.appendChild(el('span', 'lu-good', '好評 ' + rc.good));
+      b.addEventListener('click', function () {
+        LUNCH_UI.open = rc.id; LUNCH_UI.people = v.defaultPeople || rc.serves; LUNCH_UI.recording = false; LUNCH_UI.reaction = '';
+        renderLunch(); window.scrollTo(0, 0);
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    renderLunchHistory();
+  }
+
+  function renderLunchHistory() {
+    var card = document.getElementById('lunch-hist-card');
+    var body = document.getElementById('lunch-hist-body');
+    var v = DATA.lunch;
+    body.textContent = '';
+    if (!v || !v.ok || !v.history || !v.history.length) { card.hidden = true; return; }
+    card.hidden = false;
+    var ul = el('ul', 'lu-hist');
+    v.history.forEach(function (h) {
+      var li = el('li', '', h.dateText + '　' + h.menu + (h.reactionLabel ? '（' + h.reactionLabel + '）' : ''));
+      var meta = [];
+      if (h.people) meta.push(h.people + '人');
+      if (h.cost !== null && h.cost !== undefined) meta.push(h.cost.toLocaleString('ja-JP') + '円');
+      if (h.memo) meta.push(h.memo);
+      if (meta.length) li.appendChild(el('span', 'meta', meta.join('・')));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if (v.historyTotal > v.history.length) body.appendChild(el('p', 'overflow', 'ほか ' + (v.historyTotal - v.history.length) + '件'));
+  }
+
+  // 分量を人数に合わせて直す（日本式の計り方。大さじ・小さじ・個・本などは 0.5 刻みで、0.25 に満たなければ「少し」。
+  // g・ml は 100 以上で 10 刻み、10 以上で整数、1 未満は小数第2位まで（0 と出さない））
+  var LUNCH_COUNT_UNITS = ['個', '本', '袋', '枚', '玉', '丁', 'パック', '缶', '株', '束', '切れ', 'かけ', '片', '房', '尾', '杯'];
+  function lunchQtyText(g, people, serves) {
+    if (typeof g.qty !== 'number') return g.note || '';
+    var q = g.qty * people / serves;
+    var unit = g.unit || '';
+    var half = function (x) { return Math.max(0.5, Math.round(x * 2) / 2); };
+    var num = function (x) { return x >= 1 ? String(Math.round(x * 10) / 10) : String(Math.max(0.01, Math.round(x * 100) / 100)); };
+    var out;
+    if (/^(大さじ|小さじ|カップ)/.test(unit)) out = q < 0.25 ? unit + ' 少し' : unit + ' ' + num(half(q));
+    else if (LUNCH_COUNT_UNITS.indexOf(unit) >= 0) out = q < 0.25 ? '少し（' + unit + '）' : num(half(q)) + unit;
+    else if (/^(g|ml|cc|グラム|ミリリットル)$/i.test(unit)) out = (q >= 100 ? String(Math.round(q / 10) * 10) : q >= 10 ? String(Math.round(q)) : num(q)) + unit;
+    else out = num(q) + unit;
+    return out + (g.note ? '（' + g.note + '）' : '');
+  }
+
+  function renderLunchDetail(body, r, v) {
+    var back = el('button', 'lu-back', '‹ レシピの一覧へ');
+    back.type = 'button';
+    back.id = 'lunch-back';
+    back.addEventListener('click', function () { LUNCH_UI.open = ''; renderLunch(); window.scrollTo(0, 0); });
+    body.appendChild(back);
+    body.appendChild(el('h3', 'lu-title', r.name));
+    body.appendChild(el('span', 'lu-sub', r.lastText ? '前回 ' + r.lastText + '・' + r.count + '回作った' + (r.good ? '・好評 ' + r.good : '') : 'まだ作っていない'));
+    var people = LUNCH_UI.people || v.defaultPeople || r.serves;
+    var row = el('div', 'lu-people');
+    var minus = el('button', '', '−');
+    minus.type = 'button';
+    minus.id = 'lunch-minus';
+    minus.setAttribute('aria-label', '1人減らす');
+    minus.addEventListener('click', function () { LUNCH_UI.people = Math.max(1, people - 1); renderLunch(); });
+    var plus = el('button', '', '＋');
+    plus.type = 'button';
+    plus.id = 'lunch-plus';
+    plus.setAttribute('aria-label', '1人増やす');
+    plus.addEventListener('click', function () { LUNCH_UI.people = Math.min(100, people + 1); renderLunch(); });
+    var shown = el('b', '', people + '人分');
+    shown.id = 'lunch-people';
+    row.appendChild(minus);
+    row.appendChild(shown);
+    row.appendChild(plus);
+    row.appendChild(el('span', 'lu-base', '（元は ' + r.serves + '人分）'));
+    body.appendChild(row);
+    body.appendChild(el('p', 'lu-h', '材料'));
+    var ings = el('ul', 'lu-ings');
+    r.ingredients.forEach(function (g) {
+      var li = el('li', '');
+      li.appendChild(el('span', '', g.name));
+      li.appendChild(el('span', 'q', lunchQtyText(g, people, r.serves)));
+      ings.appendChild(li);
+    });
+    body.appendChild(ings);
+    if (r.steps.length) {
+      body.appendChild(el('p', 'lu-h', '作り方'));
+      var ol = el('ol', 'lu-steps');
+      r.steps.forEach(function (s) { ol.appendChild(el('li', '', s)); });
+      body.appendChild(ol);
+    }
+    if (r.memo) { body.appendChild(el('p', 'lu-h', 'メモ')); body.appendChild(el('p', 'lu-memo', r.memo)); }
+    if (r.source) {
+      var a = el('a', 'todo-link', 'もとのレシピを開く');
+      a.href = r.source;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      body.appendChild(a);
+    }
+    if (!LUNCH_UI.recording) {
+      var rec = el('button', 'todo-add', '＋ 作った記録を付ける');
+      rec.type = 'button';
+      rec.id = 'lunch-record';
+      rec.addEventListener('click', function () { LUNCH_UI.recording = true; renderLunch(); });
+      body.appendChild(rec);
+      return;
+    }
+    var form = el('div', 'lu-form');
+    var field = function (label, input) { var l = el('label', '', label); l.appendChild(input); form.appendChild(l); return input; };
+    var date = el('input', '');
+    date.type = 'date';
+    date.id = 'lunch-date';
+    date.value = v.defaultDate;
+    field('作った日', date);
+    var ppl = el('input', '');
+    ppl.type = 'number';
+    ppl.id = 'lunch-ppl';
+    ppl.inputMode = 'numeric';
+    ppl.min = '1';
+    ppl.max = '200';
+    ppl.value = String(people);
+    field('人数', ppl);
+    var cost = el('input', '');
+    cost.type = 'number';
+    cost.id = 'lunch-cost';
+    cost.inputMode = 'numeric';
+    cost.min = '0';
+    cost.placeholder = '例: 5400（空でも大丈夫）';
+    field('材料費（円）', cost);
+    var react = el('div', 'lu-react');
+    (v.reactions || []).forEach(function (x) {
+      var b = el('button', x.key === LUNCH_UI.reaction ? 'on' : '', x.label);
+      b.type = 'button';
+      b.setAttribute('data-react', x.key);
+      b.setAttribute('aria-pressed', x.key === LUNCH_UI.reaction ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        LUNCH_UI.reaction = LUNCH_UI.reaction === x.key ? '' : x.key;
+        var all = react.querySelectorAll('button');
+        for (var i = 0; i < all.length; i++) {
+          var on = all[i].getAttribute('data-react') === LUNCH_UI.reaction;
+          all[i].classList.toggle('on', on);
+          all[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+      });
+      react.appendChild(b);
+    });
+    var rl = el('div', '');
+    rl.appendChild(el('span', 'lu-sub', '評判'));
+    rl.appendChild(react);
+    form.appendChild(rl);
+    var memo = el('textarea', '');
+    memo.id = 'lunch-memo';
+    memo.rows = 2;
+    memo.maxLength = 300;
+    field('メモ', memo);
+    var actions = el('div', 'todo-form-actions');
+    var cancel = el('button', '', 'やめる');
+    cancel.type = 'button';
+    cancel.id = 'lunch-cancel';
+    cancel.addEventListener('click', function () { LUNCH_UI.recording = false; renderLunch(); });
+    var save = el('button', 'go', '記録する');
+    save.type = 'button';
+    save.id = 'lunch-save';
+    save.addEventListener('click', function () {
+      lunchSaveTap({ recipeId: r.id, date: date.value, people: ppl.value === '' ? '' : Number(ppl.value),
+        cost: cost.value === '' ? '' : Number(cost.value), reaction: LUNCH_UI.reaction, memo: memo.value }, save, r.name);
+    });
+    actions.appendChild(cancel);
+    actions.appendChild(save);
+    form.appendChild(actions);
+    body.appendChild(form);
+  }
+
+  function lunchCall(fn, arg, onOk, onFail) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); onFail(); return; }
+    LUNCH_UI.busy = true;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        LUNCH_UI.busy = false;
+        if (r && r.lunch) DATA.lunch = r.lunch;
+        if (!r || !r.ok) { toast((r && r.message) || 'できませんでした。もう一度押してください。'); onFail(); return; }
+        onOk(r);
+      })
+      .withFailureHandler(function () { LUNCH_UI.busy = false; toast('つながりませんでした。もう一度押してください。'); onFail(); })[fn](arg);
+  }
+
+  function lunchSaveTap(input, btn, name) {
+    if (LUNCH_UI.busy) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    lunchCall('lunchRecord', input, function (r) {
+      LUNCH_UI.recording = false;
+      LUNCH_UI.reaction = '';
+      renderLunch();
+      lunchShowUndo('「' + name + '」を記録しました', r.id);
+    }, function () { btn.disabled = false; btn.textContent = '記録する'; });
+  }
+
+  // 記録した直後の「元に戻す」（ほかと同じ帯。8秒で消える）
+  function lunchShowUndo(message, id) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    clearTimeout(MAIL_UI.undoTimer);
+    clearTimeout(TODO_UI.undoTimer);
+    clearTimeout(LUNCH_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled || LUNCH_UI.busy) return;
+      clearTimeout(LUNCH_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      lunchCall('lunchRecordDelete', { id: id }, function () { bar.hidden = true; renderLunch(); toast('記録を消しました'); }, function () {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        LUNCH_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+      });
+    };
+    bar.hidden = false;
+    LUNCH_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
   function renderNav() {
@@ -2511,6 +2846,7 @@
     clearTimeout(LEDGER_UI.undoTimer);
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
+    clearTimeout(LUNCH_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -2804,6 +3140,7 @@
     clearTimeout(LEDGER_UI.undoTimer);
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
+    clearTimeout(LUNCH_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -3767,6 +4104,7 @@
     clearTimeout(LEDGER_UI.undoTimer);
     if (typeof MAIL_UI !== 'undefined' && MAIL_UI) clearTimeout(MAIL_UI.undoTimer); // 返信不要の帯の残り時間で、台帳の帯を消さない
     if (typeof TODO_UI !== 'undefined' && TODO_UI) clearTimeout(TODO_UI.undoTimer); // やることの帯も同じ
+    if (typeof LUNCH_UI !== 'undefined' && LUNCH_UI) clearTimeout(LUNCH_UI.undoTimer); // ランチの帯も同じ
     document.getElementById('undo-text').textContent = message;
     var showMs = (undo && undo.showMs) || 4000;
     var hideLater = function () {
