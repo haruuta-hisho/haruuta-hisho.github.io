@@ -1167,6 +1167,24 @@
   .lu-react button { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
     color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; }
   .lu-react button.on { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .lu-modes { display: flex; gap: 8px; margin: 0 0 10px; }
+  .lu-modes button { flex: 1 1 0; min-height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .lu-modes button.on { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .lu-ask textarea { width: 100%; min-height: 88px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); box-sizing: border-box;
+    background: var(--bg); color: var(--text); font-family: inherit; font-size: 16px; line-height: 1.6; resize: vertical; }
+  .lu-ask .go { display: block; width: 100%; min-height: 48px; margin: 10px 0 0; border-radius: 999px; border: none; background: var(--lime);
+    color: #131311; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
+  .lu-ask .go:disabled { opacity: .6; cursor: default; }
+  .lu-ask-note { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .lu-draft { margin: 14px 0 0; padding: 12px; border: 1px solid var(--lime); border-radius: 14px; }
+  .lu-draft .lu-title { font-size: 19px; }
+  .lu-draft-comment { margin: 6px 0 0; font-size: 13px; color: var(--lime); line-height: 1.6; }
+  .lu-refine { display: flex; gap: 8px; margin: 12px 0 0; }
+  .lu-refine input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font-family: inherit; font-size: 16px; }
+  .lu-refine button { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lime); background: transparent;
+    color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer; }
   .lu-hist { margin: 6px 0 0; padding: 0; list-style: none; }
   .lu-hist li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
   .lu-hist li:first-child { border-top: none; }
@@ -1440,7 +1458,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -1736,7 +1754,11 @@
   <div class="screen" id="screen-lunch" hidden>
     <section class="adv-hero stagger">
       <h2 class="adv-hero-title">水曜ランチ</h2>
-      <p class="adv-hero-lead">しばらく作っていない順に並べています。レシピを足すときは、リンク・写真・メモを Claude に渡してください。</p>
+      <p class="adv-hero-lead">レシピはしばらく作っていない順。足すときは、下で Claude に聞くか、Claude のアプリで作った返事を貼ってください。</p>
+    </section>
+    <section class="card" id="lunch-ask-card" hidden>
+      <div class="card-head"><h2 class="card-title">Claude に聞いて作る</h2></div>
+      <div id="lunch-ask-body"></div>
     </section>
     <section class="card" id="lunch-card">
       <div class="card-head">
@@ -1959,7 +1981,8 @@
   }
 
   // ==== 水曜ランチ（docs/spec.md 5-39）====
-  var LUNCH_UI = { loaded: false, loading: false, open: '', people: 0, recording: false, reaction: '', busy: false, undoTimer: null };
+  var LUNCH_UI = { loaded: false, loading: false, open: '', people: 0, recording: false, reaction: '', busy: false, undoTimer: null,
+    mode: 'ask', askText: '', asking: false, draft: null, draftId: '', comment: '', unmatched: [], costYen: null, left: null, refine: '' };
 
   function setupLunch() {
     if (LUNCH_UI.loaded || LUNCH_UI.loading) return;
@@ -1992,8 +2015,9 @@
     var v = DATA.lunch;
     body.textContent = '';
     chip.textContent = '';
-    if (!v || !v.ok) { body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); renderLunchHistory(); return; }
+    if (!v || !v.ok) { renderLunchAsk(false); body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); renderLunchHistory(); return; }
     var r = LUNCH_UI.open ? lunchRecipe(LUNCH_UI.open) : null;
+    renderLunchAsk(!r && v.ai);
     if (r) { title.textContent = 'レシピ'; renderLunchDetail(body, r, v); renderLunchHistory(); return; }
     LUNCH_UI.open = '';
     title.textContent = 'レシピ';
@@ -2019,6 +2043,142 @@
     });
     body.appendChild(ul);
     renderLunchHistory();
+  }
+
+  // Claude に聞いて作る・返事を貼って整える（docs/spec.md 5-40）
+  function renderLunchAsk(show) {
+    var card = document.getElementById('lunch-ask-card');
+    var body = document.getElementById('lunch-ask-body');
+    body.textContent = '';
+    card.hidden = !show;
+    if (!show) return;
+    var box = el('div', 'lu-ask');
+    var modes = el('div', 'lu-modes');
+    [{ key: 'ask', label: 'Claude に聞く' }, { key: 'paste', label: '返事を貼る' }].forEach(function (m) {
+      var b = el('button', m.key === LUNCH_UI.mode ? 'on' : '', m.label);
+      b.type = 'button';
+      b.setAttribute('data-mode', m.key);
+      b.setAttribute('aria-pressed', m.key === LUNCH_UI.mode ? 'true' : 'false');
+      b.addEventListener('click', function () { if (LUNCH_UI.asking) return; LUNCH_UI.mode = m.key; renderLunch(); });
+      modes.appendChild(b);
+    });
+    box.appendChild(modes);
+    var ta = el('textarea', '');
+    ta.id = 'lunch-ask-text';
+    ta.setAttribute('aria-label', LUNCH_UI.mode === 'ask' ? '作りたいもの' : '貼る返事');
+    ta.placeholder = LUNCH_UI.mode === 'ask'
+      ? '例: 秋らしい鶏肉のおかず。材料費5000円くらい'
+      : 'Claude のアプリで作ったレシピの返事を、ここに貼り付けます';
+    ta.value = LUNCH_UI.askText;
+    ta.addEventListener('input', function () { LUNCH_UI.askText = ta.value; });
+    box.appendChild(ta);
+    var go = el('button', 'go', LUNCH_UI.asking ? (LUNCH_UI.mode === 'ask' ? '考えています…（30秒ほど）' : '整えています…') : (LUNCH_UI.mode === 'ask' ? '聞く' : '整える'));
+    go.type = 'button';
+    go.id = 'lunch-ask-go';
+    go.disabled = LUNCH_UI.asking;
+    go.addEventListener('click', function () { lunchAskTap(LUNCH_UI.mode, ta.value, null); });
+    box.appendChild(go);
+    var note = LUNCH_UI.mode === 'ask' ? '押したときだけ Claude に聞きます。ふつう1回 約2〜3円（長い返事ではもう少し）。' : '押したときだけ Claude が整えます。ふつう1回 約1円。';
+    if (LUNCH_UI.left !== null) note += '今日はあと ' + LUNCH_UI.left + '回。';
+    box.appendChild(el('p', 'lu-ask-note', note));
+    if (LUNCH_UI.draft) box.appendChild(lunchDraftView());
+    body.appendChild(box);
+  }
+
+  function lunchDraftView() {
+    var d = LUNCH_UI.draft;
+    var wrap = el('div', 'lu-draft');
+    wrap.id = 'lunch-draft';
+    wrap.appendChild(el('h3', 'lu-title', d.name));
+    wrap.appendChild(el('span', 'lu-sub', d.serves + '人分' + (LUNCH_UI.costYen !== null ? '・この案は約 ' + LUNCH_UI.costYen + '円' : '')));
+    if (LUNCH_UI.comment) wrap.appendChild(el('p', 'lu-draft-comment', LUNCH_UI.comment));
+    if (LUNCH_UI.unmatched && LUNCH_UI.unmatched.length) {
+      wrap.appendChild(el('p', 'error', '貼った文に見当たらない材料があります: ' + LUNCH_UI.unmatched.join('、') + '。保存の前に材料と分量を確かめてください。'));
+    }
+    wrap.appendChild(el('p', 'lu-h', '材料'));
+    var ings = el('ul', 'lu-ings');
+    d.ingredients.forEach(function (g) {
+      var li = el('li', '');
+      li.appendChild(el('span', '', g.name));
+      li.appendChild(el('span', 'q', lunchQtyText(g, d.serves, d.serves)));
+      ings.appendChild(li);
+    });
+    wrap.appendChild(ings);
+    wrap.appendChild(el('p', 'lu-h', '作り方'));
+    var ol = el('ol', 'lu-steps');
+    d.steps.forEach(function (s) { ol.appendChild(el('li', '', s)); });
+    wrap.appendChild(ol);
+    if (d.memo) { wrap.appendChild(el('p', 'lu-h', 'メモ')); wrap.appendChild(el('p', 'lu-memo', d.memo)); }
+    var actions = el('div', 'todo-form-actions');
+    var cancel = el('button', '', 'やめる');
+    cancel.type = 'button';
+    cancel.id = 'lunch-draft-cancel';
+    cancel.addEventListener('click', function () { LUNCH_UI.draft = null; LUNCH_UI.comment = ''; renderLunch(); });
+    var save = el('button', 'go', '保存');
+    save.type = 'button';
+    save.id = 'lunch-draft-save';
+    save.addEventListener('click', function () { lunchDraftSaveTap(save); });
+    actions.appendChild(cancel);
+    actions.appendChild(save);
+    wrap.appendChild(actions);
+    var refine = el('div', 'lu-refine');
+    var inp = el('input', '');
+    inp.type = 'text';
+    inp.id = 'lunch-refine';
+    inp.placeholder = '例: もう少し安く・魚にして';
+    inp.setAttribute('aria-label', '直してほしいこと');
+    inp.value = LUNCH_UI.refine;
+    inp.addEventListener('input', function () { LUNCH_UI.refine = inp.value; });
+    var again = el('button', '', '聞き直す');
+    again.type = 'button';
+    again.id = 'lunch-refine-go';
+    again.addEventListener('click', function () {
+      if (!inp.value.trim()) { toast('直してほしいことを書いてください'); return; }
+      lunchAskTap('ask', inp.value, LUNCH_UI.draftId);
+    });
+    refine.appendChild(inp);
+    refine.appendChild(again);
+    wrap.appendChild(refine);
+    return wrap;
+  }
+
+  function lunchAskTap(mode, text, baseId) {
+    if (LUNCH_UI.asking || LUNCH_UI.busy) return;
+    if (String(text || '').trim().length < 2) { toast(mode === 'ask' ? '何を作りたいかを書いてください' : '返事を貼り付けてください'); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので聞きません'); return; }
+    LUNCH_UI.asking = true;
+    renderLunch();
+    google.script.run
+      .withSuccessHandler(function (r) {
+        LUNCH_UI.asking = false;
+        if (r && typeof r.left === 'number') LUNCH_UI.left = r.left;
+        if (!r || !r.ok) { renderLunch(); toast((r && r.message) || '聞けませんでした。もう一度押してください。'); return; }
+        LUNCH_UI.draft = r.draft;
+        LUNCH_UI.draftId = r.draftId || '';
+        LUNCH_UI.unmatched = r.unmatched || [];
+        LUNCH_UI.comment = r.comment || '';
+        LUNCH_UI.costYen = typeof r.costYen === 'number' ? r.costYen : null;
+        LUNCH_UI.refine = '';
+        renderLunch();
+        var d = document.getElementById('lunch-draft');
+        if (d && d.scrollIntoView) d.scrollIntoView({ block: 'start' });
+      })
+      .withFailureHandler(function () { LUNCH_UI.asking = false; renderLunch(); toast('つながりませんでした。もう一度押してください。'); })
+      .lunchAsk({ mode: mode, text: text, baseId: baseId || '' });
+  }
+
+  function lunchDraftSaveTap(btn) {
+    if (LUNCH_UI.busy || !LUNCH_UI.draft) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    var name = LUNCH_UI.draft.name;
+    lunchCall('lunchSaveDraft', { draftId: LUNCH_UI.draftId }, function () {
+      LUNCH_UI.draft = null;
+      LUNCH_UI.comment = '';
+      LUNCH_UI.askText = '';
+      renderLunch();
+      toast('「' + name + '」を保存しました');
+    }, function () { btn.disabled = false; btn.textContent = '保存'; });
   }
 
   function renderLunchHistory() {
