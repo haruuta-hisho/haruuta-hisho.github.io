@@ -687,6 +687,12 @@
   .alert-name { font-weight: 700; font-size: 14px; line-height: 1.45; }
   .alert-towns { font-size: 12px; line-height: 1.5; opacity: .9; overflow-wrap: anywhere; }
   .alert-none { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+  /* 災害の情報（警報級の可能性・熱中症・台風。docs/spec.md 5-42） */
+  .dis-block { margin: 0 0 10px; }
+  .dis-block .alerts { margin-bottom: 6px; }
+  .dis-none { margin: 0 0 6px; font-size: 13px; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+  .dis-other { margin: 0 0 6px; font-size: 12px; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+  .dis-links { display: flex; flex-wrap: wrap; gap: 0 14px; }
   .alert-link {
     display: inline-flex; align-items: center; min-height: 44px; color: var(--lime); font-size: 13px; text-decoration: none;
   }
@@ -3077,6 +3083,8 @@
     if (!m.items.length) {
       body.appendChild(el('p', 'empty', '要対応のメールはありません。'));
       renderMailSkipped(body, m); // 全部を返信不要にしても、ここから戻せる
+      // 一覧が空でも、橋渡しが最後に取り込んだ時刻を出す（止まっていても気づけるように。spec 5-41）
+      if (m.updatedText) body.appendChild(el('p', 'card-note', m.updatedText + ' に取り込み'));
       return;
     }
 
@@ -3089,7 +3097,7 @@
     if (m.overflow > 0) body.appendChild(el('p', 'overflow', 'ほか ' + m.overflow + '件'));
     renderMailSkipped(body, m);
     body.appendChild(el('p', 'card-note',
-      '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' 時点）' : '')));
+      '未読と、3日以内に届いてまだ返していないものです' + (m.updatedText ? '（' + m.updatedText + ' に取り込み）' : '')));
   }
 
   // 要対応メールの1行。skipped は「返信不要にしたもの」の行（右のボタンが「戻す」になる）
@@ -4487,6 +4495,8 @@
 
     // 警報・注意報は予報が読めなくても出す（一番上。5-32）
     renderAlerts(body, w.alerts);
+    // その下に災害の情報（警報級の可能性・熱中症・台風。5-42）
+    renderDisaster(body, w.disaster);
 
     if (!w.ok) {
       body.appendChild(el('p', 'error', w.errorText));
@@ -4515,6 +4525,78 @@
 
     body.appendChild(el('p', 'card-note', w.noteText));
     if (w.alerts && w.alerts.noteText) body.appendChild(el('p', 'card-note', w.alerts.noteText));
+    var d = w.disaster;
+    if (d) {
+      [d.prob, d.heat, d.typhoon].forEach(function (p) {
+        if (p && p.ok && p.noteText) body.appendChild(el('p', 'card-note', p.noteText));
+      });
+    }
+  }
+
+  /**
+   * 災害の情報（5-42）。出ているもの（熱中症・台風・警報級の可能性）を色つきの行で上に、
+   * 出ていないものは1行の「なし」にまとめる。読めなかったものは赤い一言。出どころへのリンクを付ける。
+   */
+  function renderDisaster(body, d) {
+    if (!d) return;
+    var box = el('div', 'dis-block');
+    var parts = [
+      { v: d.typhoon, link: '気象庁の台風情報', none: '台風なし' },
+      { v: d.heat, link: '環境省の熱中症警戒アラート', none: '熱中症警戒アラートなし' },
+      { v: d.prob, link: '気象庁の警報級の可能性', none: '警報級の可能性なし' },
+    ];
+    var rows = [];
+    var nones = [];
+    var links = [];
+    parts.forEach(function (p) {
+      var v = p.v;
+      if (!v) return;
+      if (!v.ok) {
+        box.appendChild(el('p', 'error', v.errorText));
+        if (v.url) links.push({ text: p.link, url: v.url });
+        return;
+      }
+      if (v.season === false) return; // 熱中症は運用期間の外なら何も出さない
+      (v.items || []).forEach(function (it) { rows.push(it); });
+      if (!(v.items || []).length) nones.push(v === d.typhoon && (v.others || []).length ? '' : p.none);
+      if ((v.items || []).length || (v.others || []).length || v === d.heat) links.push({ text: p.link, url: v.url });
+    });
+    if (rows.length) {
+      var ul = el('ul', 'alerts');
+      rows.forEach(function (it) {
+        var li = el('li', 'alert-row lv' + (Number(it.level) || 20));
+        li.appendChild(el('div', 'alert-name', it.name));
+        if (it.when) li.appendChild(el('div', 'alert-towns', it.when));
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    if (d.typhoon && d.typhoon.ok) (d.typhoon.others || []).forEach(function (t) { box.appendChild(el('p', 'dis-other', t)); });
+    nones = nones.filter(function (n) { return n; });
+    if (nones.length) box.appendChild(el('p', 'dis-none', nones.join('・') + '（福岡）'));
+    if (links.length) {
+      var lw = el('div', 'dis-links');
+      links.forEach(function (l) {
+        if (!l.url) return;
+        var a = el('a', 'alert-link', l.text);
+        a.href = l.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        lw.appendChild(a);
+      });
+      box.appendChild(lw);
+    }
+    if (box.childNodes.length) body.appendChild(box);
+  }
+
+  /** 災害の情報のうち、今日の訪問に関わるもの（台風の接近・今日の熱中症アラート）。無ければ null（5-42） */
+  function disasterUrgent() {
+    var d = DATA.weather && DATA.weather.disaster;
+    if (!d) return null;
+    if (d.typhoon && d.typhoon.ok && d.typhoon.items && d.typhoon.items.length) return '台風が近づくおそれがあります。予定と訪問の段取りを確かめてください';
+    var heat = d.heat && d.heat.ok && d.heat.items ? d.heat.items.filter(function (it) { return /（今日）/.test(it.name); })[0] : null;
+    if (heat) return heat.name.replace(/（今日）/, '') + 'が出ています。訪問の合間の水分と休憩を';
+    return null;
   }
 
   /** 健康診断（5-34）。読めていない・古いものがあるときだけ、今日の画面の一番上に出す */
@@ -4617,6 +4699,8 @@
   function mollyMood() {
     var alert = topAlert();
     if (alert) return { kind: 'urgent', text: alert.name + 'が出ています。訪問の安全を確かめてください' };
+    var dis = disasterUrgent();
+    if (dis) return { kind: 'urgent', text: dis };
     var urgent = 0;
     if (DATA.todo && DATA.todo.ok) urgent += Number(DATA.todo.urgent) || 0;
     if (DATA.mail && DATA.mail.ok) urgent += Number(DATA.mail.unreplied) || 0;
