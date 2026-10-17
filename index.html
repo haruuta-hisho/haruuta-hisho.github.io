@@ -1346,6 +1346,126 @@
   .adv-item-panel { padding: 0 2px 14px; }
   .adv-item-panel[hidden] { display: none; }
   .adv-item-panel .adv-quote { -webkit-line-clamp: unset; display: block; }
+  /* ==== アクアリウム（docs/spec.md 5-55）==== */
+  .aq-hero { padding: 4px 2px 12px; }
+  .aq-hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--lime); }
+  .aq-hero-title { margin: 6px 0 4px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 24px; color: var(--text); }
+  .aq-hero-lead { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .aq-seg .seg-btn { font-size: 13px; letter-spacing: 0; padding: 0 4px; }
+  .aq-pane[hidden] { display: none !important; }
+  .aq-tasks { margin: 8px 0 0; padding: 0; list-style: none; }
+  .aq-task { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .aq-tasks li:first-child .aq-task, .aq-tasks li:first-child.aq-task { border-top: none; }
+  .aq-task-main { flex: 1 1 auto; min-width: 0; }
+  .aq-task-name { display: block; font-size: 15px; line-height: 1.45; }
+  .aq-task-how { display: block; margin-top: 3px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .aq-task.done .aq-task-name { color: var(--weak); text-decoration: line-through; text-decoration-color: var(--weak); }
+  .aq-task.done .aq-task-how { display: none; }
+  .aq-done-btn { flex: 0 0 auto; min-width: 72px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lime);
+    background: transparent; color: var(--lime); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .aq-done-btn:disabled { opacity: .5; cursor: default; }
+  .aq-tag { display: inline-block; margin: 0 0 0 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; vertical-align: 1px; white-space: nowrap; }
+  .aq-tag.red { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .aq-tag.yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .aq-tag.lime { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+  .aq-tag.gray { background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .aq-done-mark { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; color: var(--badge-lime-fg); font-size: 13px; }
+  .aq-done-mark svg { width: 18px; height: 18px; }
+  .aq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 14px; }
+  .aq-stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 14px 12px; min-width: 0; }
+  .aq-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .aq-stat-value { margin: 6px 0 2px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 20px; line-height: 1.25; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+  .aq-stat-value small { font-family: "Zen Kaku Gothic New", sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+  .aq-stat-sub { font-size: 12px; color: var(--muted); }
+  .aq-stat.soon .aq-stat-sub { color: var(--badge-yellow-fg); }
+  .aq-stat.late .aq-stat-sub { color: var(--badge-red-fg); }
+  .aq-stat.warn { border-color: var(--badge-red-fg); }
+  .aq-stat.warn .aq-stat-value { color: var(--badge-red-fg); }
+  .aq-stat.high .aq-stat-value, .aq-stat.low .aq-stat-value { color: var(--badge-yellow-fg); }
+  .aq-wide { grid-column: 1 / -1; }
+  .aq-lives { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 8px 0 0; }
+  .aq-life { font-size: 14px; color: var(--text-soft); }
+  .aq-life b { font-family: "Shippori Mincho B1", serif; font-size: 20px; color: var(--text); margin: 0 2px 0 6px; }
+  .aq-note { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.7; background: var(--badge-lime-bg); color: var(--text-soft); }
+  .aq-note.warn { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .aq-note.high, .aq-note.low, .aq-note.sign { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .aq-alert { margin: 0 0 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--badge-yellow-fg); background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); font-size: 13px; line-height: 1.7; }
+  .aq-alert b { color: var(--text); }
+  .aq-alert button { margin: 10px 0 0; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--badge-yellow-fg); background: transparent;
+    color: var(--badge-yellow-fg); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .aq-info { margin: 6px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; font-size: 13px; line-height: 1.6; }
+  .aq-info dt { color: var(--muted); }
+  .aq-info dd { margin: 0; color: var(--text-soft); min-width: 0; overflow-wrap: anywhere; }
+  .aq-sched { margin: 8px 0 0; padding: 0; list-style: none; }
+  .aq-sched li { padding: 12px 0; border-top: 1px solid var(--line); }
+  .aq-sched li:first-child { border-top: none; }
+  .aq-sched-name { font-size: 15px; line-height: 1.45; }
+  .aq-sched-rule { margin: 3px 0 0; font-size: 12px; color: var(--lime); }
+  .aq-sched-rule.bad { color: var(--badge-red-fg); }
+  .aq-sched-how { margin: 4px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .aq-dates { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+  .aq-date { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--text-soft); white-space: nowrap; }
+  .aq-date:first-child { border-color: var(--lime); color: var(--lime); }
+  .aq-sched li.off { opacity: .55; }
+  .aq-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin: 10px 0 0; }
+  .aq-quick button { min-height: 48px; padding: 0 6px; line-height: 1.3; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--text-soft);
+    font-family: inherit; font-size: 14px; cursor: pointer; }
+  .aq-quick button.on { background: var(--lime); border-color: var(--lime); color: var(--on-lime); font-weight: 700; }
+  .aq-form { margin: 14px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); display: grid; gap: 12px; }
+  .aq-form label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .aq-form input, .aq-form textarea { min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
+    color: var(--text); font-family: inherit; font-size: 16px; box-sizing: border-box; width: 100%; }
+  .aq-form textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+  .aq-form .aq-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .aq-form .aq-temp-hint { font-size: 12px; line-height: 1.6; }
+  .aq-signs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .aq-signs button { min-height: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-soft);
+    font-family: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+  .aq-signs button.on { border-color: var(--badge-yellow-fg); background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .aq-form-actions { display: flex; gap: 8px; }
+  .aq-form-actions button { flex: 1 1 0; min-height: 48px; border-radius: 999px; font-family: inherit; font-size: 15px; cursor: pointer; }
+  .aq-form-actions .cancel { border: 1px solid var(--line); background: transparent; color: var(--text-soft); }
+  .aq-form-actions .save { border: none; background: var(--lime); color: var(--on-lime); font-weight: 700; }
+  .aq-form-actions .save:disabled { opacity: .6; cursor: default; }
+  .aq-form-error { margin: 0; font-size: 12px; color: var(--badge-red-fg); }
+  .aq-form-error:empty { display: none; }
+  .aq-search { width: 100%; min-height: 44px; margin: 10px 0 0; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--text); font-family: inherit; font-size: 16px; box-sizing: border-box; }
+  .aq-filters { display: flex; gap: 6px; overflow-x: auto; margin: 8px -4px 0; padding: 2px 4px 4px; scrollbar-width: none; }
+  .aq-filters::-webkit-scrollbar { display: none; }
+  .aq-filters button { flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text-soft);
+    font-family: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .aq-filters button[aria-pressed="true"] { border-color: var(--lime); background: var(--badge-lime-bg); color: var(--text); font-weight: 700; }
+  .aq-log { margin: 8px 0 0; padding: 0; list-style: none; }
+  .aq-log > li { padding: 12px 0; border-top: 1px solid var(--line); }
+  .aq-log > li:first-child { border-top: none; }
+  .aq-log-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-size: 13px; }
+  .aq-log-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .aq-log-kind { font-size: 15px; color: var(--text); }
+  .aq-log-temp { color: var(--lime); }
+  .aq-log-memo { margin: 4px 0 0; font-size: 13px; line-height: 1.7; color: var(--text-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .aq-log-comment { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--badge-yellow-fg); }
+  .aq-log-comment.warn { color: var(--badge-red-fg); }
+  .aq-log-comment.ok { color: var(--badge-lime-fg); }
+  .aq-more { display: block; width: 100%; min-height: 44px; margin: 10px 0 0; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+    color: var(--text-soft); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .aq-zukan { position: relative; overflow: hidden; }
+  .aq-zukan::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--lime), rgba(201, 241, 88, 0)); }
+  .aq-zukan.ref::before { background: linear-gradient(90deg, var(--weak), rgba(139, 135, 123, 0)); }
+  .aq-zukan-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .aq-zukan-name { margin: 0; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 19px; }
+  .aq-zukan-sci { margin: 2px 0 0; font-size: 12px; font-style: italic; color: var(--muted); }
+  .aq-count { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; flex-wrap: wrap; }
+  .aq-count button { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text);
+    font-family: inherit; font-size: 20px; cursor: pointer; }
+  .aq-count b { min-width: 64px; text-align: center; font-family: "Shippori Mincho B1", serif; font-size: 22px; }
+  .aq-count .aq-count-save { width: auto; padding: 0 16px; font-size: 14px; border-color: var(--lime); color: var(--lime); }
+  .aq-fields { margin: 12px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; font-size: 13px; line-height: 1.65; }
+  .aq-fields dt { color: var(--muted); white-space: nowrap; }
+  .aq-fields dd { margin: 0; color: var(--text-soft); min-width: 0; overflow-wrap: anywhere; }
+  .aq-fields dd.aq-strong { color: var(--text); }
+  @media (max-width: 360px) { .aq-fields, .aq-info { grid-template-columns: 1fr; gap: 2px 0; } .aq-fields dd, .aq-info dd { margin-bottom: 8px; } }
+  .aq-sheet-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--lime); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -1494,7 +1614,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -1809,6 +1929,26 @@
     </section>
   </div>
 
+  <!-- マイ › アクアリウム（docs/spec.md 5-55）。タブを開いたときに aquaFetch で読む（表がまだ無ければアプリが作る） -->
+  <div class="screen" id="screen-my" hidden>
+    <section class="aq-hero stagger">
+      <div class="aq-hero-eyebrow">MY ・ AQUARIUM</div>
+      <h2 class="aq-hero-title">アクアリウム</h2>
+      <p class="aq-hero-lead" id="aq-lead">事務所の書庫の上の 30cm 水槽</p>
+    </section>
+    <div class="seg aq-seg stagger" id="aq-seg" role="tablist" aria-label="アクアリウムの画面">
+      <button type="button" class="seg-btn" data-pane="dash" role="tab" aria-selected="true" aria-label="ダッシュボード">ホーム</button>
+      <button type="button" class="seg-btn" data-pane="sched" role="tab" aria-selected="false" aria-label="スケジュール">予定</button>
+      <button type="button" class="seg-btn" data-pane="rec" role="tab" aria-selected="false" aria-label="作業記録">記録</button>
+      <button type="button" class="seg-btn" data-pane="zukan" role="tab" aria-selected="false" aria-label="生体図鑑">図鑑</button>
+    </div>
+    <div id="aq-status"><p class="empty">読み込んでいます…</p></div>
+    <div class="aq-pane" id="aq-pane-dash"></div>
+    <div class="aq-pane" id="aq-pane-sched" hidden></div>
+    <div class="aq-pane" id="aq-pane-rec" hidden></div>
+    <div class="aq-pane" id="aq-pane-zukan" hidden></div>
+  </div>
+
   <div class="screen" id="screen-advice" hidden>
     <section class="adv-hero stagger">
       <div class="adv-hero-eyebrow">ADVISOR</div>
@@ -2023,8 +2163,8 @@
   }
 
   // タブと画面の対応。ここに無いタブは、押しても「これから作ります」と出るだけ
-  var SCREEN_OF = { today: 'screen-today', ledger: 'screen-ledger', lunch: 'screen-lunch', advice: 'screen-advice' };
-  var EYEBROW_OF = { today: 'TODAY', ledger: 'LEDGER', lunch: 'LUNCH', advice: 'ADVICE' };
+  var SCREEN_OF = { today: 'screen-today', ledger: 'screen-ledger', lunch: 'screen-lunch', my: 'screen-my', advice: 'screen-advice' };
+  var EYEBROW_OF = { today: 'TODAY', ledger: 'LEDGER', lunch: 'LUNCH', my: 'MY', advice: 'ADVICE' };
 
   // 画面を1つだけ出す。ヘッダーの小さい文字（TODAY など）も合わせて替える
   function showScreen(key) {
@@ -2037,6 +2177,7 @@
     window.scrollTo(0, 0);
     if (key === 'advice') setupAdvice();
     if (key === 'lunch') setupLunch();
+    if (key === 'my') setupAqua();
   }
 
   // ==== 水曜ランチ（docs/spec.md 5-39）====
@@ -2435,6 +2576,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -2452,6 +2594,599 @@
     };
     bar.hidden = false;
     LUNCH_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+  }
+
+  // ==== マイ › アクアリウム（docs/spec.md 5-55）====
+  // 中身は表が正。タブを開いたときに aquaFetch で読む。書くのは「完了」「記録する」「数を直す」「見直した」「元に戻す」を押したときだけ。
+  // 見本では DATA.aquaPreview（buildAquaView_ の形）・DATA.aquaPanePreview（最初に出す画面）・DATA.aquaKindPreview（記録の入力を開いておく）
+  var AQUA_UI = { loaded: false, loading: false, pane: 'dash', busy: false, undoTimer: null, kind: '', taskId: '', taskDate: '', taskName: '',
+    signs: {}, date: '', temp: '', memo: '', filter: '', query: '', shown: 30, saved: null, counts: {} };
+
+  function setupAqua() {
+    aquaBindSeg();
+    if (AQUA_UI.loaded || AQUA_UI.loading) return;
+    if (DATA.aquaPreview) {
+      DATA.aqua = DATA.aquaPreview;
+      AQUA_UI.loaded = true;
+      if (DATA.aquaPanePreview) AQUA_UI.pane = DATA.aquaPanePreview;
+      if (DATA.aquaKindPreview) AQUA_UI.kind = DATA.aquaKindPreview;
+      if (DATA.aquaSavedPreview) AQUA_UI.saved = DATA.aquaSavedPreview;
+      renderAqua();
+      return;
+    }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    AQUA_UI.loading = true;
+    google.script.run
+      .withSuccessHandler(function (r) { AQUA_UI.loading = false; AQUA_UI.loaded = !!(r && r.ok); DATA.aqua = r; renderAqua(); })
+      .withFailureHandler(function () { AQUA_UI.loading = false; DATA.aqua = { ok: false, errorText: 'つながりませんでした。タブを押し直してください。' }; renderAqua(); })
+      .aquaFetch();
+  }
+
+  function aquaBindSeg() {
+    var seg = document.getElementById('aq-seg');
+    if (seg.getAttribute('data-bound')) return;
+    seg.setAttribute('data-bound', '1');
+    var btns = seg.querySelectorAll('.seg-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function (ev) { aquaShowPane(ev.currentTarget.getAttribute('data-pane')); });
+    }
+  }
+
+  function aquaShowPane(key) {
+    AQUA_UI.pane = key;
+    var btns = document.querySelectorAll('#aq-seg .seg-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute('aria-selected', btns[i].getAttribute('data-pane') === key ? 'true' : 'false');
+    ['dash', 'sched', 'rec', 'zukan'].forEach(function (k) { document.getElementById('aq-pane-' + k).hidden = (k !== key); });
+  }
+
+  function aquaSvg(d) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('stroke', 'currentColor');
+    p.setAttribute('stroke-width', '1.8');
+    p.setAttribute('stroke-linecap', 'round');
+    p.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(p);
+    return svg;
+  }
+
+  function aquaCard(title, chipText) {
+    var card = el('section', 'card');
+    var head = el('div', 'card-head');
+    head.appendChild(el('h2', 'card-title', title));
+    if (chipText) head.appendChild(el('span', 'count-chip has', chipText));
+    card.appendChild(head);
+    return card;
+  }
+
+  function renderAqua() {
+    var v = DATA.aqua;
+    var status = document.getElementById('aq-status');
+    status.textContent = '';
+    var panes = ['dash', 'sched', 'rec', 'zukan'];
+    panes.forEach(function (k) { document.getElementById('aq-pane-' + k).textContent = ''; });
+    if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
+    if (!v.ok) {
+      var c = el('section', 'card');
+      c.appendChild(el('p', 'card-note', v.errorText || '読めませんでした。'));
+      status.appendChild(c);
+      panes.forEach(function (k) { document.getElementById('aq-pane-' + k).hidden = true; });
+      return;
+    }
+    aquaShowPane(AQUA_UI.pane);
+    renderAquaDash(v);
+    renderAquaSched(v);
+    renderAquaRec(v);
+    renderAquaZukan(v);
+  }
+
+  // ---- ダッシュボード ----
+  function renderAquaDash(v) {
+    var pane = document.getElementById('aq-pane-dash');
+    // 生体の数が変わった（図鑑の数と餌の量の見直し）
+    if (v.countChanges && v.countChanges.length) {
+      var al = el('div', 'aq-alert');
+      al.id = 'aq-count-alert';
+      var t = el('div');
+      t.appendChild(el('b', null, v.countChanges.map(function (c) {
+        return c.name + ' ' + (c.from === null ? '（新しく）' : c.from + '匹') + ' → ' + (c.to === null ? '（図鑑から消えた）' : c.to + '匹');
+      }).join('／')));
+      al.appendChild(t);
+      al.appendChild(el('div', null, v.countChangedText));
+      var ack = el('button', null, '見直した');
+      ack.type = 'button';
+      ack.id = 'aq-count-ack';
+      ack.addEventListener('click', function () {
+        if (AQUA_UI.busy) return;
+        ack.disabled = true;
+        aquaCall('aquaAckCounts', null, function () { renderAqua(); toast('見直しました'); }, function () { ack.disabled = false; });
+      });
+      al.appendChild(ack);
+      pane.appendChild(al);
+    }
+
+    // 今日やること
+    var open = v.today.filter(function (t) { return !t.done; }).length;
+    var card = aquaCard('今日やること', open ? open + '件' : '');
+    card.id = 'aq-today-card';
+    card.appendChild(el('p', 'aq-stat-sub', v.todayText));
+    if (!v.today.length) card.appendChild(el('p', 'empty', '今日の作業はありません。'));
+    else {
+      var ul = el('ul', 'aq-tasks');
+      v.today.forEach(function (t) {
+        var li = el('li', 'aq-task' + (t.done ? ' done' : ''));
+        li.setAttribute('data-task', t.taskId);
+        var main = el('div', 'aq-task-main');
+        var name = el('span', 'aq-task-name', t.name);
+        if (!t.done && t.late > 0) name.appendChild(el('span', 'aq-tag red', t.oneOff ? t.late + '日前から' : t.late + '日遅れ'));
+        main.appendChild(name);
+        if (t.how) main.appendChild(el('span', 'aq-task-how', t.how));
+        li.appendChild(main);
+        if (t.done) {
+          var m = el('span', 'aq-done-mark');
+          m.appendChild(aquaSvg('M5 12.5l4.5 4.5L19 7.5'));
+          m.appendChild(el('span', null, '済'));
+          li.appendChild(m);
+        } else {
+          var b = el('button', 'aq-done-btn', '完了');
+          b.type = 'button';
+          b.setAttribute('aria-label', t.name + 'を完了');
+          b.addEventListener('click', function () { aquaDoneTap(t, b); });
+          li.appendChild(b);
+        }
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
+    }
+    pane.appendChild(card);
+
+    // 次の作業・水温・経過日数
+    var grid = el('div', 'aq-grid');
+    grid.id = 'aq-stats';
+    v.next.forEach(function (n) {
+      var s = el('div', 'aq-stat' + (n.days !== null && n.days < 0 ? ' late' : n.days !== null && n.days <= 2 ? ' soon' : ''));
+      s.appendChild(el('div', 'aq-stat-label', n.label));
+      s.appendChild(el('div', 'aq-stat-value', n.dateText));
+      if (n.daysText) s.appendChild(el('div', 'aq-stat-sub', n.days < 0 ? n.daysText + '（まだ）' : n.daysText));
+      grid.appendChild(s);
+    });
+    var tc = el('div', 'aq-stat' + (v.temp && v.temp.level && v.temp.level !== 'ok' ? ' ' + v.temp.level : ''));
+    tc.id = 'aq-temp';
+    tc.appendChild(el('div', 'aq-stat-label', '最新の水温'));
+    if (v.temp) {
+      var tv = el('div', 'aq-stat-value', String(v.temp.value));
+      tv.appendChild(el('small', null, '℃'));
+      tc.appendChild(tv);
+      tc.appendChild(el('div', 'aq-stat-sub', v.temp.dateText + '（' + v.temp.daysText + '）'));
+    } else {
+      tc.appendChild(el('div', 'aq-stat-value', '—'));
+      tc.appendChild(el('div', 'aq-stat-sub', 'まだ記録がありません'));
+    }
+    grid.appendChild(tc);
+    var life = el('div', 'aq-stat aq-wide');
+    life.id = 'aq-life';
+    var lifeHead = el('div', 'aq-stat-label', v.dayCount ? '立ち上げ ' + v.startText + ' から' : '生体');
+    life.appendChild(lifeHead);
+    if (v.dayCount) {
+      var dv = el('div', 'aq-stat-value', String(v.dayCount));
+      dv.appendChild(el('small', null, '日目'));
+      life.appendChild(dv);
+    }
+    var lives = el('div', 'aq-lives');
+    v.creatures.filter(function (c) { return c.keeping; }).forEach(function (c) {
+      var x = el('span', 'aq-life', c.name);
+      x.appendChild(el('b', null, c.count === null ? '?' : String(c.count)));
+      x.appendChild(document.createTextNode('匹'));
+      lives.appendChild(x);
+    });
+    life.appendChild(lives);
+    grid.appendChild(life);
+    pane.appendChild(grid);
+    if (v.temp && v.temp.text) {
+      var tn = el('p', 'aq-note ' + (v.temp.level || 'ok'), '水温 ' + v.temp.value + '℃: ' + v.temp.text);
+      tn.id = 'aq-temp-note';
+      tn.style.margin = '-4px 0 14px';
+      pane.appendChild(tn);
+    }
+
+    // 水槽のこと
+    if (v.info && v.info.length) {
+      var ic = aquaCard('水槽のこと');
+      var dl = el('dl', 'aq-info');
+      v.info.forEach(function (p) { dl.appendChild(el('dt', null, p.k)); dl.appendChild(el('dd', null, p.v)); });
+      ic.appendChild(dl);
+      if (v.url) {
+        var a = el('a', 'aq-sheet-link', '表を開く（予定・生体の足し引き）');
+        a.href = v.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        ic.appendChild(a);
+      }
+      pane.appendChild(ic);
+    }
+  }
+
+  function aquaDoneTap(t, btn) {
+    if (AQUA_UI.busy) return;
+    // 水温の数字が要る作業は、記録の画面で入れてもらう
+    if ((DATA.aqua.needsTemp || []).indexOf(t.kind) >= 0) {
+      aquaOpenForm(t.kind, t);
+      aquaShowPane('rec');
+      window.scrollTo(0, 0);
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '…';
+    aquaCall('aquaRecord', { kind: t.kind, date: DATA.aqua.todayIso, memo: t.name, taskId: t.taskId, taskDate: t.iso }, function (r) {
+      renderAqua();
+      aquaShowUndo('「' + t.name + '」を記録しました', r.already ? '' : r.id);
+    }, function () { btn.disabled = false; btn.textContent = '完了'; });
+  }
+
+  // ---- スケジュール ----
+  function renderAquaSched(v) {
+    var pane = document.getElementById('aq-pane-sched');
+    var rc = aquaCard('定期作業', v.recurring.length + '件');
+    rc.id = 'aq-recurring';
+    var ul = el('ul', 'aq-sched');
+    v.recurring.forEach(function (s) {
+      var li = el('li', s.show === false || s.ended ? 'off' : '');
+      li.setAttribute('data-sched', s.id);
+      var name = el('div', 'aq-sched-name', s.name);
+      if (s.show === false) name.appendChild(el('span', 'aq-tag gray', '止めている'));
+      else if (s.ended) name.appendChild(el('span', 'aq-tag gray', '終わり'));
+      li.appendChild(name);
+      li.appendChild(el('p', 'aq-sched-rule' + (s.error ? ' bad' : ''), s.error ? '表の書き方が読めません: ' + s.error : s.ruleText));
+      if (s.next && s.next.length) {
+        var ds = el('div', 'aq-dates');
+        s.next.forEach(function (d) { ds.appendChild(el('span', 'aq-date', d.text + '・' + d.daysText)); });
+        li.appendChild(ds);
+      }
+      if (s.how) li.appendChild(el('p', 'aq-sched-how', s.how));
+      ul.appendChild(li);
+    });
+    rc.appendChild(ul);
+    pane.appendChild(rc);
+
+    var oc = aquaCard('単発のタスク', v.oneOff.filter(function (s) { return s.state !== 'done'; }).length + '件');
+    oc.id = 'aq-oneoff';
+    var ou = el('ul', 'aq-sched');
+    v.oneOff.forEach(function (s) {
+      var li = el('li', s.state === 'done' || s.show === false ? 'off' : '');
+      li.setAttribute('data-sched', s.id);
+      var name = el('div', 'aq-sched-name', s.name);
+      if (s.error) name.appendChild(el('span', 'aq-tag red', '読めません'));
+      else if (s.show === false) name.appendChild(el('span', 'aq-tag gray', '止めている'));
+      else if (s.state === 'done') name.appendChild(el('span', 'aq-tag lime', s.doneText));
+      else if (s.state === 'open') name.appendChild(el('span', 'aq-tag yellow', s.daysText === '今日' ? '今日から' : s.daysText + 'から'));
+      li.appendChild(name);
+      li.appendChild(el('p', 'aq-sched-rule' + (s.error ? ' bad' : ''), s.error ? s.error : s.startText + (s.state === 'future' ? '・' + s.daysText : '〜')));
+      if (s.how) li.appendChild(el('p', 'aq-sched-how', s.how));
+      ou.appendChild(li);
+    });
+    oc.appendChild(ou);
+    pane.appendChild(oc);
+    var note = el('p', 'card-note', '予定の日の朝7時ごろ、LINE WORKS の朝のご案内に「水槽」の1行で届きます。予定の足し引き・繰り返し（RRULE）の書き換えは表で行います。');
+    note.style.margin = '0 4px 10px';
+    pane.appendChild(note);
+    if (v.url) {
+      var a = el('a', 'aq-sheet-link', '表を開く');
+      a.href = v.url; a.target = '_blank'; a.rel = 'noopener';
+      a.style.marginLeft = '4px';
+      pane.appendChild(a);
+    }
+  }
+
+  // ---- 作業記録 ----
+  function aquaOpenForm(kind, task) {
+    AQUA_UI.kind = kind;
+    AQUA_UI.taskId = task ? task.taskId : '';
+    AQUA_UI.taskDate = task ? task.iso : '';
+    AQUA_UI.taskName = task ? task.name : '';
+    AQUA_UI.signs = {};
+    AQUA_UI.date = DATA.aqua.todayIso;
+    AQUA_UI.temp = '';
+    AQUA_UI.memo = '';
+    AQUA_UI.saved = null;
+    renderAquaRec(DATA.aqua);
+  }
+
+  function renderAquaRec(v) {
+    var pane = document.getElementById('aq-pane-rec');
+    pane.textContent = '';
+    // 記録した直後の一言（判断基準に照らして）
+    if (AQUA_UI.saved) {
+      var sv = el('section', 'card');
+      sv.id = 'aq-saved';
+      sv.appendChild(el('div', 'card-head')).appendChild(el('h2', 'card-title', '記録しました'));
+      if (!AQUA_UI.saved.length) sv.appendChild(el('p', 'aq-note ok', '作業記録に足しました。'));
+      AQUA_UI.saved.forEach(function (c) { sv.appendChild(el('p', 'aq-note ' + (c.level || 'ok'), c.text)); });
+      pane.appendChild(sv);
+    }
+    var card = aquaCard('記録する');
+    card.id = 'aq-input';
+    var quick = el('div', 'aq-quick');
+    v.quick.forEach(function (k) {
+      var b = el('button', AQUA_UI.kind === k ? 'on' : '', k);
+      b.type = 'button';
+      b.setAttribute('data-kind', k);
+      b.addEventListener('click', function () {
+        if (AQUA_UI.kind === k && !AQUA_UI.taskId) { AQUA_UI.kind = ''; renderAquaRec(DATA.aqua); return; }
+        aquaOpenForm(k, null);
+      });
+      quick.appendChild(b);
+    });
+    card.appendChild(quick);
+    if (AQUA_UI.kind) card.appendChild(aquaForm(v));
+    pane.appendChild(card);
+
+    // 一覧（検索・絞り込み）
+    var lc = aquaCard('作業記録', v.recordsTotal + '件');
+    lc.id = 'aq-log-card';
+    var search = el('input', 'aq-search');
+    search.type = 'search';
+    search.id = 'aq-search';
+    search.placeholder = '探す（メモ・作業・日付）';
+    search.value = AQUA_UI.query;
+    search.setAttribute('aria-label', '作業記録を探す');
+    lc.appendChild(search);
+    var fl = el('div', 'aq-filters');
+    [''].concat(v.kinds).forEach(function (k) {
+      var b = el('button', null, k || 'すべて');
+      b.type = 'button';
+      b.setAttribute('data-filter', k);
+      b.setAttribute('aria-pressed', AQUA_UI.filter === k ? 'true' : 'false');
+      b.addEventListener('click', function () { AQUA_UI.filter = k; AQUA_UI.shown = 30; renderAquaRec(DATA.aqua); });
+      fl.appendChild(b);
+    });
+    lc.appendChild(fl);
+    var box = el('div');
+    box.id = 'aq-log-box';
+    lc.appendChild(box);
+    pane.appendChild(lc);
+    var draw = function () {
+      box.textContent = '';
+      var q = AQUA_UI.query.trim();
+      var list = v.records.filter(function (r) {
+        if (AQUA_UI.filter && r.kind !== AQUA_UI.filter) return false;
+        if (!q) return true;
+        return [r.memo, r.kind, r.dateText, r.iso, r.taskName, r.temp === null ? '' : r.temp + '℃'].join(' ').indexOf(q) >= 0;
+      });
+      if (!list.length) { box.appendChild(el('p', 'empty', q || AQUA_UI.filter ? '当てはまる記録はありません。' : 'まだ記録がありません。')); return; }
+      var ul = el('ul', 'aq-log');
+      list.slice(0, AQUA_UI.shown).forEach(function (r) {
+        var li = el('li');
+        li.setAttribute('data-rec', r.id || '');
+        var head = el('div', 'aq-log-head');
+        head.appendChild(el('span', 'aq-log-date', r.dateText));
+        head.appendChild(el('span', 'aq-log-kind', r.kind));
+        if (r.temp !== null) head.appendChild(el('span', 'aq-log-temp', r.temp + '℃'));
+        li.appendChild(head);
+        var memo = r.memo && r.memo !== r.taskName ? r.memo : (r.taskName && r.taskName !== r.kind ? r.taskName : r.memo);
+        if (memo) li.appendChild(el('p', 'aq-log-memo', memo));
+        (r.comments || []).forEach(function (c) { li.appendChild(el('p', 'aq-log-comment ' + (c.level === 'warn' ? 'warn' : c.level === 'ok' ? 'ok' : ''), c.text)); });
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+      if (list.length > AQUA_UI.shown) {
+        var more = el('button', 'aq-more', 'もっと見る（あと ' + (list.length - AQUA_UI.shown) + '件）');
+        more.type = 'button';
+        more.id = 'aq-more';
+        more.addEventListener('click', function () { AQUA_UI.shown += 30; draw(); });
+        box.appendChild(more);
+      }
+    };
+    search.addEventListener('input', function () { AQUA_UI.query = search.value; AQUA_UI.shown = 30; draw(); });
+    draw();
+  }
+
+  function aquaForm(v) {
+    var form = el('div', 'aq-form');
+    form.id = 'aq-form';
+    if (AQUA_UI.taskName) form.appendChild(el('p', 'aq-stat-sub', '予定「' + AQUA_UI.taskName + '」の完了として記録します。'));
+    var row = el('div', 'aq-row2');
+    var dl = el('label', null, '日付');
+    var date = el('input');
+    date.type = 'date';
+    date.id = 'aq-date';
+    date.value = AQUA_UI.date || v.todayIso;
+    date.max = v.todayIso;
+    date.addEventListener('input', function () { AQUA_UI.date = date.value; });
+    dl.appendChild(date);
+    row.appendChild(dl);
+    var needTemp = (v.needsTemp || []).indexOf(AQUA_UI.kind) >= 0;
+    var tl = el('label', null, needTemp ? '水温（℃）' : '水温（℃・空でよい）');
+    var temp = el('input');
+    temp.type = 'text';
+    temp.id = 'aq-temp-input';
+    temp.setAttribute('inputmode', 'decimal');
+    temp.placeholder = '24.5';
+    temp.value = AQUA_UI.temp;
+    temp.addEventListener('input', function () { AQUA_UI.temp = temp.value; });
+    tl.appendChild(temp);
+    row.appendChild(tl);
+    form.appendChild(row);
+
+    var sl = el('div');
+    sl.appendChild(el('div', 'aq-stat-sub', '気になること（あれば）'));
+    var signs = el('div', 'aq-signs');
+    signs.style.marginTop = '6px';
+    (v.signs || []).forEach(function (s) {
+      var b = el('button', AQUA_UI.signs[s.key] ? 'on' : '', s.label);
+      b.type = 'button';
+      b.setAttribute('data-sign', s.key);
+      b.setAttribute('aria-pressed', AQUA_UI.signs[s.key] ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        AQUA_UI.signs[s.key] = !AQUA_UI.signs[s.key];
+        b.className = AQUA_UI.signs[s.key] ? 'on' : '';
+        b.setAttribute('aria-pressed', AQUA_UI.signs[s.key] ? 'true' : 'false');
+      });
+      signs.appendChild(b);
+    });
+    sl.appendChild(signs);
+    form.appendChild(sl);
+
+    var ml = el('label', null, 'メモ');
+    var memo = el('textarea');
+    memo.id = 'aq-memo';
+    memo.maxLength = 500;
+    memo.placeholder = AQUA_UI.kind === '水換え' ? '例: 約4L、ウォーターサプリ小さじ1' : '';
+    memo.value = AQUA_UI.memo;
+    memo.addEventListener('input', function () { AQUA_UI.memo = memo.value; });
+    ml.appendChild(memo);
+    form.appendChild(ml);
+
+    var err = el('p', 'aq-form-error');
+    err.id = 'aq-form-error';
+    form.appendChild(err);
+    var actions = el('div', 'aq-form-actions');
+    var cancel = el('button', 'cancel', 'やめる');
+    cancel.type = 'button';
+    cancel.id = 'aq-cancel';
+    cancel.addEventListener('click', function () { AQUA_UI.kind = ''; AQUA_UI.taskId = ''; AQUA_UI.taskName = ''; renderAquaRec(DATA.aqua); });
+    var save = el('button', 'save', '記録する');
+    save.type = 'button';
+    save.id = 'aq-save';
+    save.addEventListener('click', function () {
+      if (AQUA_UI.busy) return;
+      err.textContent = '';
+      if (needTemp && !temp.value.trim()) { err.textContent = '水温を入れてください。'; temp.focus(); return; }
+      var input = { kind: AQUA_UI.kind, date: date.value, temp: temp.value.trim(), memo: memo.value,
+        signs: Object.keys(AQUA_UI.signs).filter(function (k) { return AQUA_UI.signs[k]; }) };
+      if (AQUA_UI.taskId) { input.taskId = AQUA_UI.taskId; input.taskDate = AQUA_UI.taskDate; }
+      if (!input.memo.trim() && AQUA_UI.taskName) input.memo = AQUA_UI.taskName;
+      var label = AQUA_UI.kind;
+      save.disabled = true;
+      save.textContent = '…';
+      aquaCall('aquaRecord', input, function (r) {
+        AQUA_UI.kind = ''; AQUA_UI.taskId = ''; AQUA_UI.taskName = ''; AQUA_UI.signs = {}; AQUA_UI.memo = ''; AQUA_UI.temp = '';
+        AQUA_UI.saved = r.comments || [];
+        renderAqua();
+        window.scrollTo(0, 0);
+        aquaShowUndo('「' + label + '」を記録しました', r.already ? '' : r.id);
+      }, function (r) {
+        save.disabled = false;
+        save.textContent = '記録する';
+        if (r && r.message) err.textContent = r.message;
+      });
+    });
+    actions.appendChild(cancel);
+    actions.appendChild(save);
+    form.appendChild(actions);
+    return form;
+  }
+
+  // ---- 生体図鑑 ----
+  function renderAquaZukan(v) {
+    var pane = document.getElementById('aq-pane-zukan');
+    if (!v.creatures.length) { var e = aquaCard('生体図鑑'); e.appendChild(el('p', 'empty', '図鑑はまだ空です。表の「生体図鑑」に足してください。')); pane.appendChild(e); return; }
+    v.creatures.forEach(function (c) {
+      var card = el('section', 'card aq-zukan' + (c.keeping ? '' : ' ref'));
+      card.setAttribute('data-creature', c.name);
+      var head = el('div', 'aq-zukan-head');
+      var nm = el('div');
+      nm.appendChild(el('h2', 'aq-zukan-name', c.name));
+      var sci = c.fields.filter(function (f) { return f.k === '学名'; })[0];
+      if (sci) nm.appendChild(el('p', 'aq-zukan-sci', sci.v));
+      head.appendChild(nm);
+      head.appendChild(el('span', 'aq-tag ' + (c.keeping ? 'lime' : 'gray'), c.label + (c.keeping && c.count !== null ? '・' + c.count + '匹' : '')));
+      card.appendChild(head);
+      if (c.keeping) card.appendChild(aquaCountEditor(c));
+      var dl = el('dl', 'aq-fields');
+      c.fields.forEach(function (f) {
+        if (f.k === '学名') return;
+        dl.appendChild(el('dt', null, f.k));
+        dl.appendChild(el('dd', f.k === '注意' || f.k === 'この水槽での運用' ? 'aq-strong' : null, f.v));
+      });
+      card.appendChild(dl);
+      pane.appendChild(card);
+    });
+    var note = el('p', 'card-note', '生体の追加・削除、図鑑の中身の書き換えは表の「生体図鑑」で行います（列を足すと、カードにもその項目が出ます）。');
+    note.style.margin = '0 4px 10px';
+    pane.appendChild(note);
+  }
+
+  function aquaCountEditor(c) {
+    var box = el('div', 'aq-count');
+    var base = c.count === null ? 0 : c.count;
+    var pending = Object.prototype.hasOwnProperty.call(AQUA_UI.counts, c.name) ? AQUA_UI.counts[c.name] : base;
+    var minus = el('button', null, '−');
+    minus.type = 'button';
+    minus.setAttribute('aria-label', c.name + 'を1匹減らす');
+    var shown = el('b', null, pending + '匹');
+    var plus = el('button', null, '＋');
+    plus.type = 'button';
+    plus.setAttribute('aria-label', c.name + 'を1匹増やす');
+    var save = el('button', 'aq-count-save', pending + '匹にする');
+    save.type = 'button';
+    save.hidden = pending === base && c.count !== null;
+    var set = function (n) {
+      pending = Math.max(0, Math.min(999, n));
+      AQUA_UI.counts[c.name] = pending;
+      shown.textContent = pending + '匹';
+      save.textContent = pending + '匹にする';
+      save.hidden = pending === base && c.count !== null;
+    };
+    minus.addEventListener('click', function () { set(pending - 1); });
+    plus.addEventListener('click', function () { set(pending + 1); });
+    save.addEventListener('click', function () {
+      if (AQUA_UI.busy) return;
+      save.disabled = true;
+      aquaCall('aquaSetCount', { name: c.name, from: c.count, to: pending }, function () {
+        delete AQUA_UI.counts[c.name];
+        renderAqua();
+        toast(c.name + 'を' + pending + '匹にしました。餌の量も見直しましょう');
+      }, function () { save.disabled = false; });
+    });
+    box.appendChild(minus);
+    box.appendChild(shown);
+    box.appendChild(plus);
+    box.appendChild(save);
+    return box;
+  }
+
+  // ---- 呼び出し・元に戻す ----
+  function aquaCall(fn, arg, onOk, onFail) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); onFail(null); return; }
+    AQUA_UI.busy = true;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        AQUA_UI.busy = false;
+        if (r && r.aqua) DATA.aqua = r.aqua;
+        if (!r || !r.ok) { toast((r && r.message) || 'できませんでした。もう一度押してください。'); onFail(r); return; }
+        onOk(r);
+      })
+      .withFailureHandler(function () { AQUA_UI.busy = false; toast('つながりませんでした。もう一度押してください。'); onFail(null); })[fn](arg);
+  }
+
+  function aquaShowUndo(message, id) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    clearTimeout(MAIL_UI.undoTimer);
+    clearTimeout(TODO_UI.undoTimer);
+    clearTimeout(LUNCH_UI.undoTimer);
+    clearTimeout(AQUA_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    btn.hidden = !id;
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled || AQUA_UI.busy) return;
+      clearTimeout(AQUA_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      aquaCall('aquaRecordDelete', { id: id }, function () { bar.hidden = true; AQUA_UI.saved = null; renderAqua(); toast('記録を消しました'); }, function () {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        AQUA_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+      });
+    };
+    bar.hidden = false;
+    AQUA_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
   function renderNav() {
@@ -3066,6 +3801,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -3362,6 +4098,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
     btn.disabled = false;
@@ -4429,6 +5166,7 @@
     if (typeof MAIL_UI !== 'undefined' && MAIL_UI) clearTimeout(MAIL_UI.undoTimer); // 返信不要の帯の残り時間で、台帳の帯を消さない
     if (typeof TODO_UI !== 'undefined' && TODO_UI) clearTimeout(TODO_UI.undoTimer); // やることの帯も同じ
     if (typeof LUNCH_UI !== 'undefined' && LUNCH_UI) clearTimeout(LUNCH_UI.undoTimer); // ランチの帯も同じ
+    if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer); // アクアリウムの帯も同じ
     document.getElementById('undo-text').textContent = message;
     var showMs = (undo && undo.showMs) || 4000;
     var hideLater = function () {
