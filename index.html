@@ -315,6 +315,24 @@
   .ledger-check:focus-visible { outline: 2px solid var(--lime); outline-offset: -4px; border-radius: 10px; }
   .ledger-main { flex: 1 1 auto; min-width: 0; }
   .ledger-name { font-size: 15px; line-height: 1.4; }
+  /* 区分の札（仕事・私。spec 5-53）。色は KINDS の COLOR を data で渡さず、ここで決める（画面とカレンダーで近い色） */
+  :root { --kind-work: #8DB7F0; --kind-work-bg: #1B2433; --kind-private: #F2A7C3; --kind-private-bg: #33202A; }
+  .ledger-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; }
+  .ledger-name-row .ledger-name { min-width: 0; overflow-wrap: anywhere; }
+  .kind-chip { display: inline-block; flex: none; padding: 1px 7px; border-radius: 999px; font-size: 11px; line-height: 16px; vertical-align: 2px; white-space: nowrap; }
+  .kind-chip.work { background: var(--kind-work-bg); color: var(--kind-work); }
+  .kind-chip.private { background: var(--kind-private-bg); color: var(--kind-private); }
+  .kind-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kind-opt { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text-soft); font-size: 14px; cursor: pointer; }
+  .kind-opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .kind-opt .kind-swatch { width: 10px; height: 10px; border-radius: 999px; }
+  .kind-opt.work .kind-swatch { background: var(--kind-work); }
+  .kind-opt.private .kind-swatch { background: var(--kind-private); }
+  .kind-opt.work:has(input:checked) { border-color: var(--kind-work); background: var(--kind-work-bg); color: var(--kind-work); }
+  .kind-opt.private:has(input:checked) { border-color: var(--kind-private); background: var(--kind-private-bg); color: var(--kind-private); }
+  .kind-opt.checked.work { border-color: var(--kind-work); background: var(--kind-work-bg); color: var(--kind-work); }
+  .kind-opt.checked.private { border-color: var(--kind-private); background: var(--kind-private-bg); color: var(--kind-private); }
   .ledger-meta { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.5; }
   .ledger-note { margin-top: 3px; color: var(--weak); font-size: 12px; line-height: 1.4; }
   .ledger-days {
@@ -1476,7 +1494,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -1845,6 +1863,12 @@
       <label for="le-name">行事名</label>
       <input type="text" id="le-name" autocomplete="off" enterkeyhint="done">
       <p class="field-error" data-error="NAME"></p>
+    </div>
+
+    <div class="field" data-field="KIND">
+      <span class="field-label">区分</span>
+      <div class="kind-row" id="le-kind" role="radiogroup" aria-label="区分"></div>
+      <p class="field-error" data-error="KIND"></p>
     </div>
 
     <div class="field" data-field="DUE">
@@ -3918,6 +3942,7 @@
           dueText: ev.repeat ? '繰り返しの予定' : ev.dueLabel,
           time: ev.time,
           place: ev.place,
+          kind: ev.kind,
           cycle: ev.cycle,
           daysText: ev.daysText,
           level: ev.level,
@@ -3994,7 +4019,17 @@
       li.appendChild(el('span', 'ledger-mark'));
     }
     var main = el('div', 'ledger-main');
-    main.appendChild(el('div', 'ledger-name', it.name));
+    // 行事名の右に区分の札（行事名の文字には混ぜない。読み上げ・試験が行事名だけを読めるように）
+    var kindInfo = ledgerKindInfo(it.kind);
+    if (kindInfo) {
+      var nameRow = el('div', 'ledger-name-row');
+      nameRow.appendChild(el('span', 'ledger-name', it.name));
+      nameRow.appendChild(el('span', 'kind-chip ' + kindInfo.key, kindInfo.short));
+      li.setAttribute('data-kind', kindInfo.key);
+      main.appendChild(nameRow);
+    } else {
+      main.appendChild(el('div', 'ledger-name', it.name));
+    }
     var when = [it.dueText, it.time].filter(function (s) { return s; }).join(' ');
     var meta = [when, it.cycle].filter(function (s) { return s; }).join('・');
     if (meta) main.appendChild(el('div', 'ledger-meta', meta));
@@ -4014,6 +4049,44 @@
       li.addEventListener('keydown', function (e) { if (e.key === 'Enter') openLedgerEditor(item); });
     }
     return li;
+  }
+
+  // 区分（spec 5-53）。古い返事（kinds が無い）では札を出さない
+  function ledgerKindInfo(key) {
+    var edit = DATA.ledger && DATA.ledger.edit;
+    var kinds = (edit && edit.kinds) || [];
+    if (!key || !kinds.length) return null;
+    for (var i = 0; i < kinds.length; i++) if (kinds[i].key === key) return kinds[i];
+    return null;
+  }
+
+  function fillKind(key) {
+    var box = document.getElementById('le-kind');
+    box.textContent = '';
+    var kinds = (DATA.ledger && DATA.ledger.edit && DATA.ledger.edit.kinds) || [];
+    box.closest('.field').hidden = !kinds.length;
+    var pick = key || (kinds[0] && kinds[0].key);
+    kinds.forEach(function (k) {
+      var lab = el('label', 'kind-opt ' + k.key + (k.key === pick ? ' checked' : ''));
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'le-kind';
+      input.value = k.label;
+      input.setAttribute('data-key', k.key);
+      input.checked = k.key === pick;
+      input.addEventListener('change', function () {
+        Array.prototype.forEach.call(box.querySelectorAll('.kind-opt'), function (o) { o.classList.toggle('checked', o.contains(input)); });
+      });
+      lab.appendChild(input);
+      lab.appendChild(el('span', 'kind-swatch'));
+      lab.appendChild(document.createTextNode(k.label));
+      box.appendChild(lab);
+    });
+  }
+
+  function kindValue() {
+    var c = document.querySelector('#le-kind input:checked');
+    return c ? c.value : '';
   }
 
   // すべての行事（期日がまだの行・隠した行も）。行を押すと直す画面
@@ -4040,7 +4113,7 @@
         var li = ledgerRowEl({
           name: item.name,
           dueText: item.due ? item.dueLabel : '期日まだ',
-          cycle: item.cycle, time: item.time, place: item.place, members: item.members, note: item.note,
+          cycle: item.cycle, time: item.time, place: item.place, members: item.members, kind: item.kind, note: item.note,
           daysText: item.show ? item.daysText : '隠し中',
           level: item.show ? item.level : 'far',
         }, item);
@@ -4219,6 +4292,7 @@
       ? '保存すると表のこの行が書き替わります。'
       : '表のあいている行に入ります。';
     document.getElementById('le-name').value = item ? item.name : '';
+    fillKind(item ? item.kind : '');
     fillDue(item ? item.due : '');
     if (item && !item.due && item.dueRaw) {
       setFieldErrors({ DUE: '表に「' + item.dueRaw + '」と入っていて期日として読めません。選び直すと直ります。' });
@@ -4290,6 +4364,9 @@
       NOTE: document.getElementById('le-note').value.trim(),
       SHOW: document.getElementById('le-show').checked,
     };
+    // 区分の選択肢が無い（古い返事）ときは送らない＝表の区分を変えない（10/17 猪八戒の点検）
+    var kind = kindValue();
+    if (kind) values.KIND = kind;
     return { values: values, errors: errors };
   }
 
