@@ -1271,6 +1271,15 @@
   .bz-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .bz-trio > div { min-width: 0; }
   .bz-trio b { display: block; margin-top: 4px; font-size: 17px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .bz-notes { margin: 0; padding: 0; list-style: none; }
+  .bz-notes li { position: relative; padding: 10px 0 10px 14px; border-top: 1px solid var(--line); }
+  .bz-notes li:first-child { border-top: none; padding-top: 2px; }
+  .bz-notes li::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 999px; background: var(--muted); }
+  .bz-notes li:first-child::before { top: 4px; }
+  .bz-notes li.good::before { background: var(--lime); }
+  .bz-notes li.warn::before { background: var(--badge-yellow-fg); }
+  .bz-note-head { display: block; font-size: 15px; line-height: 1.5; }
+  .bz-note-body { margin: 4px 0 0; font-size: 13px; line-height: 1.7; color: var(--soft); }
   .bz-years { margin: 0; padding: 0; list-style: none; }
   .bz-years li { padding: 12px 0; border-top: 1px solid var(--line); }
   .bz-years li:first-child { border-top: none; padding-top: 4px; }
@@ -2102,6 +2111,13 @@
     </section>
     <div id="bz-status"><p class="empty">読み込んでいます…</p></div>
     <section class="card bz-hero" id="bz-hero" hidden></section>
+    <section class="card" id="bz-notes-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">Claude の所見</h2>
+        <span class="count-chip" id="bz-notes-asof"></span>
+      </div>
+      <div id="bz-notes-body"></div>
+    </section>
     <section class="card" id="bz-chart-card" hidden>
       <div class="card-head">
         <h2 class="card-title">月ごとの売上と内訳</h2>
@@ -2522,7 +2538,7 @@
     var v = DATA.biz;
     var status = document.getElementById('bz-status');
     status.textContent = '';
-    ['bz-hero', 'bz-chart-card', 'bz-trail-card', 'bz-years-card', 'bz-start-card', 'bz-folder-card'].forEach(function (id) { bizShow(id, false); });
+    ['bz-hero', 'bz-notes-card', 'bz-chart-card', 'bz-trail-card', 'bz-years-card', 'bz-start-card', 'bz-folder-card'].forEach(function (id) { bizShow(id, false); });
     if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
     if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '読めませんでした。')); return; }
     var lead = document.getElementById('bz-lead');
@@ -2531,6 +2547,7 @@
       : '損益計算書の数字を、月ごと・年ごとに見ます。';
     if (v.empty) { renderBizStart(v); renderBizFolder(v); return; }
     if (v.latest) renderBizHero(v.latest);
+    if (v.notes && v.notes.items && v.notes.items.length) renderBizNotes(v.notes, v.folder);
     if (v.chart && v.chart.length) renderBizChart(v);
     if (v.trailing) renderBizTrailing(v.trailing);
     if (v.years && v.years.length) renderBizYears(v.years);
@@ -2670,6 +2687,23 @@
     cell('人件費率', t.personnelRate === null ? '—' : t.personnelRate.toFixed(1) + '%');
     cell('営業利益', bizMoneyText(t.profit));
     body.appendChild(grid);
+  }
+
+  // 所見（spec 5-65）。Claude が書いた文をそのまま文字として出す（HTML として動かさない）
+  function renderBizNotes(n, folder) {
+    bizShow('bz-notes-card', true);
+    document.getElementById('bz-notes-asof').textContent = n.asOfText + ' 時点';
+    var body = document.getElementById('bz-notes-body');
+    body.textContent = '';
+    var ul = el('ul', 'bz-notes');
+    n.items.forEach(function (it) {
+      var li = el('li', it.tone === 'good' || it.tone === 'warn' ? it.tone : 'info');
+      li.appendChild(el('b', 'bz-note-head', it.head));
+      li.appendChild(el('p', 'bz-note-body', it.body));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if (n.doc) body.appendChild(el('p', 'bz-note', '詳しくは マイドライブ › ' + folder + ' の「' + n.doc + '」'));
   }
 
   function renderBizYears(years) {
