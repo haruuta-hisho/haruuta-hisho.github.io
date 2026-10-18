@@ -3518,6 +3518,18 @@
     stat('先月の支出', v.vsPrev ? zaimYen(v.vsPrev.prevTotal) : '—', v.vsPrev ? '円' : '', v.prevMonthText + 'の合計');
     card.appendChild(stats);
     if (v.empty) card.appendChild(el('p', 'bz-note', v.monthText + 'の記録はまだありません。'));
+    // 支出が0円のときだけ、Zaim から受け取った記録の数えを出す（中身は出さない。10/19 の調べ用）
+    if (!v.spend && v.diag) {
+      var dg = v.diag;
+      var modes = Object.keys(dg.modes || {}).map(function (k) { return k + ' ' + dg.modes[k]; }).join('・');
+      var cut = [['消した記録', dg.inactive], ['種類が不明', dg.badMode], ['日付が読めない', dg.badDate], ['金額が読めない', dg.badAmount], ['重なり', dg.dup]]
+        .filter(function (x) { return x[1] > 0; }).map(function (x) { return x[0] + ' ' + x[1]; }).join('・');
+      var t = 'Zaim から受け取った記録（' + v.rangeText + '）: ' + dg.received + '件';
+      if (dg.received) t += (modes ? '／' + modes : '') + (cut ? '／除いた: ' + cut : '') + (dg.minDate ? '／日付 ' + dg.minDate + '〜' + dg.maxDate : '') + '／欄: ' + (dg.fields || []).join(',');
+      var dn = el('p', 'bz-note', t);
+      dn.id = 'zm-diag';
+      card.appendChild(dn);
+    }
   }
 
   // カテゴリ別（帯グラフ＋一覧）
