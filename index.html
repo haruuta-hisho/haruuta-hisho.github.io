@@ -1297,6 +1297,27 @@
   .bz-parts b { display: block; font-size: 14px; }
   .bz-parts span { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .bz-src { margin: 8px 0 0; font-size: 11px; color: var(--weak); word-break: break-all; }
+  /* マイの切り替え・観葉植物（5-62） */
+  .my-seg { margin: 0 0 12px; }
+  .my-seg .seg-btn.on { background: var(--lime); color: var(--on-lime); font-weight: 700; }
+  .pl-list { margin: 0; padding: 0; list-style: none; }
+  .pl-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .pl-row:first-child { border-top: none; }
+  .pl-main { flex: 1 1 auto; min-width: 0; }
+  .pl-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pl-name { font-size: 15px; }
+  .pl-badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .pl-badge.today { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+  .pl-badge.late { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .pl-sub { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .pl-water { flex: 0 0 auto; min-height: 44px; padding: 0 16px; border-radius: 999px; border: none; background: var(--lime); color: var(--on-lime);
+    font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .pl-water.soft { background: transparent; border: 1px solid var(--line); color: var(--text-soft); font-weight: 500; font-size: 13px; }
+  .pl-water:disabled { opacity: .6; cursor: default; }
+  .pl-done { flex: 0 0 auto; font-size: 12px; color: var(--lime); }
+  .pl-del { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--badge-red-fg); background: transparent;
+    color: var(--badge-red-fg); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .pl-del.sure { background: var(--badge-red-bg); font-weight: 700; }
   /* 作った記録のまとめ（5-61） */
   .lu-ins-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 0; border: none; border-top: 1px solid var(--line);
     background: transparent; color: var(--text); font-family: inherit; text-align: left; cursor: pointer; }
@@ -1625,7 +1646,7 @@
 <script>
   var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
   // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
-  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch', 'bizFetch'];
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch'];
   window.HISHO_STALE = false;
   var hishoPending = [];
   var hishoShown = false;   // 画面を一度でも出したか
@@ -1719,7 +1740,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2080,6 +2101,12 @@
 
   <!-- マイ › アクアリウム（docs/spec.md 5-55）。タブを開いたときに aquaFetch で読む（表がまだ無ければアプリが作る） -->
   <div class="screen" id="screen-my" hidden>
+    <!-- マイの中の切り替え（アクアリウム 5-55・観葉植物 5-62）。選んだほうを覚えておく -->
+    <div class="seg my-seg stagger" id="my-seg" role="tablist" aria-label="マイの画面">
+      <button type="button" class="seg-btn" data-my="aqua" role="tab" aria-selected="true">アクアリウム</button>
+      <button type="button" class="seg-btn" data-my="plant" role="tab" aria-selected="false">観葉植物</button>
+    </div>
+    <div id="my-aqua">
     <section class="aq-hero stagger">
       <div class="aq-hero-eyebrow">MY ・ AQUARIUM</div>
       <h2 class="aq-hero-title">アクアリウム</h2>
@@ -2096,6 +2123,29 @@
     <div class="aq-pane" id="aq-pane-sched" hidden></div>
     <div class="aq-pane" id="aq-pane-rec" hidden></div>
     <div class="aq-pane" id="aq-pane-zukan" hidden></div>
+    </div>
+    <!-- マイ › 観葉植物（docs/spec.md 5-62）。開いたときに plantFetch で読む（ファイルがまだ無ければアプリが作る） -->
+    <div id="my-plant" hidden>
+      <section class="adv-hero">
+        <h2 class="adv-hero-title">観葉植物</h2>
+        <p class="adv-hero-lead" id="pl-lead">水やりの日を数えます。</p>
+      </section>
+      <div id="pl-status"><p class="empty">読み込んでいます…</p></div>
+      <section class="card" id="pl-today-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title">今日の水やり</h2>
+          <span class="count-chip" id="pl-today-count"></span>
+        </div>
+        <div id="pl-today-body"></div>
+      </section>
+      <section class="card" id="pl-next-card" hidden>
+        <div class="card-head"><h2 class="card-title">これから</h2></div>
+        <div id="pl-next-body"></div>
+      </section>
+      <section class="card" id="pl-add-card" hidden>
+        <div id="pl-add-body"></div>
+      </section>
+    </div>
   </div>
 
   <div class="screen" id="screen-advice" hidden>
@@ -2326,7 +2376,7 @@
     window.scrollTo(0, 0);
     if (key === 'advice') setupAdvice();
     if (key === 'lunch') setupLunch();
-    if (key === 'my') setupAqua();
+    if (key === 'my') setupMy();
     if (key === 'biz') setupBiz();
   }
 
@@ -3118,6 +3168,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer);
     if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
@@ -3126,6 +3177,7 @@
     btn.onclick = function () {
       if (btn.disabled || LUNCH_UI.busy) return;
       clearTimeout(LUNCH_UI.undoTimer);
+      if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer);
       btn.disabled = true;
       btn.textContent = '戻しています…';
       lunchCall('lunchRecordDelete', { id: id }, function () { bar.hidden = true; renderLunch(); toast('記録を消しました'); }, function () {
@@ -3136,6 +3188,220 @@
     };
     bar.hidden = false;
     LUNCH_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+  }
+
+  // ==== マイの中の切り替え（アクアリウム・観葉植物）====
+  var MY_UI = { sub: '' };
+  function setupMy() {
+    var seg = document.getElementById('my-seg');
+    if (!seg.getAttribute('data-bound')) {
+      seg.setAttribute('data-bound', '1');
+      Array.prototype.forEach.call(seg.querySelectorAll('[data-my]'), function (b) {
+        b.addEventListener('click', function () { showMySub(b.getAttribute('data-my')); });
+      });
+    }
+    if (!MY_UI.sub) {
+      var saved = '';
+      // 見本（DATA.*Preview）では覚えた選択を使わない（見本どうしで選択が移らないように）
+      var preview = !!(DATA.mySubPreview || DATA.aquaPreview || DATA.plantPreview);
+      if (!preview) { try { saved = window.localStorage.getItem('hisho.my.sub') || ''; } catch (e) { saved = ''; } }
+      MY_UI.sub = DATA.mySubPreview || (saved === 'plant' ? 'plant' : 'aqua');
+    }
+    // 止めた側のボタンは出さない。選んでいた側が止まっていれば、動いている側を開く（10/18 猪八戒の点検 中）
+    var subs = DATA.mySubs || { aqua: true, plant: true };
+    Array.prototype.forEach.call(seg.querySelectorAll('[data-my]'), function (b) { b.hidden = subs[b.getAttribute('data-my')] === false; });
+    seg.hidden = !(subs.aqua !== false && subs.plant !== false);
+    if (subs[MY_UI.sub] === false) MY_UI.sub = MY_UI.sub === 'plant' ? 'aqua' : 'plant';
+    showMySub(MY_UI.sub);
+  }
+  function showMySub(sub) {
+    MY_UI.sub = sub === 'plant' ? 'plant' : 'aqua';
+    if (!(DATA.mySubPreview || DATA.aquaPreview || DATA.plantPreview)) {
+      try { window.localStorage.setItem('hisho.my.sub', MY_UI.sub); } catch (e) { /* 覚えられなくても動く */ }
+    }
+    document.getElementById('my-aqua').hidden = MY_UI.sub !== 'aqua';
+    document.getElementById('my-plant').hidden = MY_UI.sub !== 'plant';
+    Array.prototype.forEach.call(document.querySelectorAll('#my-seg [data-my]'), function (b) {
+      var on = b.getAttribute('data-my') === MY_UI.sub;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var eyebrow = document.querySelector('.eyebrow');
+    if (eyebrow) eyebrow.textContent = MY_UI.sub === 'plant' ? 'MY ・ PLANTS' : 'MY';
+    if (MY_UI.sub === 'plant') setupPlant(); else setupAqua();
+  }
+
+  // ==== マイ › 観葉植物（docs/spec.md 5-62）====
+  var PLANT_UI = { loaded: false, loading: false, busy: false, adding: false, manage: false, confirm: '', undoTimer: null };
+
+  function setupPlant() {
+    if (PLANT_UI.loaded || PLANT_UI.loading) return;
+    if (DATA.plantPreview) { DATA.plant = DATA.plantPreview; PLANT_UI.loaded = true; renderPlant(); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    PLANT_UI.loading = true;
+    google.script.run
+      .withSuccessHandler(function (r) { PLANT_UI.loading = false; PLANT_UI.loaded = !!(r && r.ok); DATA.plant = r; renderPlant(); })
+      .withFailureHandler(function () { PLANT_UI.loading = false; DATA.plant = { ok: false, errorText: 'つながりませんでした。タブを押し直してください。' }; renderPlant(); })
+      .plantFetch();
+  }
+
+  function plantCall(fn, arg, onOk, onFail) {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); onFail(); return; }
+    PLANT_UI.busy = true;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        PLANT_UI.busy = false;
+        if (r && r.plant) DATA.plant = r.plant;
+        if (!r || !r.ok) { toast((r && r.message) || 'できませんでした。もう一度押してください。'); onFail(); return; }
+        onOk(r);
+      })
+      .withFailureHandler(function () { PLANT_UI.busy = false; toast('つながりませんでした。もう一度押してください。'); onFail(); })[fn](arg);
+  }
+
+  function renderPlant() {
+    var v = DATA.plant;
+    var status = document.getElementById('pl-status');
+    status.textContent = '';
+    ['pl-today-card', 'pl-next-card', 'pl-add-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
+    if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
+    if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '読めませんでした。')); return; }
+    document.getElementById('pl-lead').textContent = v.empty ? '水やりの日を数えます。下の「＋ 植物を足す」から始めてください。'
+      : v.plants.length + '鉢・今日の水やりは ' + (v.todayCount ? v.todayCount + '鉢' : 'ありません');
+    var due = v.plants.filter(function (p) { return p.due; });
+    var later = v.plants.filter(function (p) { return !p.due; });
+    if (due.length) {
+      document.getElementById('pl-today-card').hidden = false;
+      document.getElementById('pl-today-count').textContent = due.length + '鉢';
+      var tb = document.getElementById('pl-today-body');
+      tb.textContent = '';
+      tb.appendChild(plantList(due, true));
+    }
+    if (later.length) {
+      document.getElementById('pl-next-card').hidden = false;
+      var nb = document.getElementById('pl-next-body');
+      nb.textContent = '';
+      nb.appendChild(plantList(later, false));
+    }
+    renderPlantAdd(v);
+  }
+
+  function plantList(list, today) {
+    var ul = el('ul', 'pl-list');
+    list.forEach(function (p) {
+      var li = el('li', 'pl-row');
+      li.setAttribute('data-plant', p.id);
+      var main = el('div', 'pl-main');
+      var name = el('div', 'pl-name-row');
+      name.appendChild(el('b', 'pl-name', p.name));
+      if (today) name.appendChild(el('span', 'pl-badge ' + (p.late ? 'late' : 'today'), p.late ? p.late + '日遅れ' : '今日'));
+      else name.appendChild(el('span', 'pl-badge', p.dueIn === 1 ? 'あした' : 'あと' + p.dueIn + '日'));
+      main.appendChild(name);
+      main.appendChild(el('span', 'pl-sub', [p.place, p.every + '日ごと', p.lastKnown ? '前回 ' + p.lastText : p.lastText].filter(function (x) { return x; }).join('・')));
+      li.appendChild(main);
+      if (PLANT_UI.manage) {
+        var del = el('button', 'pl-del' + (PLANT_UI.confirm === p.id ? ' sure' : ''), PLANT_UI.confirm === p.id ? '本当に消す' : '消す');
+        del.type = 'button';
+        del.setAttribute('data-del', p.id);
+        del.addEventListener('click', function () {
+          if (PLANT_UI.busy) return;
+          if (PLANT_UI.confirm !== p.id) { PLANT_UI.confirm = p.id; renderPlant(); return; }
+          plantCall('plantRemove', { id: p.id, name: p.name }, function () { PLANT_UI.confirm = ''; renderPlant(); toast('「' + p.name + '」を消しました'); }, function () { PLANT_UI.confirm = ''; renderPlant(); });
+        });
+        li.appendChild(del);
+      } else if (!p.wateredToday) {
+        var w = el('button', 'pl-water' + (today ? '' : ' soft'), '水やりした');
+        w.type = 'button';
+        w.setAttribute('data-water', p.id);
+        w.addEventListener('click', function () {
+          if (PLANT_UI.busy) return;
+          w.disabled = true;
+          w.textContent = '…';
+          plantCall('plantWater', { id: p.id }, function (r) { renderPlant(); plantShowUndo('「' + p.name + '」に水やりしました', r.id); },
+            function () { w.disabled = false; w.textContent = '水やりした'; });
+        });
+        li.appendChild(w);
+      } else {
+        li.appendChild(el('span', 'pl-done', '今日やった'));
+      }
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function renderPlantAdd(v) {
+    var card = document.getElementById('pl-add-card');
+    var body = document.getElementById('pl-add-body');
+    card.hidden = false;
+    body.textContent = '';
+    if (!PLANT_UI.adding) {
+      var add = el('button', 'todo-add', '＋ 植物を足す');
+      add.type = 'button';
+      add.id = 'pl-add';
+      add.addEventListener('click', function () { PLANT_UI.adding = true; PLANT_UI.manage = false; renderPlant(); });
+      body.appendChild(add);
+      if (!v.empty) {
+        var mg = el('button', 'lu-plan-clear', PLANT_UI.manage ? '整理を終える' : '植物を整理する（消す）');
+        mg.type = 'button';
+        mg.id = 'pl-manage';
+        mg.addEventListener('click', function () { PLANT_UI.manage = !PLANT_UI.manage; PLANT_UI.confirm = ''; renderPlant(); });
+        body.appendChild(mg);
+      }
+      return;
+    }
+    var form = el('div', 'lu-form');
+    var field = function (label, input) { var l = el('label', '', label); l.appendChild(input); form.appendChild(l); return input; };
+    var name = el('input', ''); name.type = 'text'; name.id = 'pl-name'; name.maxLength = v.max.name; name.placeholder = '例: モンステラ';
+    field('名前', name);
+    var place = el('input', ''); place.type = 'text'; place.id = 'pl-place'; place.maxLength = v.max.place; place.placeholder = '例: 事務所の窓ぎわ（空でも大丈夫）';
+    field('置き場所', place);
+    var every = el('input', ''); every.type = 'number'; every.id = 'pl-every'; every.inputMode = 'numeric'; every.min = '1'; every.max = String(v.max.every); every.value = '7';
+    field('水やりの間隔（日ごと）', every);
+    var last = el('input', ''); last.type = 'date'; last.id = 'pl-last'; last.value = v.todayIso; last.max = v.todayIso;
+    field('最後に水をやった日（分からなければ空に）', last);
+    var actions = el('div', 'todo-form-actions');
+    var cancel = el('button', '', 'やめる'); cancel.type = 'button'; cancel.id = 'pl-cancel';
+    cancel.addEventListener('click', function () { PLANT_UI.adding = false; renderPlant(); });
+    var save = el('button', 'go', '足す'); save.type = 'button'; save.id = 'pl-save';
+    save.addEventListener('click', function () {
+      if (PLANT_UI.busy) return;
+      save.disabled = true;
+      plantCall('plantAdd', { name: name.value, place: place.value, every: every.value === '' ? '' : Number(every.value), last: last.value },
+        function () { PLANT_UI.adding = false; renderPlant(); toast('「' + name.value.trim() + '」を足しました'); },
+        function () { save.disabled = false; });
+    });
+    actions.appendChild(cancel);
+    actions.appendChild(save);
+    form.appendChild(actions);
+    body.appendChild(form);
+  }
+
+  // 水やりした直後の「元に戻す」（ほかと同じ帯。8秒で消える）
+  function plantShowUndo(message, id) {
+    var bar = document.getElementById('undo-bar');
+    var btn = document.getElementById('undo-btn');
+    clearTimeout(LEDGER_UI.undoTimer);
+    clearTimeout(MAIL_UI.undoTimer);
+    clearTimeout(TODO_UI.undoTimer);
+    clearTimeout(LUNCH_UI.undoTimer);
+    clearTimeout(PLANT_UI.undoTimer);
+    if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
+    document.getElementById('undo-text').textContent = message;
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = '元に戻す';
+    btn.onclick = function () {
+      if (btn.disabled || PLANT_UI.busy) return;
+      clearTimeout(PLANT_UI.undoTimer);
+      btn.disabled = true;
+      btn.textContent = '戻しています…';
+      plantCall('plantWaterUndo', { id: id }, function () { bar.hidden = true; renderPlant(); toast('水やりを取り消しました'); }, function () {
+        btn.disabled = false;
+        btn.textContent = '元に戻す';
+        PLANT_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
+      });
+    };
+    bar.hidden = false;
+    PLANT_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
   // ==== マイ › アクアリウム（docs/spec.md 5-55）====
@@ -3711,6 +3977,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer);
     clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = !id;
@@ -4343,6 +4610,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer);
     if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
@@ -4640,6 +4908,7 @@
     clearTimeout(MAIL_UI.undoTimer);
     clearTimeout(TODO_UI.undoTimer);
     clearTimeout(LUNCH_UI.undoTimer);
+    if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer);
     if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer);
     document.getElementById('undo-text').textContent = message;
     btn.hidden = false;
@@ -5743,6 +6012,7 @@
     if (typeof MAIL_UI !== 'undefined' && MAIL_UI) clearTimeout(MAIL_UI.undoTimer); // 返信不要の帯の残り時間で、台帳の帯を消さない
     if (typeof TODO_UI !== 'undefined' && TODO_UI) clearTimeout(TODO_UI.undoTimer); // やることの帯も同じ
     if (typeof LUNCH_UI !== 'undefined' && LUNCH_UI) clearTimeout(LUNCH_UI.undoTimer); // ランチの帯も同じ
+    if (typeof PLANT_UI !== 'undefined' && PLANT_UI) clearTimeout(PLANT_UI.undoTimer); // 観葉植物の帯も同じ
     if (typeof AQUA_UI !== 'undefined' && AQUA_UI) clearTimeout(AQUA_UI.undoTimer); // アクアリウムの帯も同じ
     document.getElementById('undo-text').textContent = message;
     var showMs = (undo && undo.showMs) || 4000;
