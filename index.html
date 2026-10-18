@@ -1337,6 +1337,50 @@
   .pl-del { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--badge-red-fg); background: transparent;
     color: var(--badge-red-fg); font-family: inherit; font-size: 13px; cursor: pointer; }
   .pl-del.sure { background: var(--badge-red-bg); font-weight: 700; }
+  /* マイ › 家計（Zaim。5-64）。数字の見た目は経営のタブ（.bz-*）に揃える */
+  .zm-yen { font-variant-numeric: tabular-nums; }
+  .zm-lead { margin: 0 0 14px; font-size: 14px; line-height: 1.7; color: var(--text-soft); }
+  .zm-points { margin: 0 0 14px; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .zm-points li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: var(--muted); }
+  .zm-points svg { flex: 0 0 auto; width: 20px; height: 20px; color: var(--lime); margin-top: 1px; }
+  .zm-connect { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 20px; border: none;
+    border-radius: 999px; background: var(--lime); color: var(--on-lime); font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .zm-connect svg { width: 18px; height: 18px; }
+  .zm-connect:disabled { opacity: .6; cursor: default; }
+  .zm-open { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 10px 0 0; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--lime); font-size: 14px; text-decoration: none; }
+  .zm-msg { margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); font-size: 13px; line-height: 1.6; }
+  .zm-band { display: flex; height: 14px; margin: 2px 0 14px; border-radius: 999px; overflow: hidden; background: var(--bg); }
+  .zm-band i { display: block; height: 100%; min-width: 2px; }
+  .zm-cats { margin: 0; padding: 0; list-style: none; }
+  .zm-cats li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .zm-cats li:first-child { border-top: none; }
+  .zm-cat-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 3px; }
+  .zm-cat-name { flex: 1 1 auto; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zm-cat-pct { flex: 0 0 auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .zm-cat-yen { flex: 0 0 auto; min-width: 76px; text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .zm-daily { margin: 4px -2px 0; }
+  .zm-svg { display: block; width: 100%; height: auto; }
+  .zm-bar { fill: #6F7F3E; }
+  .zm-bar.today { fill: var(--lime); }
+  .zm-bar.future { fill: #33332C; }
+  .zm-dlabel { font-size: 8px; fill: var(--muted); font-family: inherit; }
+  .zm-dlabel.today { fill: var(--lime); font-weight: 700; }
+  .zm-recent { margin: 0; padding: 0; list-style: none; }
+  .zm-recent li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .zm-recent li:first-child { border-top: none; padding-top: 2px; }
+  .zm-r-date { flex: 0 0 auto; width: 58px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .zm-r-main { flex: 1 1 auto; min-width: 0; }
+  .zm-r-cat { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zm-r-place { display: block; margin-top: 2px; font-size: 12px; color: var(--weak); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zm-r-yen { flex: 0 0 auto; text-align: right; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .zm-r-yen.income { color: var(--lime); }
+  .zm-r-yen.transfer { color: var(--muted); font-weight: 500; }
+  .zm-r-mode { display: block; font-size: 10px; font-weight: 500; color: var(--weak); }
+  .zm-foot { margin: 0 0 8px; font-size: 12px; line-height: 1.6; color: var(--weak); }
+  .zm-cut { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-soft);
+    font-family: inherit; font-size: 13px; cursor: pointer; }
+  .zm-cut.sure { border-color: var(--badge-red-fg); background: var(--badge-red-bg); color: var(--badge-red-fg); font-weight: 700; }
   /* 作った記録のまとめ（5-61） */
   .lu-ins-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 0; border: none; border-top: 1px solid var(--line);
     background: transparent; color: var(--text); font-family: inherit; text-align: left; cursor: pointer; }
@@ -1665,7 +1709,7 @@
 <script>
   var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
   // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
-  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch'];
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch', 'zaimFetch'];
   window.HISHO_STALE = false;
   var hishoPending = [];
   var hishoShown = false;   // 画面を一度でも出したか
@@ -1759,7 +1803,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2124,6 +2168,7 @@
     <div class="seg my-seg stagger" id="my-seg" role="tablist" aria-label="マイの画面">
       <button type="button" class="seg-btn" data-my="aqua" role="tab" aria-selected="true">アクアリウム</button>
       <button type="button" class="seg-btn" data-my="plant" role="tab" aria-selected="false">観葉植物</button>
+      <button type="button" class="seg-btn" data-my="zaim" role="tab" aria-selected="false">家計</button>
     </div>
     <div id="my-aqua">
     <section class="aq-hero stagger">
@@ -2164,6 +2209,35 @@
       <section class="card" id="pl-add-card" hidden>
         <div id="pl-add-body"></div>
       </section>
+    </div>
+    <!-- マイ › 家計（docs/spec.md 5-64）。開いたときに zaimFetch で Zaim から読む（読むだけ。書かない） -->
+    <div id="my-zaim" hidden>
+      <section class="adv-hero">
+        <h2 class="adv-hero-title">家計</h2>
+        <p class="adv-hero-lead" id="zm-lead">Zaim の記録を読んで、今月のお金の流れを見ます。</p>
+      </section>
+      <div id="zm-status"><p class="empty">読み込んでいます…</p></div>
+      <section class="card" id="zm-connect-card" hidden></section>
+      <section class="card bz-hero" id="zm-hero" hidden></section>
+      <section class="card" id="zm-cat-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title">カテゴリ別の支出</h2>
+          <span class="count-chip" id="zm-cat-count"></span>
+        </div>
+        <div id="zm-cat-body"></div>
+      </section>
+      <section class="card" id="zm-daily-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title">日ごとの支出</h2>
+          <span class="count-chip" id="zm-daily-count"></span>
+        </div>
+        <div id="zm-daily-body"></div>
+      </section>
+      <section class="card" id="zm-recent-card" hidden>
+        <div class="card-head"><h2 class="card-title">最近の記録</h2></div>
+        <div id="zm-recent-body"></div>
+      </section>
+      <section class="card" id="zm-foot-card" hidden></section>
     </div>
   </div>
 
@@ -3209,8 +3283,11 @@
     LUNCH_UI.undoTimer = setTimeout(function () { bar.hidden = true; }, 8000);
   }
 
-  // ==== マイの中の切り替え（アクアリウム・観葉植物）====
+  // ==== マイの中の切り替え（アクアリウム・観葉植物・家計）====
+  var MY_SUBS = ['aqua', 'plant', 'zaim'];
+  var MY_EYEBROW = { aqua: 'MY', plant: 'MY ・ PLANTS', zaim: 'MY ・ MONEY' };
   var MY_UI = { sub: '' };
+  function myPreview() { return !!(DATA.mySubPreview || DATA.aquaPreview || DATA.plantPreview || DATA.zaimPreview); }
   function setupMy() {
     var seg = document.getElementById('my-seg');
     if (!seg.getAttribute('data-bound')) {
@@ -3222,32 +3299,308 @@
     if (!MY_UI.sub) {
       var saved = '';
       // 見本（DATA.*Preview）では覚えた選択を使わない（見本どうしで選択が移らないように）
-      var preview = !!(DATA.mySubPreview || DATA.aquaPreview || DATA.plantPreview);
-      if (!preview) { try { saved = window.localStorage.getItem('hisho.my.sub') || ''; } catch (e) { saved = ''; } }
-      MY_UI.sub = DATA.mySubPreview || (saved === 'plant' ? 'plant' : 'aqua');
+      if (!myPreview()) { try { saved = window.localStorage.getItem('hisho.my.sub') || ''; } catch (e) { saved = ''; } }
+      MY_UI.sub = DATA.mySubPreview || (MY_SUBS.indexOf(saved) >= 0 ? saved : 'aqua');
     }
-    // 止めた側のボタンは出さない。選んでいた側が止まっていれば、動いている側を開く（10/18 猪八戒の点検 中）
-    var subs = DATA.mySubs || { aqua: true, plant: true };
+    // 止めた側のボタンは出さない。選んでいた側が止まっていれば、動いている側を開く（10/18 猪八戒の点検 中）。
+    // 動いているのが1つだけなら切り替えそのものを出さない
+    var subs = DATA.mySubs || { aqua: true, plant: true, zaim: true };
+    var on = MY_SUBS.filter(function (k) { return subs[k] !== false; });
     Array.prototype.forEach.call(seg.querySelectorAll('[data-my]'), function (b) { b.hidden = subs[b.getAttribute('data-my')] === false; });
-    seg.hidden = !(subs.aqua !== false && subs.plant !== false);
-    if (subs[MY_UI.sub] === false) MY_UI.sub = MY_UI.sub === 'plant' ? 'aqua' : 'plant';
+    seg.hidden = on.length < 2;
+    if (on.indexOf(MY_UI.sub) < 0) MY_UI.sub = on[0] || 'aqua';
     showMySub(MY_UI.sub);
   }
   function showMySub(sub) {
-    MY_UI.sub = sub === 'plant' ? 'plant' : 'aqua';
-    if (!(DATA.mySubPreview || DATA.aquaPreview || DATA.plantPreview)) {
+    MY_UI.sub = MY_SUBS.indexOf(sub) >= 0 ? sub : 'aqua';
+    if (!myPreview()) {
       try { window.localStorage.setItem('hisho.my.sub', MY_UI.sub); } catch (e) { /* 覚えられなくても動く */ }
     }
-    document.getElementById('my-aqua').hidden = MY_UI.sub !== 'aqua';
-    document.getElementById('my-plant').hidden = MY_UI.sub !== 'plant';
+    MY_SUBS.forEach(function (k) { document.getElementById('my-' + k).hidden = MY_UI.sub !== k; });
     Array.prototype.forEach.call(document.querySelectorAll('#my-seg [data-my]'), function (b) {
       var on = b.getAttribute('data-my') === MY_UI.sub;
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     var eyebrow = document.querySelector('.eyebrow');
-    if (eyebrow) eyebrow.textContent = MY_UI.sub === 'plant' ? 'MY ・ PLANTS' : 'MY';
-    if (MY_UI.sub === 'plant') setupPlant(); else setupAqua();
+    if (eyebrow) eyebrow.textContent = MY_EYEBROW[MY_UI.sub];
+    if (MY_UI.sub === 'plant') setupPlant(); else if (MY_UI.sub === 'zaim') setupZaim(); else setupAqua();
+  }
+
+  // ==== マイ › 家計（Zaim と読むだけでつなぐ。docs/spec.md 5-64）====
+  // 開くたびに、前に読んでから1分たっていれば読み直す（サーバー側でも数分とっておく）。
+  // 見本では DATA.zaimPreview（zaimFetch の答えの形）
+  var ZAIM_UI = { loaded: false, loading: false, at: 0, busy: false, cutSure: false, authUrl: '' };
+  var ZAIM_COLORS = ['#C9F158', '#A6CC4A', '#83A23F', '#647A36', '#4C5A2E'];
+
+  function setupZaim() {
+    if (ZAIM_UI.loading || (ZAIM_UI.loaded && Date.now() - ZAIM_UI.at < 60000)) return;
+    if (DATA.zaimPreview) { DATA.zaim = DATA.zaimPreview; ZAIM_UI.loaded = true; ZAIM_UI.at = Date.now(); renderZaim(); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    ZAIM_UI.loading = true;
+    google.script.run
+      .withSuccessHandler(function (r) { ZAIM_UI.loading = false; ZAIM_UI.loaded = !!(r && r.ok); ZAIM_UI.at = Date.now(); DATA.zaim = r; renderZaim(); })
+      .withFailureHandler(function () {
+        ZAIM_UI.loading = false;
+        if (!ZAIM_UI.loaded) { DATA.zaim = { ok: false, errorText: 'つながりませんでした。マイの「家計」を押し直してください。' }; renderZaim(); }
+      })
+      .zaimFetch();
+  }
+
+  function zaimYen(n) { return (typeof n === 'number' ? Math.abs(Math.round(n)) : 0).toLocaleString('ja-JP'); }
+
+  function renderZaim() {
+    var v = DATA.zaim;
+    var status = document.getElementById('zm-status');
+    status.textContent = '';
+    ['zm-connect-card', 'zm-hero', 'zm-cat-card', 'zm-daily-card', 'zm-recent-card', 'zm-foot-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
+    var lead = document.getElementById('zm-lead');
+    if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
+    if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '読めませんでした。')); return; }
+    if (!v.connected) {
+      lead.textContent = 'Zaim の記録を読んで、今月のお金の流れを見ます。';
+      renderZaimConnect(v);
+      return;
+    }
+    lead.textContent = v.monthText + 'の記録 ' + v.monthCount + '件・Zaim から読んでいます';
+    renderZaimHero(v);
+    if (v.categories && v.categories.length) renderZaimCats(v);
+    renderZaimDaily(v);
+    if (v.recent && v.recent.length) renderZaimRecent(v);
+    renderZaimFoot(v);
+  }
+
+  // まだつながっていない（鍵が無い・つながりが切れた）とき
+  function renderZaimConnect(v) {
+    var card = document.getElementById('zm-connect-card');
+    card.hidden = false;
+    card.textContent = '';
+    var head = el('div', 'card-head');
+    head.appendChild(el('h2', 'card-title', v.needsReconnect ? 'Zaim とつなぎ直す' : 'Zaim とつなぐ'));
+    card.appendChild(head);
+    if (v.message) card.appendChild(el('p', 'zm-msg', v.message));
+    card.appendChild(el('p', 'zm-lead', 'Zaim に付けている家計簿を、この画面で見られるようにします。'));
+    var ul = el('ul', 'zm-points');
+    [['M12 4.5c-4.5 0-8 3.5-9 7.5 1 4 4.5 7.5 9 7.5s8-3.5 9-7.5c-1-4-4.5-7.5-9-7.5Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', '読むだけです。秘書アプリから Zaim の記録を書き換えることはありません。'],
+     ['M7 10.5V8a5 5 0 0 1 10 0v2.5 M5.5 10.5h13v9.5h-13Z', '金額やお店の名前は、AI にも監視の通知にも送りません。'],
+     ['M4 12h11 M11 7l5 5-5 5 M20 4.5v15', '押すと Zaim の画面が開きます。ログインして「許可」を押すと戻ってきます。']].forEach(function (x) {
+      var li = el('li', '');
+      li.appendChild(aquaSvg(x[0]));
+      li.appendChild(el('span', '', x[1]));
+      ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    if (!v.hasKeys) return; // 鍵がまだ無いときは押せるボタンを出さない（文言は v.message）
+    var btn = el('button', 'zm-connect');
+    btn.type = 'button';
+    btn.id = 'zm-connect';
+    btn.appendChild(aquaSvg('M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1 M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1'));
+    btn.appendChild(document.createTextNode(v.needsReconnect ? 'Zaim とつなぎ直す' : 'Zaim とつなぐ'));
+    card.appendChild(btn);
+    var linkBox = el('div', '');
+    linkBox.id = 'zm-open-box';
+    card.appendChild(linkBox);
+    var showLink = function (url) {
+      linkBox.textContent = '';
+      var a = el('a', 'zm-open', '開かないときはここを押す（Zaim の許可の画面）');
+      a.id = 'zm-open';
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      linkBox.appendChild(a);
+    };
+    if (ZAIM_UI.authUrl) showLink(ZAIM_UI.authUrl);
+    btn.addEventListener('click', function () {
+      if (ZAIM_UI.busy) return;
+      if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なのでつなぎません'); return; }
+      // 返事を待ってから開くと iPhone では止められるので、押したときに先に窓を開けておく
+      var win = null;
+      try { win = window.open('', '_blank'); } catch (e) { win = null; }
+      ZAIM_UI.busy = true;
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (r) {
+          ZAIM_UI.busy = false;
+          btn.disabled = false;
+          if (!r || !r.ok || !r.url) {
+            if (win) { try { win.close(); } catch (e) { /* 閉じられなくてもよい */ } }
+            toast((r && r.message) || 'つなぐ準備ができませんでした。もう一度押してください。');
+            return;
+          }
+          ZAIM_UI.authUrl = r.url;
+          showLink(r.url);
+          var opened = false;
+          if (win) { try { win.location.href = r.url; opened = true; } catch (e) { opened = false; } }
+          if (!opened) { try { opened = !!window.open(r.url, '_blank'); } catch (e) { opened = false; } }
+          toast(opened ? 'Zaim の画面を開きました。許可したら、ここに戻って開き直してください' : '下のリンクから Zaim の画面を開いてください');
+        })
+        .withFailureHandler(function () {
+          ZAIM_UI.busy = false;
+          btn.disabled = false;
+          if (win) { try { win.close(); } catch (e) { /* 閉じられなくてもよい */ } }
+          toast('つながりませんでした。もう一度押してください。');
+        })
+        .zaimAuthStart();
+    });
+  }
+
+  // 今月の支出（大きく）・先月の同じ日までとの比べ・収入
+  function renderZaimHero(v) {
+    var card = document.getElementById('zm-hero');
+    card.hidden = false;
+    card.textContent = '';
+    card.appendChild(el('p', 'bz-k', v.monthText + 'の支出'));
+    var big = el('div', 'bz-big');
+    big.id = 'zm-spend';
+    big.appendChild(el('b', '', zaimYen(v.spend)));
+    big.appendChild(el('span', '', '円'));
+    card.appendChild(big);
+    var chips = el('div', 'bz-chips');
+    if (v.vsPrev) {
+      var d = v.vsPrev;
+      // 支出は増えたら赤・減ったらライム
+      var chip = el('span', 'bz-chip ' + (d.yen > 0 ? 'bad' : d.yen < 0 ? 'good' : 'flat'));
+      chip.id = 'zm-vs';
+      chip.appendChild(el('span', 'bz-chip-k', '先月の ' + d.dayText + ' まで'));
+      var sign = d.yen > 0 ? '+' : d.yen < 0 ? '−' : '±';
+      chip.appendChild(el('b', '', sign + zaimYen(d.yen) + '円' + (d.pct !== null && d.pct !== undefined ? '（' + (d.pct > 0 ? '+' : d.pct < 0 ? '−' : '±') + Math.abs(d.pct).toFixed(1) + '%）' : '')));
+      chips.appendChild(chip);
+    } else {
+      chips.appendChild(el('span', 'bz-chip', '先月の記録がないので比べません'));
+    }
+    card.appendChild(chips);
+    var stats = el('div', 'bz-stats');
+    var stat = function (k, val, unit, sub) {
+      var s = el('div', 'bz-stat');
+      s.appendChild(el('span', 'bz-stat-k', k));
+      var b = el('b', '', val);
+      if (unit) b.appendChild(el('small', '', unit));
+      s.appendChild(b);
+      if (sub) s.appendChild(el('span', 'bz-stat-sub', sub));
+      stats.appendChild(s);
+    };
+    stat('収入', zaimYen(v.income), '円', v.monthText);
+    stat('今日までの支出', zaimYen(v.spendToDate), '円', v.todayText + 'まで');
+    stat('先月の支出', v.vsPrev ? zaimYen(v.vsPrev.prevTotal) : '—', v.vsPrev ? '円' : '', v.prevMonthText + 'の合計');
+    card.appendChild(stats);
+    if (v.empty) card.appendChild(el('p', 'bz-note', v.monthText + 'の記録はまだありません。'));
+  }
+
+  // カテゴリ別（帯グラフ＋一覧）
+  function renderZaimCats(v) {
+    document.getElementById('zm-cat-card').hidden = false;
+    document.getElementById('zm-cat-count').textContent = v.payCount + '件';
+    var body = document.getElementById('zm-cat-body');
+    body.textContent = '';
+    var color = function (c, i) { return c.other ? '#45453C' : ZAIM_COLORS[i % ZAIM_COLORS.length]; };
+    var band = el('div', 'zm-band');
+    band.setAttribute('role', 'img');
+    band.setAttribute('aria-label', 'カテゴリ別の割合: ' + v.categories.map(function (c) { return c.name + ' ' + c.pct + '%'; }).join('、'));
+    v.categories.forEach(function (c, i) {
+      var seg = el('i', '');
+      seg.style.width = Math.max(0, c.pct) + '%';
+      seg.style.background = color(c, i);
+      band.appendChild(seg);
+    });
+    body.appendChild(band);
+    var ul = el('ul', 'zm-cats');
+    v.categories.forEach(function (c, i) {
+      var li = el('li', '');
+      var dot = el('i', 'zm-cat-dot');
+      dot.style.background = color(c, i);
+      li.appendChild(dot);
+      li.appendChild(el('span', 'zm-cat-name', c.name));
+      li.appendChild(el('span', 'zm-cat-pct', c.pct.toFixed(1) + '%'));
+      li.appendChild(el('span', 'zm-cat-yen', zaimYen(c.yen) + '円'));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+
+  // 日ごとの支出（今月の棒。今日はライム・先の日は薄く）
+  function renderZaimDaily(v) {
+    var days = v.daily || [];
+    if (!days.length) return;
+    document.getElementById('zm-daily-card').hidden = false;
+    var past = days.filter(function (d) { return !d.future; });
+    var avg = past.length ? Math.round(v.spendToDate / past.length) : 0;
+    document.getElementById('zm-daily-count').textContent = '1日平均 ' + zaimYen(avg) + '円';
+    var body = document.getElementById('zm-daily-body');
+    body.textContent = '';
+    var NS = 'http://www.w3.org/2000/svg';
+    var colW = 10, barW = 6, top = 6, h = 90, base = top + h, W = days.length * colW, H = base + 14;
+    var max = v.dailyMax > 0 ? v.dailyMax : 1;
+    var mk = function (tag, attrs) { var n = document.createElementNS(NS, tag); Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); }); return n; };
+    var svg = mk('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'zm-svg', role: 'img', 'aria-label': v.monthText + 'の日ごとの支出の棒グラフ（いちばん多い日 ' + zaimYen(v.dailyMax) + '円）' });
+    svg.appendChild(mk('line', { x1: 0, x2: W, y1: base, y2: base, 'class': 'bz-axis' }));
+    svg.appendChild(mk('line', { x1: 0, x2: W, y1: top, y2: top, 'class': 'bz-grid' }));
+    days.forEach(function (d, i) {
+      var x = i * colW + (colW - barW) / 2;
+      var bh = d.yen > 0 ? Math.max(1.5, d.yen / max * h) : 0;
+      if (bh > 0) svg.appendChild(mk('rect', { x: x, y: base - bh, width: barW, height: bh, rx: 1.5, 'class': 'zm-bar' + (d.today ? ' today' : d.future ? ' future' : ''), 'data-day': d.day }));
+      if (d.day === 1 || d.day % 5 === 0 || d.today) {
+        var t = mk('text', { x: x + barW / 2, y: base + 11, 'text-anchor': 'middle', 'class': 'zm-dlabel' + (d.today ? ' today' : '') });
+        t.textContent = String(d.day);
+        svg.appendChild(t);
+      }
+    });
+    var wrap = el('div', 'zm-daily');
+    wrap.appendChild(svg);
+    body.appendChild(wrap);
+    body.appendChild(el('p', 'bz-note', '上の点線は、いちばん多い日の ' + zaimYen(v.dailyMax) + '円。'));
+  }
+
+  // 最近の記録（新しい順）
+  function renderZaimRecent(v) {
+    document.getElementById('zm-recent-card').hidden = false;
+    var body = document.getElementById('zm-recent-body');
+    body.textContent = '';
+    var ul = el('ul', 'zm-recent');
+    v.recent.forEach(function (r) {
+      var li = el('li', '');
+      li.appendChild(el('span', 'zm-r-date', r.dateText));
+      var main = el('div', 'zm-r-main');
+      main.appendChild(el('span', 'zm-r-cat', r.mode === 'transfer' ? '振替' : [r.category, r.genre].filter(function (x) { return x; }).join('／')));
+      if (r.place) main.appendChild(el('span', 'zm-r-place', r.place));
+      li.appendChild(main);
+      var yen = el('span', 'zm-r-yen ' + r.mode, (r.mode === 'income' ? '+' : '') + zaimYen(r.amount) + '円');
+      yen.appendChild(el('span', 'zm-r-mode', r.modeText));
+      li.appendChild(yen);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+
+  // つながりの案内と「つなぎ直す」（2回押し）
+  function renderZaimFoot(v) {
+    var card = document.getElementById('zm-foot-card');
+    card.hidden = false;
+    card.textContent = '';
+    if (v.truncated) card.appendChild(el('p', 'zm-msg', '記録が多いので、新しい分の一部だけを読んでいます。'));
+    card.appendChild(el('p', 'zm-foot', 'Zaim から読むだけです（数分ごとに読み直します）。うまく読めないときは、つなぎ直してください。'));
+    var cut = el('button', 'zm-cut' + (ZAIM_UI.cutSure ? ' sure' : ''), ZAIM_UI.cutSure ? '本当につなぎ直す（いまのつながりを外す）' : 'つなぎ直す');
+    cut.type = 'button';
+    cut.id = 'zm-cut';
+    cut.addEventListener('click', function () {
+      if (ZAIM_UI.busy) return;
+      if (!ZAIM_UI.cutSure) { ZAIM_UI.cutSure = true; renderZaim(); return; }
+      if (typeof google === 'undefined' || !google.script || !google.script.run) { toast('見本の画面なので変えません'); ZAIM_UI.cutSure = false; renderZaim(); return; }
+      ZAIM_UI.busy = true;
+      cut.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (r) {
+          ZAIM_UI.busy = false;
+          ZAIM_UI.cutSure = false;
+          if (!r || !r.ok) { toast((r && r.message) || 'できませんでした。もう一度押してください。'); renderZaim(); return; }
+          DATA.zaim = r.zaim;
+          ZAIM_UI.authUrl = '';
+          renderZaim();
+          toast('Zaim とのつながりを外しました。「Zaim とつなぐ」でつなぎ直せます');
+        })
+        .withFailureHandler(function () { ZAIM_UI.busy = false; ZAIM_UI.cutSure = false; toast('つながりませんでした。もう一度押してください。'); renderZaim(); })
+        .zaimDisconnect();
+    });
+    card.appendChild(cut);
   }
 
   // ==== マイ › 観葉植物（docs/spec.md 5-62）====
