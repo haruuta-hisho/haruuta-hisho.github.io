@@ -1297,6 +1297,25 @@
   .bz-parts b { display: block; font-size: 14px; }
   .bz-parts span { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .bz-src { margin: 8px 0 0; font-size: 11px; color: var(--weak); word-break: break-all; }
+  /* 週間天気（5-63） */
+  .wk-block { margin: 14px 0 0; }
+  .wk-row { display: grid; grid-template-columns: repeat(7, minmax(52px, 1fr)); gap: 6px; margin: 8px -2px 0; overflow-x: auto; padding: 0 2px 2px; }
+  .wk-day { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); min-width: 0; }
+  .wk-date { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .wk-dow { font-size: 12px; font-weight: 700; color: var(--text-soft); }
+  .wk-day.sun .wk-dow { color: var(--badge-red-fg); }
+  .wk-day.sat .wk-dow { color: #8FB8FF; }
+  .wk-mark { width: 18px; height: 18px; border-radius: 50%; background: var(--weak); }
+  .wk-day.g1 .wk-mark { background: #F0C75E; }
+  .wk-day.g2 .wk-mark { background: #8B877B; }
+  .wk-day.g3 .wk-mark { background: #6FA8E8; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+  .wk-day.g4 .wk-mark { background: #E8EEF5; }
+  .wk-text { font-size: 10px; line-height: 1.3; text-align: center; color: var(--text-soft); min-height: 26px; display: flex; align-items: center; word-break: break-all; }
+  .wk-pop { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .wk-pop.warn { color: #8FB8FF; font-weight: 700; }
+  .wk-temp { display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 1.3; font-variant-numeric: tabular-nums; }
+  .wk-temp b { color: var(--badge-red-fg); font-weight: 700; }
+  .wk-temp i { font-style: normal; color: #8FB8FF; }
   /* マイの切り替え・観葉植物（5-62） */
   .my-seg { margin: 0 0 12px; }
   .my-seg .seg-btn.on { background: var(--lime); color: var(--on-lime); font-weight: 700; }
@@ -6275,6 +6294,8 @@
       body.appendChild(block);
     }
 
+    renderWeatherWeek(body, w.week, w.popWarnPercent);
+
     body.appendChild(el('p', 'card-note', w.noteText));
     if (w.alerts && w.alerts.noteText) body.appendChild(el('p', 'card-note', w.alerts.noteText));
     var d = w.disaster;
@@ -6283,6 +6304,32 @@
         if (p && p.ok && p.noteText) body.appendChild(el('p', 'card-note', p.noteText));
       });
     }
+  }
+
+  // 週間天気（5-63）。明日から7日。横に並べ、狭い画面では横にすべらせる。雨・雪の日と降水確率の高い日を目立たせる
+  function renderWeatherWeek(body, week, warn) {
+    if (!week || !week.length) return;
+    var block = el('div', 'wk-block');
+    block.appendChild(el('span', 'case-label', 'これから1週間'));
+    var row = el('div', 'wk-row');
+    row.setAttribute('role', 'list');
+    week.forEach(function (d) {
+      var c = el('div', 'wk-day g' + (d.group || '0') + (d.dowIndex === 0 ? ' sun' : d.dowIndex === 6 ? ' sat' : ''));
+      c.setAttribute('role', 'listitem');
+      c.setAttribute('data-ymd', d.ymd);
+      c.appendChild(el('span', 'wk-date', d.label));
+      c.appendChild(el('span', 'wk-dow', d.dow));
+      c.appendChild(el('span', 'wk-mark', ''));
+      c.appendChild(el('span', 'wk-text', d.text));
+      c.appendChild(el('span', 'wk-pop' + (d.pop !== null && d.pop >= warn ? ' warn' : ''), d.pop !== null ? d.pop + '%' : '—'));
+      var t = el('span', 'wk-temp');
+      t.appendChild(el('b', '', d.max !== null ? d.max + '°' : '—'));
+      t.appendChild(el('i', '', d.min !== null ? d.min + '°' : '—'));
+      c.appendChild(t);
+      row.appendChild(c);
+    });
+    block.appendChild(row);
+    body.appendChild(block);
   }
 
   /**
