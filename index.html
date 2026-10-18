@@ -1221,6 +1221,26 @@
     background: var(--bg); color: var(--text); font-family: inherit; font-size: 16px; }
   .lu-refine button { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lime); background: transparent;
     color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer; }
+  /* 次の水曜に作る・買い物リスト（5-58） */
+  .lu-plan-head { margin: 0 0 8px; font-size: 14px; line-height: 1.6; }
+  .lu-plan-head b { font-size: 16px; }
+  .lu-buy { margin: 0; padding: 0; list-style: none; }
+  .lu-buy button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 0; border: none;
+    border-top: 1px solid var(--line); background: transparent; color: var(--text); font-family: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+  .lu-buy li:first-child button { border-top: none; }
+  .lu-buy .box { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--muted); box-sizing: border-box; }
+  .lu-buy .nm { flex: 1 1 auto; min-width: 0; }
+  .lu-buy .q { flex: 0 1 auto; color: var(--text-soft); text-align: right; font-size: 13px; }
+  .lu-buy button[aria-pressed="true"] .box { background: var(--lime); border-color: var(--lime); }
+  .lu-buy button[aria-pressed="true"] .nm, .lu-buy button[aria-pressed="true"] .q { color: var(--weak); text-decoration: line-through; }
+  .lu-plan-note { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .lu-plan-set { border-style: solid; border-color: var(--lime); }
+  .lu-plan-on { margin: 10px 0 0; font-size: 13px; color: var(--lime); }
+  .lu-plan-clear { min-height: 44px; margin: 6px 0 0; padding: 0; border: none; background: none; color: var(--muted);
+    font-family: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+  /* 台帳の場所・備考のリンク（5-59）。押しやすいよう行の高さを足す */
+  .ledger-place-link, .ledger-link { color: var(--lime); text-decoration: underline; text-underline-offset: 2px; word-break: break-all;
+    display: inline-block; min-height: 24px; padding: 2px 0; }
   .lu-hist { margin: 6px 0 0; padding: 0; list-style: none; }
   .lu-hist li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
   .lu-hist li:first-child { border-top: none; }
@@ -1614,7 +1634,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -1916,6 +1936,13 @@
       <div class="card-head"><h2 class="card-title">Claude に聞いて作る</h2></div>
       <div id="lunch-ask-body"></div>
     </section>
+    <section class="card" id="lunch-plan-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">買い物リスト</h2>
+        <span class="count-chip" id="lunch-plan-count"></span>
+      </div>
+      <div id="lunch-plan-body"></div>
+    </section>
     <section class="card" id="lunch-card">
       <div class="card-head">
         <h2 class="card-title" id="lunch-card-title">レシピ</h2>
@@ -2215,9 +2242,10 @@
     var v = DATA.lunch;
     body.textContent = '';
     chip.textContent = '';
-    if (!v || !v.ok) { renderLunchAsk(false); body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); renderLunchHistory(); return; }
+    if (!v || !v.ok) { renderLunchAsk(false); renderLunchPlan(false); body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); renderLunchHistory(); return; }
     var r = LUNCH_UI.open ? lunchRecipe(LUNCH_UI.open) : null;
     renderLunchAsk(!r && v.ai);
+    renderLunchPlan(!r);
     if (r) { title.textContent = 'レシピ'; renderLunchDetail(body, r, v); renderLunchHistory(); return; }
     LUNCH_UI.open = '';
     title.textContent = 'レシピ';
@@ -2381,6 +2409,58 @@
     }, function () { btn.disabled = false; btn.textContent = '保存'; });
   }
 
+  // 次の水曜に作る・買い物リスト（docs/spec.md 5-58）。一覧の画面だけに出す。押したらすぐ印を変え、答えで描き直す
+  function renderLunchPlan(show) {
+    var card = document.getElementById('lunch-plan-card');
+    var body = document.getElementById('lunch-plan-body');
+    var chip = document.getElementById('lunch-plan-count');
+    var p = DATA.lunch && DATA.lunch.plan;
+    body.textContent = '';
+    chip.textContent = '';
+    if (!show || !p) { card.hidden = true; return; }
+    card.hidden = false;
+    var clear = el('button', 'lu-plan-clear', 'この予定をやめる');
+    clear.type = 'button';
+    clear.id = 'lunch-plan-clear';
+    clear.addEventListener('click', function () {
+      if (LUNCH_UI.busy) return;
+      lunchCall('lunchPlanClear', { date: p.date, ver: p.ver }, function () { renderLunch(); toast('予定をやめました'); }, function () {});
+    });
+    if (p.missing) {
+      // レシピが消えた予定（ファイルを手で直したとき）。黙って隠さず、やめられるようにする
+      body.appendChild(el('p', 'error', p.dateText + 'に作る予定のレシピが見つかりません。やめてから、もう一度選んでください。'));
+      body.appendChild(clear);
+      return;
+    }
+    chip.textContent = p.boughtCount + '/' + p.items.length;
+    var head = el('p', 'lu-plan-head', p.dateText + '　');
+    head.appendChild(el('b', '', p.name));
+    head.appendChild(document.createTextNode('　' + p.people + '人分'));
+    body.appendChild(head);
+    var ul = el('ul', 'lu-buy');
+    p.items.forEach(function (it) {
+      var li = el('li', '');
+      var b = el('button', '');
+      b.type = 'button';
+      b.setAttribute('data-buy', String(it.i));
+      b.setAttribute('aria-pressed', it.bought ? 'true' : 'false');
+      b.appendChild(el('span', 'box'));
+      b.appendChild(el('span', 'nm', it.name));
+      if (it.qty) b.appendChild(el('span', 'q', it.qty));
+      b.addEventListener('click', function () {
+        if (LUNCH_UI.busy) return;
+        var on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        lunchCall('lunchPlanBuy', { recipeId: p.recipeId, date: p.date, ver: p.ver, i: it.i, name: it.name, on: on }, function () { renderLunch(); }, function () { renderLunch(); });
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    body.appendChild(el('p', 'lu-plan-note', '前の日（火曜）の17時に、まだ買っていない材料を LINE WORKS にも送ります。'));
+    body.appendChild(clear);
+  }
+
   function renderLunchHistory() {
     var card = document.getElementById('lunch-hist-card');
     var body = document.getElementById('lunch-hist-body');
@@ -2468,6 +2548,25 @@
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       body.appendChild(a);
+    }
+    // 次の水曜に作る（5-58）。同じレシピ・同じ日・同じ人数で決まっていれば、その旨だけ出す
+    var plan = v.plan;
+    if (plan && plan.recipeId === r.id && plan.date === v.planDate && plan.people === people) {
+      body.appendChild(el('p', 'lu-plan-on', v.planDateText + 'に作る予定です（' + people + '人分）。買い物リストは一覧の上に出ています。'));
+    } else {
+      var ps = el('button', 'todo-add lu-plan-set', '次の水曜 ' + v.planDateText + ' に作る（' + people + '人分）');
+      ps.type = 'button';
+      ps.id = 'lunch-plan-set';
+      ps.addEventListener('click', function () {
+        if (LUNCH_UI.busy) return;
+        ps.disabled = true;
+        lunchCall('lunchPlanSet', { recipeId: r.id, date: v.planDate, people: people, ver: plan ? plan.ver : -1 }, function () {
+          renderLunch();
+          toast(v.planDateText + 'の買い物リストを作りました');
+        }, function () { ps.disabled = false; });
+      });
+      body.appendChild(ps);
+      if (plan && !plan.missing && plan.date === v.planDate && plan.recipeId !== r.id) body.appendChild(el('p', 'lu-plan-note', 'いまは「' + plan.name + '」に決まっています。押すとこちらに変わります。'));
     }
     if (!LUNCH_UI.recording) {
       var rec = el('button', 'todo-add', '＋ 作った記録を付ける');
@@ -4679,6 +4778,7 @@
           dueText: ev.repeat ? '繰り返しの予定' : ev.dueLabel,
           time: ev.time,
           place: ev.place,
+          placeLink: ev.placeLink,
           kind: ev.kind,
           cycle: ev.cycle,
           daysText: ev.daysText,
@@ -4770,10 +4870,19 @@
     var when = [it.dueText, it.time].filter(function (s) { return s; }).join(' ');
     var meta = [when, it.cycle].filter(function (s) { return s; }).join('・');
     if (meta) main.appendChild(el('div', 'ledger-meta', meta));
-    // 場所・参加者（spec 5-43）。どちらも無ければ出さない
-    var where = [it.place ? '場所 ' + it.place : '', it.members ? '参加 ' + it.members : ''].filter(function (s) { return s; }).join('・');
-    if (where) main.appendChild(el('div', 'ledger-meta ledger-where', where));
-    if (it.note) main.appendChild(el('div', 'ledger-note', it.note));
+    // 場所・参加者（spec 5-43）。どちらも無ければ出さない。
+    // 場所は押すと開く（URL はそのページ、住所・名前は Google マップ。spec 5-59）。行を押すと直す画面なので、リンクの押下は行へ伝えない
+    if (it.place || it.members) {
+      var whereEl = el('div', 'ledger-meta ledger-where');
+      if (it.place) {
+        whereEl.appendChild(document.createTextNode('場所 '));
+        if (it.placeLink) whereEl.appendChild(ledgerLinkEl(it.place, it.placeLink, 'ledger-place-link'));
+        else whereEl.appendChild(document.createTextNode(it.place));
+      }
+      if (it.members) whereEl.appendChild(document.createTextNode((it.place ? '・' : '') + '参加 ' + it.members));
+      main.appendChild(whereEl);
+    }
+    if (it.note) main.appendChild(ledgerNoteEl(it.note));
     li.appendChild(main);
     if (it.daysText) li.appendChild(el('span', 'ledger-days', it.daysText));
     if (item) {
@@ -4786,6 +4895,31 @@
       li.addEventListener('keydown', function (e) { if (e.key === 'Enter') openLedgerEditor(item); });
     }
     return li;
+  }
+
+  // 台帳の中のリンク（spec 5-59）。http・https だけ。新しいタブで開き、押しても行（直す画面）は開かない
+  var LEDGER_URL_RE = /https?:\/\/[^\s"'<>]+/g;
+  function ledgerLinkEl(text, href, cls) {
+    var a = el('a', cls || 'ledger-link', text);
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.addEventListener('click', function (e) { e.stopPropagation(); });
+    a.addEventListener('keydown', function (e) { e.stopPropagation(); });
+    return a;
+  }
+  // 備考の中の URL を押せるようにする（文字は textContent で入れる。HTML として動かさない）
+  function ledgerNoteEl(note) {
+    var div = el('div', 'ledger-note');
+    var last = 0;
+    String(note).replace(LEDGER_URL_RE, function (url, at) {
+      if (at > last) div.appendChild(document.createTextNode(note.slice(last, at)));
+      div.appendChild(ledgerLinkEl(url, url, 'ledger-link'));
+      last = at + url.length;
+      return url;
+    });
+    if (last < note.length) div.appendChild(document.createTextNode(note.slice(last)));
+    return div;
   }
 
   // 区分（spec 5-53）。古い返事（kinds が無い）では札を出さない
@@ -4850,7 +4984,7 @@
         var li = ledgerRowEl({
           name: item.name,
           dueText: item.due ? item.dueLabel : '期日まだ',
-          cycle: item.cycle, time: item.time, place: item.place, members: item.members, kind: item.kind, note: item.note,
+          cycle: item.cycle, time: item.time, place: item.place, placeLink: item.placeLink, members: item.members, kind: item.kind, note: item.note,
           daysText: item.show ? item.daysText : '隠し中',
           level: item.show ? item.level : 'far',
         }, item);
