@@ -316,19 +316,22 @@
   .ledger-main { flex: 1 1 auto; min-width: 0; }
   .ledger-name { font-size: 15px; line-height: 1.4; }
   /* 区分の札（仕事・私。spec 5-53）。色は KINDS の COLOR を data で渡さず、ここで決める（画面とカレンダーで近い色） */
-  :root { --kind-work: #8DB7F0; --kind-work-bg: #1B2433; --kind-private: #F2A7C3; --kind-private-bg: #33202A; }
+  :root { --kind-work: #8DB7F0; --kind-work-bg: #1B2433; --kind-private: #F2A7C3; --kind-private-bg: #33202A; --kind-birthday: #F0C75E; --kind-birthday-bg: #38301A; }
   .ledger-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; }
   .ledger-name-row .ledger-name { min-width: 0; overflow-wrap: anywhere; }
   .kind-chip { display: inline-block; flex: none; padding: 1px 7px; border-radius: 999px; font-size: 11px; line-height: 16px; vertical-align: 2px; white-space: nowrap; }
   .kind-chip.work { background: var(--kind-work-bg); color: var(--kind-work); }
   .kind-chip.private { background: var(--kind-private-bg); color: var(--kind-private); }
-  .kind-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kind-chip.birthday { background: var(--kind-birthday-bg); color: var(--kind-birthday); }
+  .kind-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; }
   .kind-opt { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 999px;
     border: 1px solid var(--line); background: var(--card); color: var(--text-soft); font-size: 14px; cursor: pointer; }
   .kind-opt input { position: absolute; opacity: 0; pointer-events: none; }
   .kind-opt .kind-swatch { width: 10px; height: 10px; border-radius: 999px; }
   .kind-opt.work .kind-swatch { background: var(--kind-work); }
   .kind-opt.private .kind-swatch { background: var(--kind-private); }
+  .kind-opt.birthday .kind-swatch { background: var(--kind-birthday); }
+  .kind-opt.birthday:has(input:checked), .kind-opt.checked.birthday { border-color: var(--kind-birthday); background: var(--kind-birthday-bg); color: var(--kind-birthday); }
   .kind-opt.work:has(input:checked) { border-color: var(--kind-work); background: var(--kind-work-bg); color: var(--kind-work); }
   .kind-opt.private:has(input:checked) { border-color: var(--kind-private); background: var(--kind-private-bg); color: var(--kind-private); }
   .kind-opt.checked.work { border-color: var(--kind-work); background: var(--kind-work-bg); color: var(--kind-work); }
@@ -362,6 +365,7 @@
 
   /* ==== 台帳: リスト／カレンダーの切り替えとカレンダー（docs/spec.md 5-21。2026-10-08 代表「カレンダー機能入れて」）==== */
   .card[hidden], .seg[hidden] { display: none !important; }
+  .yearly-btn[hidden], .field-hint[hidden] { display: none !important; }
   .seg {
     display: flex; gap: 4px; padding: 4px; margin: 0 0 14px;
     background: var(--nav); border: 1px solid var(--line); border-radius: 999px;
@@ -480,6 +484,22 @@
     color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer;
   }
   .ledger-group { margin: 14px 0 0; font-size: 11px; letter-spacing: 1px; color: var(--weak); }
+  /* 「毎年出す」（spec 5-67）。繰り返しの選ぶ欄の下に、押すと「毎年」になるボタン */
+  .yearly-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 8px; padding: 0 16px;
+    border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer;
+  }
+  .yearly-btn svg { width: 16px; height: 16px; }
+  .yearly-btn[aria-pressed="true"] { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  /* 済んだもの（振り返り。spec 5-67） */
+  .done-month { margin: 16px 0 4px; font-size: 12px; letter-spacing: 1px; color: var(--weak); }
+  .done-list { list-style: none; margin: 0; padding: 0; }
+  .done-item { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .done-item:first-child { border-top: 0; }
+  .done-date { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .done-name { font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
+  .done-detail { display: block; margin-top: 2px; font-size: 12px; color: var(--weak); overflow-wrap: anywhere; }
 
   .sheet-backdrop {
     position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6);
@@ -1718,7 +1738,7 @@
 <script>
   var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
   // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
-  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch', 'zaimFetch'];
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'ledgerDoneList', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch', 'zaimFetch'];
   window.HISHO_STALE = false;
   var hishoPending = [];
   var hishoShown = false;   // 画面を一度でも出したか
@@ -1812,7 +1832,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2100,6 +2120,15 @@
       <div id="ledger-all-body"></div>
     </section>
 
+    <!-- 済んだもの（振り返り。spec 5-67）。開いたときに ledgerDoneList で履歴のシートから読む -->
+    <section class="card" id="ledger-done-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">済んだもの</h2>
+        <span class="count-chip" id="ledger-done-count"></span>
+      </div>
+      <div id="ledger-done-body"></div>
+    </section>
+
     <p class="soon stagger" id="ledger-foot">期日は表で直します。表は代表のアカウントの中にあるので、事務員には見えません。</p>
   </div><!-- /screen-ledger -->
 
@@ -2346,6 +2375,10 @@
       <label for="le-cycle">繰り返し</label>
       <select id="le-cycle"></select>
       <input type="text" id="le-cycle-other" placeholder="繰り返しを入れる（例: 3年ごと）" hidden>
+      <button class="yearly-btn" id="le-yearly" type="button" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>毎年出す
+      </button>
+      <p class="field-hint" id="le-yearly-hint">誕生日・記念日など、毎年同じ日のものに。「済んだ」を押すと来年の同じ日に進みます。</p>
       <p class="field-error" data-error="CYCLE"></p>
     </div>
 
@@ -5662,9 +5695,72 @@
         if (LEDGER_UI.allOpen) document.getElementById('ledger-all-card').scrollIntoView({ block: 'start' });
       });
       body.appendChild(more);
+      var past = el('button', 'ledger-more', LEDGER_UI.doneOpen ? '済んだものを閉じる' : '済んだものを見る（振り返り）');
+      past.type = 'button';
+      past.id = 'ledger-done-toggle';
+      past.addEventListener('click', function () {
+        LEDGER_UI.doneOpen = !LEDGER_UI.doneOpen;
+        if (LEDGER_UI.doneOpen) loadLedgerDone();
+        renderLedger();
+        if (LEDGER_UI.doneOpen) document.getElementById('ledger-done-card').scrollIntoView({ block: 'start' });
+      });
+      body.appendChild(past);
     }
     renderLedgerAll(edit);
+    renderLedgerDone();
     renderLedgerView();
+  }
+
+  // ---- 済んだもの（振り返り。spec 5-67、代表の選択 B「すべて」）----
+  // 履歴のシートの「済んだ」を新しい順に、月ごとに並べる。開くたびに読み直す（読むだけ・表は書かない）
+  function loadLedgerDone() {
+    if (DATA.ledgerDonePreview) { LEDGER_UI.done = DATA.ledgerDonePreview; renderLedgerDone(); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      LEDGER_UI.done = { ok: false, errorText: '見本の画面なので読みません。' }; renderLedgerDone(); return;
+    }
+    LEDGER_UI.done = null; // 読み込み中
+    // 最後に頼んだ分の返事だけ使う（開き直し・済んだのあとの読み直しが重なったとき、遅れて届いた古い返事で上書きしない。猪八戒の点検）
+    var seq = LEDGER_UI.doneSeq = (LEDGER_UI.doneSeq || 0) + 1;
+    google.script.run
+      .withSuccessHandler(function (r) { if (seq !== LEDGER_UI.doneSeq) return; LEDGER_UI.done = r || { ok: false }; renderLedgerDone(); })
+      .withFailureHandler(function () { if (seq !== LEDGER_UI.doneSeq) return; LEDGER_UI.done = { ok: false, errorText: 'つながりませんでした。閉じて、もう一度開いてください。' }; renderLedgerDone(); })
+      .ledgerDoneList();
+  }
+
+  function renderLedgerDone() {
+    var card = document.getElementById('ledger-done-card');
+    var body = document.getElementById('ledger-done-body');
+    var count = document.getElementById('ledger-done-count');
+    body.textContent = '';
+    count.textContent = '';
+    if (!LEDGER_UI.doneOpen || !(DATA.ledger && DATA.ledger.edit)) { card.hidden = true; return; }
+    card.hidden = false;
+    var d = LEDGER_UI.done;
+    if (!d) { body.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
+    if (!d.ok) { body.appendChild(el('p', 'empty', d.errorText || '読めませんでした。閉じて、もう一度開いてください。')); return; }
+    count.textContent = d.total + '件';
+    if (!d.items.length) {
+      body.appendChild(el('p', 'empty', 'まだありません。一覧の左の四角を押すと、ここに残ります。'));
+      return;
+    }
+    var month = '', ul = null;
+    d.items.forEach(function (it) {
+      var p = String(it.date).split('/');
+      var m = p[0] + '年' + Number(p[1]) + '月';
+      if (m !== month) {
+        month = m;
+        body.appendChild(el('p', 'done-month', m));
+        ul = el('ul', 'done-list');
+        body.appendChild(ul);
+      }
+      var li = el('li', 'done-item');
+      li.appendChild(el('span', 'done-date', Number(p[1]) + '/' + Number(p[2])));
+      var main = el('div', 'done-name', it.name);
+      if (it.detail) main.appendChild(el('span', 'done-detail', it.detail));
+      li.appendChild(main);
+      ul.appendChild(li);
+    });
+    if (d.clipped) body.appendChild(el('p', 'card-note', '新しい ' + d.items.length + '件だけ出しています。それより前は、表の「履歴」のシートにあります。'));
   }
 
 
@@ -6077,6 +6173,12 @@
       input.checked = k.key === pick;
       input.addEventListener('change', function () {
         Array.prototype.forEach.call(box.querySelectorAll('.kind-opt'), function (o) { o.classList.toggle('checked', o.contains(input)); });
+        // 誕生日など毎年の区分（spec 5-68）を選んだら、繰り返しが「なし」のときだけ「毎年」にする（代表が選んだ繰り返しは変えない）
+        var sel = document.getElementById('le-cycle');
+        if (k.yearly && input.checked && sel.value === '' && Array.prototype.some.call(sel.options, function (o) { return o.value === YEARLY_WORD; })) {
+          sel.value = YEARLY_WORD;
+          syncYearly();
+        }
       });
       lab.appendChild(input);
       lab.appendChild(el('span', 'kind-swatch'));
@@ -6127,6 +6229,7 @@
 
   // allOpen の初期値は見本づくり用（本番の webapp.js は ledgerAllOpen を渡さない）
   var LEDGER_UI = { item: null, busy: false, quick: false, allOpen: !!(DATA && DATA.ledgerAllOpen), undoTimer: null, confirmStep: 0,
+    doneOpen: !!(DATA && DATA.ledgerDoneOpen), done: (DATA && DATA.ledgerDonePreview) || null,
     // 見せ方（list / calendar）。前に選んだほうを覚えておく（この端末だけ。消えてもリストに戻るだけ）
     view: DATA.ledgerView || readLedgerView() || 'list', cal: null, calAnim: '' };
 
@@ -6169,6 +6272,17 @@
 
   function choiceValue(sel, other) {
     return sel.value === '__other' ? other.value : sel.value;
+  }
+
+  // 「毎年出す」のボタンの見た目を、繰り返しの欄に合わせる（選択肢に「毎年」が無い設定ならボタンを出さない）
+  var YEARLY_WORD = '毎年';
+  function syncYearly() {
+    var sel = document.getElementById('le-cycle');
+    var btn = document.getElementById('le-yearly');
+    var has = Array.prototype.some.call(sel.options, function (o) { return o.value === YEARLY_WORD; });
+    btn.hidden = !has;
+    document.getElementById('le-yearly-hint').hidden = !has;
+    btn.setAttribute('aria-pressed', has && sel.value === YEARLY_WORD ? 'true' : 'false');
   }
 
   // 期日の3つの欄（年・月・日）。年が「未定」なら月・日は選べない。月を選ぶまで日は選べない
@@ -6301,6 +6415,7 @@
       setFieldErrors(null);
     }
     fillChoice(document.getElementById('le-cycle'), document.getElementById('le-cycle-other'), edit.cycles, item ? item.cycle : '', 'なし');
+    syncYearly();
     fillTime(item ? item.time : '');
     document.getElementById('le-place').value = item ? (item.place || '') : '';
     document.getElementById('le-members').value = item ? (item.members || '') : '';
@@ -6393,6 +6508,7 @@
     var editorOpen = !document.getElementById('ledger-editor').hidden;
     if (r && r.ok) {
       if (editorOpen) closeLedgerEditor();
+      if (LEDGER_UI.doneOpen) loadLedgerDone();
       renderLedger();
       showLedgerUndo(r.message || '保存しました', r.undo);
       if (r.warning) toast(r.warning);
@@ -6585,7 +6701,15 @@
         var other = document.getElementById(id + '-other');
         other.hidden = this.value !== '__other';
         if (!other.hidden) other.focus();
+        syncYearly();
       });
+    });
+    // 「毎年出す」: 押すと繰り返しを「毎年」に。もう一度押すと「なし」に戻す（spec 5-67）
+    document.getElementById('le-yearly').addEventListener('click', function () {
+      var sel = document.getElementById('le-cycle');
+      sel.value = this.getAttribute('aria-pressed') === 'true' ? '' : YEARLY_WORD;
+      document.getElementById('le-cycle-other').hidden = true;
+      syncYearly();
     });
     // 背景（暗いところ）を押したら閉じる。入力の途中で閉じないよう、保存中は閉じない
     document.getElementById('ledger-editor').addEventListener('click', function (e) {
