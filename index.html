@@ -1287,6 +1287,41 @@
   .bz-dl dt { color: var(--muted); }
   .bz-dl dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
   .bz-note { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--weak); }
+  .count-chip.warn { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .bz-acc-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 12px 14px; margin: 0 0 6px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); }
+  .bz-acc-total .bz-stat-k { width: 100%; }
+  .bz-acc-total b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .bz-acc { margin: 0; padding: 0; list-style: none; }
+  .bz-acc-row { position: relative; border-top: 1px solid var(--line); }
+  .bz-acc-row:first-child { border-top: none; }
+  .bz-acc-row.warn::before { content: ''; position: absolute; left: -8px; top: 12px; bottom: 12px; width: 3px; border-radius: 999px; background: var(--badge-yellow-fg); }
+  .bz-acc-btn { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(78px, auto); align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .bz-acc-l { min-width: 0; }
+  .bz-acc-name { display: block; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+  .bz-acc-meta { display: block; margin-top: 2px; font-size: 11px; color: var(--weak); }
+  .bz-spark { display: block; width: 72px; height: 24px; }
+  .bz-spark rect { fill: #45453C; }
+  .bz-spark rect.last { fill: var(--text-soft); }
+  .bz-spark rect.last.warn { fill: var(--badge-yellow-fg); }
+  .bz-spark rect.last.low { fill: var(--lime); }
+  .bz-acc-r { text-align: right; }
+  .bz-acc-yen { display: block; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bz-acc-vs { display: inline-block; margin-top: 2px; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+  .bz-acc-vs.up { color: var(--badge-yellow-fg); }
+  .bz-acc-vs.down { color: var(--badge-lime-fg); }
+  .bz-acc-badge { display: inline-block; margin: -4px 0 10px; padding: 3px 10px; border-radius: 999px; font-size: 11px; background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .bz-acc-detail { margin: 0 0 12px; }
+  .bz-acc-note { margin: 0 0 10px; font-size: 13px; line-height: 1.7; color: var(--text-soft); }
+  .bz-acc-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 0 0 8px; }
+  .bz-acc-months div { padding: 6px 8px; border-radius: 10px; background: var(--card); }
+  .bz-acc-months span { display: block; font-size: 11px; color: var(--muted); }
+  .bz-acc-months b { display: block; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .bz-acc-months .on b { color: var(--lime); }
+  .bz-acc-base { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+  .bz-acc-subvs { font-size: 11px; }
+  .bz-acc-subvs.up { color: var(--badge-yellow-fg); }
+  .bz-acc-subvs.down { color: var(--badge-lime-fg); }
+  .bz-acc-h { margin: 16px 0 4px; font-size: 12px; letter-spacing: 1px; color: var(--muted); }
   .bz-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
   .bz-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .bz-trio > div { min-width: 0; }
@@ -2154,6 +2189,13 @@
       </div>
       <div id="bz-chart-body"></div>
     </section>
+    <section class="card" id="bz-acc-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">科目ごと</h2>
+        <span class="count-chip" id="bz-acc-chip"></span>
+      </div>
+      <div id="bz-acc-body"></div>
+    </section>
     <section class="card" id="bz-trail-card" hidden>
       <div class="card-head"><h2 class="card-title">直近12か月</h2></div>
       <div id="bz-trail-body"></div>
@@ -2523,7 +2565,7 @@
   }
 
   // ==== 経営（docs/spec.md 5-60）====
-  var BIZ_UI = { loaded: false, loading: false, sel: '', at: 0 };
+  var BIZ_UI = { loaded: false, loading: false, sel: '', acc: '', at: 0 };
 
   // 開くたびに、前に読んでから1分たっていれば読み直す（Claude が数字を書いた直後に、古い数字のままにしない。10/18 猪八戒の点検 軽）
   function setupBiz() {
@@ -2571,7 +2613,7 @@
     var v = DATA.biz;
     var status = document.getElementById('bz-status');
     status.textContent = '';
-    ['bz-hero', 'bz-notes-card', 'bz-chart-card', 'bz-trail-card', 'bz-years-card', 'bz-start-card', 'bz-folder-card'].forEach(function (id) { bizShow(id, false); });
+    ['bz-hero', 'bz-notes-card', 'bz-chart-card', 'bz-acc-card', 'bz-trail-card', 'bz-years-card', 'bz-start-card', 'bz-folder-card'].forEach(function (id) { bizShow(id, false); });
     if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
     if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '読めませんでした。')); return; }
     var lead = document.getElementById('bz-lead');
@@ -2582,6 +2624,7 @@
     if (v.latest) renderBizHero(v.latest);
     if (v.notes && v.notes.items && v.notes.items.length) renderBizNotes(v.notes, v.folder);
     if (v.chart && v.chart.length) renderBizChart(v);
+    if (v.accounts && v.accounts.sga && v.accounts.sga.length) renderBizAccounts(v.accounts);
     if (v.trailing) renderBizTrailing(v.trailing);
     if (v.years && v.years.length) renderBizYears(v.years);
     renderBizFolder(v);
@@ -2707,6 +2750,115 @@
     d.appendChild(dl);
     body.appendChild(d);
     body.appendChild(el('p', 'bz-note', '棒を押すと、その月の数字が出ます。'));
+  }
+
+  // 科目ごと（spec 5-69）。いちばん新しい月を「ふだん」（その月を除いた平均）と比べ、多い科目を先頭に。行を押すと推移・内訳・Claude の一言
+  function bizSpark(values, flag) {
+    var NS = 'http://www.w3.org/2000/svg', W = 72, H = 24, n = values.length;
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('class', 'bz-spark');
+    svg.setAttribute('aria-hidden', 'true');
+    var max = Math.max.apply(null, values.concat([0])), min = Math.min.apply(null, values.concat([0]));
+    var span = max - min || 1, gap = 2, bw = (W - gap * (n - 1)) / n;
+    values.forEach(function (x, i) {
+      var top = H - (Math.max(x, 0) - min) / span * H, bot = H - (Math.min(x, 0) - min) / span * H;
+      var r = document.createElementNS(NS, 'rect');
+      r.setAttribute('x', i * (bw + gap)); r.setAttribute('width', bw);
+      // 0円の月は下端に細い線（枠の外に描かない。10/22 猪八戒の点検）
+      r.setAttribute('y', Math.min(top, H - 1)); r.setAttribute('height', Math.max(1, bot - top));
+      r.setAttribute('class', i === n - 1 ? 'last' + (flag ? ' ' + flag : '') : '');
+      svg.appendChild(r);
+    });
+    return svg;
+  }
+  function bizVsText(r) {
+    if (r.diff === null) return '';
+    return 'ふだん' + (r.pct !== null ? bizSign(r.pct) + Math.abs(r.pct).toFixed(0) + '%' : bizSign(r.diff) + bizMoneyText(Math.abs(r.diff)));
+  }
+  function renderBizAccounts(a) {
+    bizShow('bz-acc-card', true);
+    var chip = document.getElementById('bz-acc-chip');
+    chip.textContent = a.warnCount ? '多い ' + a.warnCount : a.ymText.replace(/^\d+年/, '');
+    chip.className = 'count-chip' + (a.warnCount ? ' warn' : '');
+    var body = document.getElementById('bz-acc-body');
+    body.textContent = '';
+    var compared = a.total.base !== null;
+    body.appendChild(el('p', 'bz-sub', compared
+      ? a.ymText + 'の販管費を、ふだん（' + a.baseText + '）と比べました。ふだんより増えた順。'
+      : a.ymText + 'の販管費です。比べるには、前の月の数字がもう少し要ります。'));
+    var tot = el('div', 'bz-acc-total');
+    tot.appendChild(el('span', 'bz-stat-k', '販管費の合計'));
+    tot.appendChild(el('b', '', bizMoneyText(a.total.latest)));
+    if (a.total.diff !== null) {
+      var td = el('span', 'bz-acc-vs ' + (a.total.diff > 0 ? 'up' : 'down'), bizVsText(a.total) + '（' + bizSign(a.total.diff) + bizMoneyText(Math.abs(a.total.diff)) + '）');
+      tot.appendChild(td);
+    }
+    body.appendChild(tot);
+    var list = function (rows, flags) {
+      var ul = el('ul', 'bz-acc');
+      rows.forEach(function (r) {
+        var li = el('li', 'bz-acc-row' + (r.flag ? ' ' + r.flag : ''));
+        var key = r.name;
+        var btn = el('button', 'bz-acc-btn');
+        btn.type = 'button';
+        btn.setAttribute('aria-expanded', BIZ_UI.acc === key ? 'true' : 'false');
+        var left = el('div', 'bz-acc-l');
+        var nm = el('b', 'bz-acc-name', r.name);
+        left.appendChild(nm);
+        var meta = el('span', 'bz-acc-meta', (r.rate !== null ? '売上の ' + r.rate.toFixed(1) + '%' : '') + (r.subs.length ? (r.rate !== null ? '・' : '') + '内訳 ' + r.subs.length : ''));
+        left.appendChild(meta);
+        btn.appendChild(left);
+        btn.appendChild(bizSpark(r.values, flags ? r.flag : ''));
+        var right = el('div', 'bz-acc-r');
+        right.appendChild(el('b', 'bz-acc-yen', bizMoneyText(r.latest)));
+        var vs = bizVsText(r);
+        if (vs) right.appendChild(el('span', 'bz-acc-vs ' + (r.flag === 'warn' ? 'up' : r.flag === 'low' ? 'down' : 'flat'), vs));
+        btn.appendChild(right);
+        btn.addEventListener('click', function () { BIZ_UI.acc = BIZ_UI.acc === key ? '' : key; renderBizAccounts(a); });
+        li.appendChild(btn);
+        if (r.flag === 'warn') li.appendChild(el('span', 'bz-acc-badge', 'いつもより多い'));
+        if (BIZ_UI.acc === key) li.appendChild(bizAccDetail(r, a));
+        ul.appendChild(li);
+      });
+      return ul;
+    };
+    body.appendChild(list(a.sga, true));
+    // 営業外は収益と費用をまとめて、ふだんとの差の大きい順（10/22 猪八戒の点検 中）
+    var other = (a.income || []).concat(a.cost || []).sort(function (x, y) {
+      return (y.diff === null ? -Infinity : y.diff) - (x.diff === null ? -Infinity : x.diff);
+    });
+    if (other.length) {
+      body.appendChild(el('p', 'bz-acc-h', '営業外（参考）'));
+      body.appendChild(list(other, false));
+    }
+    body.appendChild(el('p', 'bz-note', (compared ? '「いつもより多い」は、ふだんより ' + a.warnPct + '% 以上かつ ' + bizMoneyText(a.minYen) + ' 以上多い科目。' : '') + '行を押すと、月ごとの数字と内訳が出ます。'));
+  }
+  function bizAccDetail(r, a) {
+    var d = el('div', 'bz-detail bz-acc-detail');
+    if (r.note) d.appendChild(el('p', 'bz-acc-note', r.note));
+    var months = el('div', 'bz-acc-months');
+    r.values.forEach(function (x, i) {
+      var c = el('div', i === r.values.length - 1 ? 'on' : '');
+      c.appendChild(el('span', '', a.labels[i]));
+      c.appendChild(el('b', '', bizMoneyText(x)));
+      months.appendChild(c);
+    });
+    d.appendChild(months);
+    if (r.base !== null) d.appendChild(el('p', 'bz-acc-base', 'ふだん（' + a.baseText + '）' + bizMoneyText(r.base) + ' → ' + a.labels[a.labels.length - 1] + ' ' + bizMoneyText(r.latest)));
+    if (r.subs.length) {
+      d.appendChild(el('p', 'bz-detail-h', '内訳（' + a.labels[a.labels.length - 1] + '）'));
+      var dl = el('dl', 'bz-dl');
+      r.subs.forEach(function (s) {
+        dl.appendChild(el('dt', '', s.name));
+        var dd = el('dd', '', bizMoneyText(s.latest));
+        if (s.diff !== null && s.diff !== 0) dd.appendChild(el('small', 'bz-acc-subvs ' + (s.diff > 0 ? 'up' : 'down'), ' ' + bizSign(s.diff) + bizMoneyText(Math.abs(s.diff))));
+        dl.appendChild(dd);
+      });
+      d.appendChild(dl);
+      d.appendChild(el('p', 'bz-note', '右の小さな数字は、ふだんとの差です。'));
+    }
+    return d;
   }
 
   function renderBizTrailing(t) {
