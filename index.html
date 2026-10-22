@@ -2417,9 +2417,13 @@
       <label for="le-cycle">繰り返し</label>
       <select id="le-cycle"></select>
       <input type="text" id="le-cycle-other" placeholder="繰り返しを入れる（例: 3年ごと）" hidden>
+      <button class="yearly-btn" id="le-monthly" type="button" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>毎月出す
+      </button>
       <button class="yearly-btn" id="le-yearly" type="button" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>毎年出す
       </button>
+      <p class="field-hint" id="le-monthly-hint">毎月同じ日のもの（提出物・支払いなど）に。「済んだ」を押すと翌月の同じ日に進みます。</p>
       <p class="field-hint" id="le-yearly-hint">誕生日・記念日など、毎年同じ日のものに。「済んだ」を押すと来年の同じ日に進みます。</p>
       <p class="field-error" data-error="CYCLE"></p>
     </div>
@@ -6426,15 +6430,19 @@
     return sel.value === '__other' ? other.value : sel.value;
   }
 
-  // 「毎年出す」のボタンの見た目を、繰り返しの欄に合わせる（選択肢に「毎年」が無い設定ならボタンを出さない）
-  var YEARLY_WORD = '毎年';
+  // 「毎月出す」「毎年出す」のボタンの見た目を、繰り返しの欄に合わせる（選択肢にその言葉が無い設定ならボタンを出さない）
+  // 「毎月出す」は 2026-10-22 代表「毎年出すはあるが毎月出すがない」
+  var YEARLY_WORD = '毎年', MONTHLY_WORD = '毎月';
+  var CYCLE_BTNS = [{ id: 'le-monthly', word: MONTHLY_WORD }, { id: 'le-yearly', word: YEARLY_WORD }];
   function syncYearly() {
     var sel = document.getElementById('le-cycle');
-    var btn = document.getElementById('le-yearly');
-    var has = Array.prototype.some.call(sel.options, function (o) { return o.value === YEARLY_WORD; });
-    btn.hidden = !has;
-    document.getElementById('le-yearly-hint').hidden = !has;
-    btn.setAttribute('aria-pressed', has && sel.value === YEARLY_WORD ? 'true' : 'false');
+    CYCLE_BTNS.forEach(function (b) {
+      var btn = document.getElementById(b.id);
+      var has = Array.prototype.some.call(sel.options, function (o) { return o.value === b.word; });
+      btn.hidden = !has;
+      document.getElementById(b.id + '-hint').hidden = !has;
+      btn.setAttribute('aria-pressed', has && sel.value === b.word ? 'true' : 'false');
+    });
   }
 
   // 期日の3つの欄（年・月・日）。年が「未定」なら月・日は選べない。月を選ぶまで日は選べない
@@ -6856,12 +6864,14 @@
         syncYearly();
       });
     });
-    // 「毎年出す」: 押すと繰り返しを「毎年」に。もう一度押すと「なし」に戻す（spec 5-67）
-    document.getElementById('le-yearly').addEventListener('click', function () {
-      var sel = document.getElementById('le-cycle');
-      sel.value = this.getAttribute('aria-pressed') === 'true' ? '' : YEARLY_WORD;
-      document.getElementById('le-cycle-other').hidden = true;
-      syncYearly();
+    // 「毎月出す」「毎年出す」: 押すと繰り返しをその言葉に。もう一度押すと「なし」に戻す（spec 5-67・5-70）
+    CYCLE_BTNS.forEach(function (b) {
+      document.getElementById(b.id).addEventListener('click', function () {
+        var sel = document.getElementById('le-cycle');
+        sel.value = this.getAttribute('aria-pressed') === 'true' ? '' : b.word;
+        document.getElementById('le-cycle-other').hidden = true;
+        syncYearly();
+      });
     });
     // 背景（暗いところ）を押したら閉じる。入力の途中で閉じないよう、保存中は閉じない
     document.getElementById('ledger-editor').addEventListener('click', function (e) {
