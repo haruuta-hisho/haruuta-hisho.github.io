@@ -1359,6 +1359,35 @@
   .bz-acc-subvs.up { color: var(--badge-yellow-fg); }
   .bz-acc-subvs.down { color: var(--badge-lime-fg); }
   .bz-acc-h { margin: 16px 0 4px; font-size: 12px; letter-spacing: 1px; color: var(--muted); }
+  .bz-eval { position: relative; margin: 0 0 8px; padding: 12px 14px 12px 18px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); }
+  .bz-eval::before { content: ''; position: absolute; left: 8px; top: 12px; bottom: 12px; width: 3px; border-radius: 999px; background: var(--muted); }
+  .bz-eval.good::before { background: var(--lime); }
+  .bz-eval.warn::before { background: var(--badge-yellow-fg); }
+  .bz-eval.bad::before { background: var(--badge-red-fg); }
+  .bz-eval-k { display: block; font-size: 11px; color: var(--muted); }
+  .bz-eval-head { display: block; margin-top: 4px; font-size: 15px; line-height: 1.5; }
+  .bz-eval-body { margin: 4px 0 0; font-size: 13px; line-height: 1.7; color: var(--text-soft); }
+  .bz-acc-row.v-check::before, .bz-acc-row.v-act::before { content: ''; position: absolute; left: -8px; top: 12px; bottom: 12px; width: 3px; border-radius: 999px; background: var(--badge-yellow-fg); }
+  .bz-acc-row.v-act::before { background: var(--badge-red-fg); }
+  .bz-verdict { display: inline-block; margin: -4px 0 10px; padding: 3px 10px; border-radius: 999px; font-size: 11px; background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .bz-verdict.check { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .bz-verdict.act { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .bz-reasons { margin: 0 0 8px; padding: 0; list-style: none; }
+  .bz-reasons li { padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
+  .bz-reasons li:first-child { border-top: none; }
+  .bz-reason-ym { display: inline-block; margin-right: 8px; font-size: 11px; color: var(--muted); }
+  .bz-reason-text { color: var(--text-soft); overflow-wrap: anywhere; }
+  .bz-reason-form { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .bz-reason-form .bz-detail-h { display: block; }
+  .bz-reason-ta { display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 16px; line-height: 1.6; resize: vertical; }
+  .bz-reason-row { display: flex; gap: 8px; margin-top: 8px; }
+  .bz-reason-ym-sel { flex: 0 0 auto; min-height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 16px; }
+  .bz-reason-save { flex: 1 1 auto; min-height: 44px; border: 0; border-radius: 999px; background: var(--lime); color: var(--on-lime); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .bz-reason-save:disabled { opacity: .5; cursor: default; }
+  .bz-reason-msg { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .bz-reason-msg:empty { display: none; }
+  .bz-reason-msg.ok { color: var(--badge-lime-fg); }
+  .bz-reason-msg.ng { color: var(--badge-red-fg); }
   .bz-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
   .bz-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .bz-trio > div { min-width: 0; }
@@ -1904,7 +1933,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","kakeiFetch","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","bizReason","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","kakeiFetch","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2637,7 +2666,7 @@
   }
 
   // ==== 経営（docs/spec.md 5-60）====
-  var BIZ_UI = { loaded: false, loading: false, sel: '', acc: '', at: 0 };
+  var BIZ_UI = { loaded: false, loading: false, sel: '', acc: '', at: 0, saving: false, msg: null, req: null };
 
   // 開くたびに、前に読んでから1分たっていれば読み直す（Claude が数字を書いた直後に、古い数字のままにしない。10/18 猪八戒の点検 軽）
   function setupBiz() {
@@ -2851,8 +2880,10 @@
   function renderBizAccounts(a) {
     bizShow('bz-acc-card', true);
     var chip = document.getElementById('bz-acc-chip');
-    chip.textContent = a.warnCount ? '多い ' + a.warnCount : a.ymText.replace(/^\d+年/, '');
-    chip.className = 'count-chip' + (a.warnCount ? ' warn' : '');
+    // 評価があれば「確認」の数（確認を＋対策を）、無ければ「いつもより多い」の数（spec 5-71）
+    var needs = a.evaluation ? a.sga.concat(a.income, a.cost).filter(function (r) { return r.verdict === 'check' || r.verdict === 'act'; }).length : 0;
+    chip.textContent = a.evaluation ? (needs ? '確認 ' + needs : '問題なし') : a.warnCount ? '多い ' + a.warnCount : a.ymText.replace(/^\d+年/, '');
+    chip.className = 'count-chip' + ((a.evaluation ? needs : a.warnCount) ? ' warn' : '');
     var body = document.getElementById('bz-acc-body');
     body.textContent = '';
     var compared = a.total.base !== null;
@@ -2867,10 +2898,17 @@
       tot.appendChild(td);
     }
     body.appendChild(tot);
+    if (a.evaluation) {
+      var ev = el('div', 'bz-eval ' + a.evaluation.tone);
+      ev.appendChild(el('span', 'bz-eval-k', 'Claude の評価' + (a.evaluation.atText ? '・' + a.evaluation.atText : '') + (a.evaluation.by === 'app' ? '（理由をふまえて直した）' : '')));
+      ev.appendChild(el('b', 'bz-eval-head', a.evaluation.head));
+      ev.appendChild(el('p', 'bz-eval-body', a.evaluation.body));
+      body.appendChild(ev);
+    }
     var list = function (rows, flags) {
       var ul = el('ul', 'bz-acc');
       rows.forEach(function (r) {
-        var li = el('li', 'bz-acc-row' + (r.flag ? ' ' + r.flag : ''));
+        var li = el('li', 'bz-acc-row' + (r.verdict ? ' v-' + r.verdict : r.flag ? ' ' + r.flag : ''));
         var key = r.name;
         var btn = el('button', 'bz-acc-btn');
         btn.type = 'button';
@@ -2889,7 +2927,8 @@
         btn.appendChild(right);
         btn.addEventListener('click', function () { BIZ_UI.acc = BIZ_UI.acc === key ? '' : key; renderBizAccounts(a); });
         li.appendChild(btn);
-        if (r.flag === 'warn') li.appendChild(el('span', 'bz-acc-badge', 'いつもより多い'));
+        if (r.verdict) li.appendChild(el('span', 'bz-verdict ' + r.verdict, BIZ_VERDICT_TEXT[r.verdict] + (r.flag === 'warn' ? '・いつもより多い' : '') + (r.reasons && r.reasons.length ? '・理由あり' : '')));
+        else if (r.flag === 'warn') li.appendChild(el('span', 'bz-acc-badge', 'いつもより多い'));
         if (BIZ_UI.acc === key) li.appendChild(bizAccDetail(r, a));
         ul.appendChild(li);
       });
@@ -2906,9 +2945,10 @@
     }
     body.appendChild(el('p', 'bz-note', (compared ? '「いつもより多い」は、ふだんより ' + a.warnPct + '% 以上かつ ' + bizMoneyText(a.minYen) + ' 以上多い科目。' : '') + '行を押すと、月ごとの数字と内訳が出ます。'));
   }
+  var BIZ_VERDICT_TEXT = { ok: '問題なし', check: '確認を', act: '対策を' };
   function bizAccDetail(r, a) {
     var d = el('div', 'bz-detail bz-acc-detail');
-    if (r.note) d.appendChild(el('p', 'bz-acc-note', r.note));
+    if (r.comment || r.note) d.appendChild(el('p', 'bz-acc-note', r.comment || r.note));
     var months = el('div', 'bz-acc-months');
     r.values.forEach(function (x, i) {
       var c = el('div', i === r.values.length - 1 ? 'on' : '');
@@ -2930,7 +2970,88 @@
       d.appendChild(dl);
       d.appendChild(el('p', 'bz-note', '右の小さな数字は、ふだんとの差です。'));
     }
+    if (r.reasons && r.reasons.length) {
+      d.appendChild(el('p', 'bz-detail-h', '代表が書いた理由'));
+      var ul = el('ul', 'bz-reasons');
+      r.reasons.forEach(function (x) {
+        var li = el('li', '');
+        li.appendChild(el('span', 'bz-reason-ym', x.ymText));
+        li.appendChild(el('span', 'bz-reason-text', x.text));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    }
+    if (a.reasonMonths) d.appendChild(bizReasonForm(r, a));
     return d;
+  }
+  // 受付番号: 同じ科目・同じ月・同じ文のあいだは同じ番号（サーバーは同じ番号の2回目に1回目の答えを返す）
+  function bizReasonRequestId(name, ym, text) {
+    var key = name + '|' + ym + '|' + text;
+    if (!BIZ_UI.req || BIZ_UI.req.key !== key) BIZ_UI.req = { key: key, id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) };
+    return BIZ_UI.req.id;
+  }
+  // 理由を書く（spec 5-71）。保存すると、理由を残してから Claude がこの科目の判定と全体のまとめを直す
+  function bizReasonForm(r, a) {
+    var f = el('div', 'bz-reason-form');
+    var head = el('label', 'bz-detail-h', 'この科目の理由を書く');
+    var sel = el('select', 'bz-reason-ym-sel');
+    sel.setAttribute('aria-label', 'どの月の理由か');
+    a.reasonMonths.slice().reverse().forEach(function (m) {
+      var o = el('option', '', m.label);
+      o.value = m.ym;
+      sel.appendChild(o);
+    });
+    var ta = el('textarea', 'bz-reason-ta');
+    ta.id = 'bz-reason-ta';
+    head.setAttribute('for', 'bz-reason-ta');
+    ta.maxLength = a.reasonMax;
+    ta.rows = 3;
+    ta.placeholder = '例: 9月は2か月分の社会保険料をまとめて払ったため';
+    var fill = function () {
+      var hit = (r.reasons || []).filter(function (x) { return x.ym === sel.value; })[0];
+      ta.value = hit ? hit.text : '';
+    };
+    sel.addEventListener('change', fill);
+    fill();
+    var row = el('div', 'bz-reason-row');
+    row.appendChild(sel);
+    var btn = el('button', 'bz-reason-save', '保存して評価を直す');
+    btn.type = 'button';
+    row.appendChild(btn);
+    var msg = el('p', 'bz-reason-msg');
+    msg.setAttribute('role', 'status');
+    if (BIZ_UI.msg && BIZ_UI.msg.name === r.name) { msg.textContent = BIZ_UI.msg.text; msg.className = 'bz-reason-msg ' + (BIZ_UI.msg.ok ? 'ok' : 'ng'); }
+    btn.addEventListener('click', function () {
+      if (BIZ_UI.saving) return;
+      var text = ta.value.trim();
+      if (!text) { msg.textContent = '理由を書いてください。'; msg.className = 'bz-reason-msg ng'; return; }
+      var done = function (res) {
+        BIZ_UI.saving = false;
+        // 答えが届いたら次は新しい受付番号（届かなかった＝通信が切れたときは、同じ番号のまま押し直せる）
+        if (res && res.ok) BIZ_UI.req = null;
+        BIZ_UI.msg = { name: r.name, ok: !!(res && res.ok && res.evaluated), text: (res && res.message) || '保存できませんでした。もう一度押してください。' };
+        if (res && res.view && res.view.ok) DATA.biz = res.view;
+        renderBizAccounts((DATA.biz && DATA.biz.accounts) || a);
+      };
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        msg.textContent = '（見本では保存しません）'; msg.className = 'bz-reason-msg';
+        return;
+      }
+      BIZ_UI.saving = true;
+      btn.disabled = true;
+      msg.textContent = '理由を保存して、Claude が評価を直しています…（10〜30秒ほど）';
+      msg.className = 'bz-reason-msg';
+      google.script.run
+        .withSuccessHandler(done)
+        .withFailureHandler(function () { done({ ok: false, message: 'つながりませんでした。理由が残っているか、開き直して確かめてください。' }); })
+        .bizReason({ requestId: bizReasonRequestId(r.name, sel.value, text), name: r.name, ym: sel.value, text: text });
+    });
+    f.appendChild(head);
+    f.appendChild(ta);
+    f.appendChild(row);
+    f.appendChild(msg);
+    f.appendChild(el('p', 'bz-note', '人は「A さん」、病気や症状・住所は書かないでください（名前・病名・住所らしいものがあると保存しません）。'));
+    return f;
   }
 
   function renderBizTrailing(t) {
