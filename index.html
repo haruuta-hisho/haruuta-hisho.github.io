@@ -484,6 +484,43 @@
     color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer;
   }
   .ledger-group { margin: 14px 0 0; font-size: 11px; letter-spacing: 1px; color: var(--weak); }
+  /* 月ごとの家計（spec 5-72） */
+  .kk-svg { display: block; width: 100%; height: auto; }
+  .kk-bar { cursor: pointer; }
+  .kk-bar.dim { opacity: .38; }
+  .kk-bar.partial { opacity: .55; }
+  .kk-mlabel { font-size: 11px; fill: var(--muted); }
+  .kk-mlabel.on { fill: var(--text); font-weight: 700; }
+  .kk-vlabel { font-size: 10px; fill: var(--text-soft); font-variant-numeric: tabular-nums; }
+  .kk-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--text-soft); }
+  .kk-legend li { display: inline-flex; align-items: center; gap: 5px; }
+  .kk-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .kk-months { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+  .kk-chip { min-height: 44px; min-width: 56px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--text-soft); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .kk-chip[aria-pressed="true"] { background: var(--lime); border-color: var(--lime); color: #131311; font-weight: 700; }
+  .kk-total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 2px 0 10px; }
+  .kk-total b { font-size: 26px; font-variant-numeric: tabular-nums; color: var(--text); }
+  .kk-total span { font-size: 13px; color: var(--muted); }
+  .kk-rows { list-style: none; margin: 0; padding: 0; }
+  .kk-row { border-top: 1px solid var(--line); }
+  .kk-row:first-child { border-top: none; }
+  .kk-row > button { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; min-height: 48px;
+    padding: 6px 0; border: 0; background: transparent; color: var(--text); font-family: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+  .kk-name { overflow-wrap: anywhere; }
+  .kk-yen { font-variant-numeric: tabular-nums; }
+  .kk-diff { min-width: 76px; padding: 2px 8px; border-radius: 999px; font-size: 11px; text-align: center; font-variant-numeric: tabular-nums; background: #26261F; color: #A09B8E; }
+  .kk-diff.up { background: #3A211B; color: #FF9B85; }
+  .kk-diff.down { background: #252B16; color: #C9F158; }
+  .kk-shops { list-style: none; margin: 0 0 10px 22px; padding: 0; font-size: 13px; color: var(--text-soft); }
+  .kk-shops li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px dashed var(--line); }
+  .kk-shops li span:first-child { overflow-wrap: anywhere; }
+  .kk-shops li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kk-more { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 10px 0 0; padding: 0 16px; border: 1px solid var(--lime);
+    border-radius: 999px; background: transparent; color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .kk-seg { display: flex; gap: 6px; margin: 0 0 10px; }
+  .kk-help { margin: 0; padding-left: 1.3em; font-size: 14px; line-height: 1.8; color: var(--text-soft); }
+
   /* 「毎年出す」（spec 5-67）。繰り返しの選ぶ欄の下に、押すと「毎年」になるボタン */
   .yearly-btn {
     display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 8px; padding: 0 16px;
@@ -1773,7 +1810,7 @@
 <script>
   var HISHO_PAGES = { api: "https://script.google.com/macros/s/AKfycbwbzmK6P7UEUn4wwze9gMWHVWV2ijAPqlJsAT_OLgu_2SON_j1d9TK3Qoie46EnQJ6P/exec", key: 'hisho.apiToken', lastKey: 'hisho.lastPage', timeoutMs: 90000 };
   // 前回の内容を先に出しているあいだも、そのまま呼んでよいもの（読むだけ）。ほか（返信不要・台帳を直す・送るなど）は最新が届いてから呼ぶ
-  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'ledgerDoneList', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch', 'zaimFetch'];
+  var HISHO_READ_ACTIONS = ['getAiNote', 'getNews', 'getTenjikuState', 'adviceRecent', 'ledgerFetch', 'ledgerDoneList', 'mailOpen', 'lunchFetch', 'bizFetch', 'plantFetch', 'zaimFetch', 'kakeiFetch'];
   window.HISHO_STALE = false;
   var hishoPending = [];
   var hishoShown = false;   // 画面を一度でも出したか
@@ -1867,7 +1904,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","kakeiFetch","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2302,6 +2339,37 @@
       <section class="adv-hero">
         <h2 class="adv-hero-title">家計</h2>
         <p class="adv-hero-lead" id="zm-lead">Zaim の記録を読んで、今月のお金の流れを見ます。</p>
+      </section>
+      <!-- 月ごとの家計（docs/spec.md 5-72）。Zaim から書き出した CSV を kakeiFetch で読む。読めたら下の Zaim の API のカードは隠す -->
+      <div id="kk-status"></div>
+      <section class="card" id="kk-help-card" hidden></section>
+      <section class="card" id="kk-month-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title">月ごとの支出</h2>
+          <span class="count-chip" id="kk-file-chip"></span>
+        </div>
+        <div id="kk-month-body"></div>
+      </section>
+      <section class="card" id="kk-items-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title" id="kk-items-title">内訳</h2>
+          <span class="count-chip" id="kk-items-chip"></span>
+        </div>
+        <div id="kk-items-body"></div>
+      </section>
+      <section class="card" id="kk-food-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title" id="kk-food-title">食費をくわしく</h2>
+          <span class="count-chip" id="kk-food-chip"></span>
+        </div>
+        <div id="kk-food-body"></div>
+      </section>
+      <section class="card" id="kk-unknown-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title">分けられなかったもの</h2>
+          <span class="count-chip" id="kk-unknown-chip"></span>
+        </div>
+        <div id="kk-unknown-body"></div>
       </section>
       <div id="zm-status"><p class="empty">読み込んでいます…</p></div>
       <section class="card" id="zm-connect-card" hidden></section>
@@ -3556,7 +3624,310 @@
   var ZAIM_UI = { loaded: false, loading: false, at: 0, busy: false, cutSure: false, authUrl: '' };
   var ZAIM_COLORS = ['#C9F158', '#A6CC4A', '#83A23F', '#647A36', '#4C5A2E'];
 
+  // ==== 月ごとの家計（Zaim から書き出した CSV。docs/spec.md 5-72）====
+  // 開くたびに、前に読んでから1分たっていれば読み直す。見本では DATA.kakeiPreview（kakeiFetch の答えの形）
+  var KAKEI_UI = { loaded: false, loading: false, at: 0, ym: '', foodMode: (typeof DATA !== 'undefined' && DATA.kakeiFoodPreview) || 'month', foodYm: '', open: {}, foodOpen: {} };
+
+  function setupKakei() {
+    if (KAKEI_UI.loading || (KAKEI_UI.loaded && Date.now() - KAKEI_UI.at < 60000)) return;
+    if (DATA.kakeiPreview) { DATA.kakei = DATA.kakeiPreview; KAKEI_UI.loaded = true; KAKEI_UI.at = Date.now(); renderKakei(); return; }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    KAKEI_UI.loading = true;
+    google.script.run
+      .withSuccessHandler(function (r) { KAKEI_UI.loading = false; KAKEI_UI.loaded = !!(r && r.ok); KAKEI_UI.at = Date.now(); DATA.kakei = r; renderKakei(); })
+      .withFailureHandler(function () {
+        KAKEI_UI.loading = false;
+        if (!KAKEI_UI.loaded) { DATA.kakei = { ok: false, errorText: 'つながりませんでした。マイの「家計」を押し直してください。' }; renderKakei(); }
+      })
+      .kakeiFetch();
+  }
+
+  function kakeiHas() { var k = DATA.kakei; return !!(k && k.ok && !k.empty && k.months && k.months.length); }
+
+  function kakeiMan(n) {
+    // 棒の上の短い数（1万円以上は「12.3万」）
+    var a = Math.abs(Math.round(n || 0));
+    return a >= 10000 ? (Math.round(a / 1000) / 10) + '万' : a.toLocaleString('ja-JP');
+  }
+
+  function kakeiDiffText(d) {
+    if (d === null || d === undefined) return 'ふだん —';
+    if (Math.abs(d) < 1) return '±0';
+    return (d > 0 ? '+' : '−') + zaimYen(d);
+  }
+
+  function renderKakei() {
+    var v = DATA.kakei;
+    var status = document.getElementById('kk-status');
+    status.textContent = '';
+    ['kk-help-card', 'kk-month-card', 'kk-items-card', 'kk-food-card', 'kk-unknown-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
+    if (!v) return;
+    if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '家計のファイルを読めませんでした。')); renderZaim(); return; }
+    if (!kakeiHas()) { renderKakeiHelp(v); renderZaim(); return; }
+    if (!KAKEI_UI.ym || !v.months.some(function (m) { return m.ym === KAKEI_UI.ym; })) KAKEI_UI.ym = v.pick;
+    if (!KAKEI_UI.foodYm || !v.months.some(function (m) { return m.ym === KAKEI_UI.foodYm; })) KAKEI_UI.foodYm = v.pick;
+    document.getElementById('zm-lead').textContent = v.firstDate.replace(/-/g, '/') + '〜' + v.lastDate.replace(/-/g, '/') + ' の記録（書き出したファイル）から';
+    renderZaim();
+    renderKakeiMonths(v);
+    renderKakeiItems(v);
+    if (v.detail) renderKakeiFood(v);
+    if (v.unknown && v.unknown.count) renderKakeiUnknown(v);
+  }
+
+  // まだファイルが無いとき: 入れ方を出す（下には Zaim から直接読んだ分をそのまま出す）
+  function renderKakeiHelp(v) {
+    var card = document.getElementById('kk-help-card');
+    card.hidden = false;
+    card.textContent = '';
+    card.appendChild(el('h2', 'card-title', '月ごとのグラフを出すには'));
+    var ol = el('ol', 'kk-help');
+    ['パソコンで zaim.net を開き、「設定」→「ファイル入出力」→「Zaim の記録データをダウンロードする」',
+      '開始日と終了日を選んで「この条件でダウンロード」',
+      'できたファイル（Zaim.….csv）を、マイドライブの「' + (v.folderName || 'はるうた秘書_家計') + '」フォルダに入れる',
+      'この画面を開き直す'].forEach(function (t) { ol.appendChild(el('li', '', t)); });
+    card.appendChild(ol);
+    if (v.message) card.appendChild(el('p', 'bz-note', v.message));
+  }
+
+  // 上: 月ごとの積み上げ棒（押すとその月を選ぶ）
+  function renderKakeiMonths(v) {
+    document.getElementById('kk-month-card').hidden = false;
+    document.getElementById('kk-file-chip').textContent = (v.fileAt ? v.fileAt + ' に入れたファイル' : '');
+    var body = document.getElementById('kk-month-body');
+    body.textContent = '';
+    var NS = 'http://www.w3.org/2000/svg';
+    var mk = function (tag, attrs) { var n = document.createElementNS(NS, tag); Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); }); return n; };
+    var n = v.months.length, colW = 64, barW = 34, top = 18, h = 150, base = top + h, W = Math.max(n * colW, 200), H = base + 18;
+    var max = Math.max.apply(null, v.months.map(function (m) { return m.total; }).concat([1]));
+    var svg = mk('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'kk-svg', role: 'img',
+      'aria-label': '月ごとの支出の積み上げ棒グラフ: ' + v.months.map(function (m) { return m.label + ' ' + zaimYen(m.total) + '円'; }).join('、') });
+    svg.appendChild(mk('line', { x1: 0, x2: W, y1: base, y2: base, 'class': 'bz-axis' }));
+    var x0 = (W - n * colW) / 2;
+    v.months.forEach(function (m, i) {
+      var x = x0 + i * colW + (colW - barW) / 2;
+      var on = m.ym === KAKEI_UI.ym;
+      var g = mk('g', { 'class': 'kk-bar' + (on ? '' : ' dim') + (m.complete ? '' : ' partial'), 'data-ym': m.ym });
+      var y = base;
+      m.stack.forEach(function (yen, j) {
+        if (yen <= 0) return;
+        var bh = yen / max * h;
+        y -= bh;
+        g.appendChild(mk('rect', { x: x, y: y, width: barW, height: Math.max(bh, 0.5), fill: v.groups[j].color }));
+      });
+      // 押しやすいよう、棒の列全体を押せる透明の板
+      g.appendChild(mk('rect', { x: x0 + i * colW, y: 0, width: colW, height: H, fill: 'transparent' }));
+      g.addEventListener('click', function () { KAKEI_UI.ym = m.ym; KAKEI_UI.foodYm = m.ym; KAKEI_UI.open = {}; KAKEI_UI.foodOpen = {}; renderKakei(); });
+      svg.appendChild(g);
+      var t = mk('text', { x: x + barW / 2, y: Math.max(11, base - m.total / max * h - 5), 'text-anchor': 'middle', 'class': 'kk-vlabel' });
+      t.textContent = kakeiMan(m.total);
+      svg.appendChild(t);
+      var l = mk('text', { x: x + barW / 2, y: base + 14, 'text-anchor': 'middle', 'class': 'kk-mlabel' + (on ? ' on' : '') });
+      l.textContent = m.label + (m.complete ? '' : '（途中）');
+      svg.appendChild(l);
+    });
+    body.appendChild(svg);
+    var chips = el('div', 'kk-months');
+    v.months.forEach(function (m) {
+      var b = el('button', 'kk-chip', m.label + (m.complete ? '' : '・途中'));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', m.ym === KAKEI_UI.ym ? 'true' : 'false');
+      b.addEventListener('click', function () { KAKEI_UI.ym = m.ym; KAKEI_UI.foodYm = m.ym; KAKEI_UI.open = {}; KAKEI_UI.foodOpen = {}; renderKakei(); });
+      chips.appendChild(b);
+    });
+    body.appendChild(chips);
+    var leg = el('ul', 'kk-legend');
+    v.groups.forEach(function (g) {
+      var li = el('li', '');
+      var d = el('i', 'kk-dot'); d.style.background = g.color;
+      li.appendChild(d); li.appendChild(document.createTextNode(g.name));
+      leg.appendChild(li);
+    });
+    body.appendChild(leg);
+    var cur = v.months.filter(function (m) { return !m.complete; })[0];
+    if (cur) body.appendChild(el('p', 'bz-note', cur.label + 'は ' + v.lastDate.slice(8).replace(/^0/, '') + '日までの分（途中）です。銀行の連携が止まっている間の分は、まだ入っていません。'));
+  }
+
+  // 選んだ月の項目ごと（多い順。ふだんとの差。押すとお店ごと）
+  function renderKakeiItems(v) {
+    var m = v.months.filter(function (x) { return x.ym === KAKEI_UI.ym; })[0];
+    if (!m) return;
+    document.getElementById('kk-items-card').hidden = false;
+    document.getElementById('kk-items-title').textContent = m.label + 'の内訳' + (m.complete ? '' : '（途中）');
+    document.getElementById('kk-items-chip').textContent = m.avgMonths ? 'ふだん＝前の' + m.avgMonths + 'か月の平均' : '';
+    var body = document.getElementById('kk-items-body');
+    body.textContent = '';
+    var tot = el('div', 'kk-total');
+    tot.appendChild(el('b', '', zaimYen(m.total) + '円'));
+    if (m.avgTotal !== null) tot.appendChild(el('span', '', 'ふだん ' + zaimYen(m.avgTotal) + '円（' + kakeiDiffText(m.total - m.avgTotal) + '円）'));
+    body.appendChild(tot);
+    var colorOf = {};
+    v.groups.forEach(function (g) { colorOf[g.name] = g.color; });
+    var ul = el('ul', 'kk-rows');
+    m.items.forEach(function (it) {
+      var li = el('li', 'kk-row');
+      var btn = el('button', '');
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', KAKEI_UI.open[it.name] ? 'true' : 'false');
+      var d = el('i', 'kk-dot'); d.style.background = colorOf[it.name] || '#5A5A50';
+      btn.appendChild(d);
+      btn.appendChild(el('span', 'kk-name', it.name));
+      btn.appendChild(el('span', 'kk-yen', zaimYen(it.yen) + '円'));
+      var big = it.diff !== null && it.avg !== null && Math.abs(it.diff) >= Math.max(3000, (it.avg || 0) * 0.2);
+      btn.appendChild(el('span', 'kk-diff' + (big ? (it.diff > 0 ? ' up' : ' down') : ''), kakeiDiffText(it.diff)));
+      btn.addEventListener('click', function () { KAKEI_UI.open[it.name] = !KAKEI_UI.open[it.name]; renderKakeiItems(v); });
+      li.appendChild(btn);
+      if (KAKEI_UI.open[it.name]) {
+        var sl = el('ul', 'kk-shops');
+        if (!it.shops.length) sl.appendChild(el('li', '', 'この月はありません'));
+        it.shops.forEach(function (s) {
+          var r = el('li', '');
+          r.appendChild(el('span', '', s.name));
+          r.appendChild(el('span', '', zaimYen(s.yen) + '円'));
+          sl.appendChild(r);
+        });
+        li.appendChild(sl);
+      }
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if (v.detail) {
+      var more = el('button', 'kk-more', v.detail.name + 'をくわしく見る');
+      more.type = 'button';
+      more.addEventListener('click', function () {
+        KAKEI_UI.foodYm = KAKEI_UI.ym;
+        renderKakeiFood(v);
+        var c = document.getElementById('kk-food-card');
+        if (c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      body.appendChild(more);
+    }
+    if (v.skipped && v.skipped.length) {
+      body.appendChild(el('p', 'bz-note', '数えていないもの: ' + v.skipped.filter(function (s) { return s.why !== '支出でない'; }).map(function (s) { return s.why + ' ' + s.count + '件'; }).join('・')));
+    }
+  }
+
+  // 食費をくわしく（細目の積み上げ。月ごと／週ごと）
+  function renderKakeiFood(v) {
+    var dt = v.detail;
+    document.getElementById('kk-food-card').hidden = false;
+    document.getElementById('kk-food-title').textContent = dt.name + 'をくわしく';
+    var body = document.getElementById('kk-food-body');
+    body.textContent = '';
+    var seg = el('div', 'kk-seg');
+    [['month', '月ごと'], ['week', '週ごと']].forEach(function (p) {
+      var b = el('button', 'kk-chip', p[1]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', KAKEI_UI.foodMode === p[0] ? 'true' : 'false');
+      b.addEventListener('click', function () { KAKEI_UI.foodMode = p[0]; renderKakeiFood(v); });
+      seg.appendChild(b);
+    });
+    body.appendChild(seg);
+    var bars = KAKEI_UI.foodMode === 'week' ? dt.weeks : dt.months;
+    var NS = 'http://www.w3.org/2000/svg';
+    var mk = function (tag, attrs) { var n = document.createElementNS(NS, tag); Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); }); return n; };
+    var n = bars.length, colW = KAKEI_UI.foodMode === 'week' ? 34 : 64, barW = KAKEI_UI.foodMode === 'week' ? 20 : 34;
+    var top = 18, h = 130, base = top + h, W = Math.max(n * colW, 200), H = base + 18;
+    var max = Math.max.apply(null, bars.map(function (b) { return b.total; }).concat([1]));
+    var svg = mk('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'kk-svg', role: 'img',
+      'aria-label': dt.name + 'の' + (KAKEI_UI.foodMode === 'week' ? '週' : '月') + 'ごとの積み上げ棒グラフ: ' + bars.map(function (b) { return b.label + ' ' + zaimYen(b.total) + '円'; }).join('、') });
+    svg.appendChild(mk('line', { x1: 0, x2: W, y1: base, y2: base, 'class': 'bz-axis' }));
+    var x0 = (W - n * colW) / 2;
+    bars.forEach(function (b, i) {
+      var x = x0 + i * colW + (colW - barW) / 2;
+      var on = KAKEI_UI.foodMode === 'week' || b.ym === KAKEI_UI.foodYm;
+      var partial = KAKEI_UI.foodMode === 'week' ? b.partial : !b.complete;
+      var g = mk('g', { 'class': 'kk-bar' + (on ? '' : ' dim') + (partial ? ' partial' : '') });
+      var y = base;
+      b.stack.forEach(function (yen, j) {
+        if (yen <= 0) return;
+        var bh = yen / max * h;
+        y -= bh;
+        g.appendChild(mk('rect', { x: x, y: y, width: barW, height: Math.max(bh, 0.5), fill: dt.subs[j].color }));
+      });
+      if (KAKEI_UI.foodMode !== 'week') {
+        g.appendChild(mk('rect', { x: x0 + i * colW, y: 0, width: colW, height: H, fill: 'transparent' }));
+        g.addEventListener('click', function () { KAKEI_UI.foodYm = b.ym; KAKEI_UI.foodOpen = {}; renderKakeiFood(v); });
+      }
+      svg.appendChild(g);
+      if (KAKEI_UI.foodMode !== 'week' || i % 2 === n % 2 || i === n - 1) {
+        var t = mk('text', { x: x + barW / 2, y: Math.max(11, base - b.total / max * h - 5), 'text-anchor': 'middle', 'class': 'kk-vlabel' });
+        t.textContent = kakeiMan(b.total);
+        svg.appendChild(t);
+      }
+      var l = mk('text', { x: x + barW / 2, y: base + 14, 'text-anchor': 'middle', 'class': 'kk-mlabel' + (on && KAKEI_UI.foodMode !== 'week' ? ' on' : '') });
+      l.textContent = KAKEI_UI.foodMode === 'week' ? (i % 2 === (n - 1) % 2 ? b.label : '') : b.label;
+      svg.appendChild(l);
+    });
+    body.appendChild(svg);
+    var leg = el('ul', 'kk-legend');
+    dt.subs.forEach(function (s) {
+      var li = el('li', '');
+      var d = el('i', 'kk-dot'); d.style.background = s.color;
+      li.appendChild(d); li.appendChild(document.createTextNode(s.name));
+      leg.appendChild(li);
+    });
+    body.appendChild(leg);
+    if (KAKEI_UI.foodMode === 'week') {
+      var nw = dt.weeks.filter(function (w) { return !w.partial; });
+      var avg = nw.length ? nw.reduce(function (s, w) { return s + w.total; }, 0) / nw.length : 0;
+      document.getElementById('kk-food-chip').textContent = nw.length ? '1週 平均 ' + zaimYen(avg) + '円' : '';
+      body.appendChild(el('p', 'bz-note', '月曜はじまり。薄い棒は途中の週です。'));
+      return;
+    }
+    var m = dt.months.filter(function (x) { return x.ym === KAKEI_UI.foodYm; })[0];
+    document.getElementById('kk-food-chip').textContent = m ? m.label + ' ' + zaimYen(m.total) + '円' : '';
+    if (!m) return;
+    var ul = el('ul', 'kk-rows');
+    var colorOf = {};
+    dt.subs.forEach(function (s) { colorOf[s.name] = s.color; });
+    m.subs.forEach(function (s) {
+      var li = el('li', 'kk-row');
+      var btn = el('button', '');
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', KAKEI_UI.foodOpen[s.name] ? 'true' : 'false');
+      var d = el('i', 'kk-dot'); d.style.background = colorOf[s.name];
+      btn.appendChild(d);
+      btn.appendChild(el('span', 'kk-name', s.name));
+      btn.appendChild(el('span', 'kk-yen', zaimYen(s.yen) + '円'));
+      btn.appendChild(el('span', 'kk-diff', m.total ? Math.round(s.yen / m.total * 100) + '%' : ''));
+      btn.addEventListener('click', function () { KAKEI_UI.foodOpen[s.name] = !KAKEI_UI.foodOpen[s.name]; renderKakeiFood(v); });
+      li.appendChild(btn);
+      if (KAKEI_UI.foodOpen[s.name]) {
+        var sl = el('ul', 'kk-shops');
+        s.shops.forEach(function (x) {
+          var r = el('li', '');
+          r.appendChild(el('span', '', x.name));
+          r.appendChild(el('span', '', zaimYen(x.yen) + '円'));
+          sl.appendChild(r);
+        });
+        li.appendChild(sl);
+      }
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+
+  // 分けられなかったもの（Claude に何のお店か伝えてもらう）
+  function renderKakeiUnknown(v) {
+    var u = v.unknown;
+    document.getElementById('kk-unknown-card').hidden = false;
+    document.getElementById('kk-unknown-chip').textContent = u.count + '件・' + zaimYen(u.yen) + '円';
+    var body = document.getElementById('kk-unknown-body');
+    body.textContent = '';
+    var sl = el('ul', 'kk-shops');
+    sl.style.marginLeft = '0';
+    u.shops.forEach(function (s) {
+      var r = el('li', '');
+      r.appendChild(el('span', '', s.name + (s.count > 1 ? '（' + s.count + '回）' : '')));
+      r.appendChild(el('span', '', zaimYen(s.yen) + '円'));
+      sl.appendChild(r);
+    });
+    body.appendChild(sl);
+    body.appendChild(el('p', 'bz-note', '「' + u.name + '」に入っています。何のお店か Claude に伝えると、次から分けます。'));
+  }
+
   function setupZaim() {
+    setupKakei();
     if (ZAIM_UI.loading || (ZAIM_UI.loaded && Date.now() - ZAIM_UI.at < 60000)) return;
     if (DATA.zaimPreview) { DATA.zaim = DATA.zaimPreview; ZAIM_UI.loaded = true; ZAIM_UI.at = Date.now(); renderZaim(); return; }
     if (typeof google === 'undefined' || !google.script || !google.script.run) return;
@@ -3578,6 +3949,8 @@
     status.textContent = '';
     ['zm-connect-card', 'zm-hero', 'zm-cat-card', 'zm-daily-card', 'zm-recent-card', 'zm-foot-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
     var lead = document.getElementById('zm-lead');
+    // 書き出したファイルの月ごとの家計が出ているときは、Zaim から直接読む分（手で入れた記録だけ）は出さない（5-72）
+    if (kakeiHas()) return;
     if (!v) { status.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
     if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '読めませんでした。')); return; }
     if (!v.connected) {
