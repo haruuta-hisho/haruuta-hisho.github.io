@@ -519,6 +519,14 @@
   .kk-more { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 10px 0 0; padding: 0 16px; border: 1px solid var(--lime);
     border-radius: 999px; background: transparent; color: var(--lime); font-family: inherit; font-size: 13px; cursor: pointer; }
   .kk-seg { display: flex; gap: 6px; margin: 0 0 10px; }
+  .kk-ev-items { list-style: none; margin: 10px 0 0; padding: 0; }
+  .kk-ev-items li { padding: 10px 0; border-top: 1px solid var(--line); }
+  .kk-ev-items li:first-child { border-top: none; }
+  .kk-ev-name { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .kk-ev-name .bz-verdict { margin: 0 0 0 auto; }
+  .kk-ev-comment { margin: 4px 0 0; font-size: 13px; line-height: 1.7; color: var(--text-soft); }
+  .kk-ev-ok { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+  .kk-ev-wait { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text-soft); }
   .kk-help { margin: 0; padding-left: 1.3em; font-size: 14px; line-height: 1.8; color: var(--text-soft); }
 
   /* 「毎年出す」（spec 5-67）。繰り返しの選ぶ欄の下に、押すと「毎年」になるボタン */
@@ -1933,7 +1941,7 @@
       withSuccessHandler: function (f) { ok = f; return runner; },
       withFailureHandler: function (f) { ng = f; return runner; },
     };
-    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","bizReason","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","kakeiFetch","quickAdd"].forEach(function (fn) {
+    ["getAiNote","adviceAsk","adviceRecent","ledgerFetch","ledgerSave","ledgerComplete","ledgerDelete","ledgerUndo","ledgerDoneList","getTenjikuState","mailOpen","mailDraft","mailSend","mailDismiss","mailRestore","mailDismissMany","mailRestoreMany","mailDismissBefore","mailDismissBeforeUndo","getNews","todoAdd","todoMark","bizFetch","bizReason","lunchFetch","lunchRecord","lunchRecordDelete","lunchAsk","lunchSaveDraft","lunchPlanSet","lunchPlanClear","lunchPlanBuy","aquaFetch","aquaRecord","aquaRecordDelete","aquaSetCount","aquaAckCounts","plantFetch","plantWater","plantWaterUndo","plantAdd","plantRemove","zaimFetch","zaimAuthStart","zaimDisconnect","kakeiFetch","kakeiEvaluate","quickAdd"].forEach(function (fn) {
       runner[fn] = function () {
         var args = Array.prototype.slice.call(arguments);
         if (window.HISHO_STALE && HISHO_READ_ACTIONS.indexOf(fn) < 0) hishoPending.push({ fn: fn, args: args, ok: ok, ng: ng });
@@ -2372,6 +2380,14 @@
       <!-- 月ごとの家計（docs/spec.md 5-72）。Zaim から書き出した CSV を kakeiFetch で読む。読めたら下の Zaim の API のカードは隠す -->
       <div id="kk-status"></div>
       <section class="card" id="kk-help-card" hidden></section>
+      <!-- AI の評価（docs/spec.md 5-73）。選んだ月の評価。そろった最新の月に評価が無ければ kakeiEvaluate を1回呼ぶ -->
+      <section class="card" id="kk-eval-card" hidden>
+        <div class="card-head">
+          <h2 class="card-title" id="kk-eval-title">AI の評価</h2>
+          <span class="count-chip" id="kk-eval-chip"></span>
+        </div>
+        <div id="kk-eval-body"></div>
+      </section>
       <section class="card" id="kk-month-card" hidden>
         <div class="card-head">
           <h2 class="card-title">月ごとの支出</h2>
@@ -3747,7 +3763,7 @@
 
   // ==== 月ごとの家計（Zaim から書き出した CSV。docs/spec.md 5-72）====
   // 開くたびに、前に読んでから1分たっていれば読み直す。見本では DATA.kakeiPreview（kakeiFetch の答えの形）
-  var KAKEI_UI = { loaded: false, loading: false, at: 0, ym: '', foodMode: (typeof DATA !== 'undefined' && DATA.kakeiFoodPreview) || 'month', foodYm: '', open: {}, foodOpen: {} };
+  var KAKEI_UI = { loaded: false, loading: false, at: 0, ym: '', foodMode: (typeof DATA !== 'undefined' && DATA.kakeiFoodPreview) || 'month', foodYm: '', open: {}, foodOpen: {}, evalBusy: '', evalAsked: {}, evalMsg: {} };
 
   function setupKakei() {
     if (KAKEI_UI.loading || (KAKEI_UI.loaded && Date.now() - KAKEI_UI.at < 60000)) return;
@@ -3781,7 +3797,7 @@
     var v = DATA.kakei;
     var status = document.getElementById('kk-status');
     status.textContent = '';
-    ['kk-help-card', 'kk-month-card', 'kk-items-card', 'kk-food-card', 'kk-unknown-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
+    ['kk-help-card', 'kk-eval-card', 'kk-month-card', 'kk-items-card', 'kk-food-card', 'kk-unknown-card'].forEach(function (id) { document.getElementById(id).hidden = true; });
     if (!v) return;
     if (!v.ok) { status.appendChild(el('p', 'error', v.errorText || '家計のファイルを読めませんでした。')); renderZaim(); return; }
     if (!kakeiHas()) { renderKakeiHelp(v); renderZaim(); return; }
@@ -3790,6 +3806,7 @@
     document.getElementById('zm-lead').textContent = v.firstDate.replace(/-/g, '/') + '〜' + v.lastDate.replace(/-/g, '/') + ' の記録（書き出したファイル）から';
     renderZaim();
     renderKakeiMonths(v);
+    renderKakeiEval(v);
     renderKakeiItems(v);
     if (v.detail) renderKakeiFood(v);
     if (v.unknown && v.unknown.count) renderKakeiUnknown(v);
@@ -3869,6 +3886,88 @@
   }
 
   // 選んだ月の項目ごと（多い順。ふだんとの差。押すとお店ごと）
+  var KAKEI_VERDICT_TEXT = { ok: '問題なし', check: '確認を', act: '対策を' };
+
+  // AI に評価をたずねる（そろった最新の月だけ。1回開くごとに1回まで。失敗したら「もう一度」で押し直す）
+  function kakeiAskEval(v, ym) {
+    if (KAKEI_UI.evalBusy || typeof google === 'undefined' || !google.script || !google.script.run) return;
+    KAKEI_UI.evalBusy = ym;
+    KAKEI_UI.evalAsked[ym] = true;
+    delete KAKEI_UI.evalMsg[ym];
+    var done = function (r) {
+      KAKEI_UI.evalBusy = '';
+      // 待っているあいだに家計を読み直していても、今の画面の分へ入れる（同じ月があるときだけ。猪八戒の点検 中）
+      var cur = DATA.kakei;
+      var has = !!(cur && cur.ok && cur.months && cur.months.some(function (m) { return m.ym === ym; }));
+      if (r && r.ok && r.evaluation) {
+        if (has) { cur.evals = cur.evals || {}; cur.evals[ym] = r.evaluation; if (cur.evalWant === ym) cur.evalWant = ''; }
+      } else KAKEI_UI.evalMsg[ym] = (r && r.message) || 'うまくいきませんでした。もう一度押してください。';
+      if (kakeiHas()) renderKakei();
+    };
+    google.script.run
+      .withSuccessHandler(done)
+      .withFailureHandler(function () { done({ ok: false, message: 'つながりませんでした。少しおいて、もう一度押してください。' }); })
+      .kakeiEvaluate({ ym: ym });
+  }
+
+  function renderKakeiEval(v) {
+    var m = v.months.filter(function (x) { return x.ym === KAKEI_UI.ym; })[0];
+    if (!m) return;
+    var ym = m.ym;
+    var ev = v.evals && v.evals[ym];
+    var want = v.evalWant === ym;
+    if (want && !KAKEI_UI.evalAsked[ym] && !KAKEI_UI.evalBusy) kakeiAskEval(v, ym);
+    // 評価が無く、たずねる月でもないとき（途中の月・古い月）はカードを出さない
+    var errHere = v.evalError && ym === v.pick; // 評価のファイルが読めないことは、評価する月でだけ知らせる
+    if (!ev && !want && !errHere) return;
+    document.getElementById('kk-eval-card').hidden = false;
+    document.getElementById('kk-eval-title').textContent = m.label + 'の AI の評価';
+    var chip = document.getElementById('kk-eval-chip');
+    var body = document.getElementById('kk-eval-body');
+    body.textContent = '';
+    chip.className = 'count-chip';
+    chip.textContent = '';
+    if (!ev && errHere) { body.appendChild(el('p', 'error', v.evalError)); return; }
+    var busy = KAKEI_UI.evalBusy === ym;
+    var msg = KAKEI_UI.evalMsg[ym];
+    if (ev) {
+      var needs = ev.items.filter(function (it) { return it.verdict !== 'ok'; });
+      chip.textContent = needs.length ? '確認 ' + needs.length : '問題なし';
+      if (needs.length) chip.className = 'count-chip warn';
+      var box = el('div', 'bz-eval ' + ev.summary.tone);
+      box.appendChild(el('span', 'bz-eval-k', 'Claude の評価・' + ev.atText + (ev.stale ? '（そのあと数字が変わりました' + (busy ? '。見直しています' : '') + '）' : '')));
+      box.appendChild(el('b', 'bz-eval-head', ev.summary.head));
+      box.appendChild(el('p', 'bz-eval-body', ev.summary.body));
+      body.appendChild(box);
+      var order = { act: 0, check: 1 };
+      if (needs.length) {
+        var ul = el('ul', 'kk-ev-items');
+        needs.slice().sort(function (a, b) { return order[a.verdict] - order[b.verdict]; }).forEach(function (it) {
+          var li = el('li', '');
+          var nm = el('div', 'kk-ev-name');
+          nm.appendChild(el('span', '', it.name));
+          nm.appendChild(el('span', 'bz-verdict ' + it.verdict, KAKEI_VERDICT_TEXT[it.verdict]));
+          li.appendChild(nm);
+          li.appendChild(el('p', 'kk-ev-comment', it.comment));
+          ul.appendChild(li);
+        });
+        body.appendChild(ul);
+      }
+      var oks = ev.items.filter(function (it) { return it.verdict === 'ok'; }).map(function (it) { return it.name; });
+      if (oks.length) body.appendChild(el('p', 'kk-ev-ok', '問題なし: ' + oks.join('・')));
+    } else if (busy) {
+      chip.textContent = '見ています';
+      body.appendChild(el('p', 'kk-ev-wait', 'Claude が' + m.label + 'の家計を見ています（30秒ほど）。'));
+    }
+    if (msg && !busy) {
+      body.appendChild(el('p', 'error', msg));
+      var again = el('button', 'kk-more', 'もう一度たずねる');
+      again.type = 'button';
+      again.addEventListener('click', function () { kakeiAskEval(v, ym); renderKakei(); });
+      body.appendChild(again);
+    }
+  }
+
   function renderKakeiItems(v) {
     var m = v.months.filter(function (x) { return x.ym === KAKEI_UI.ym; })[0];
     if (!m) return;
