@@ -3935,7 +3935,7 @@
       chip.textContent = needs.length ? '確認 ' + needs.length : '問題なし';
       if (needs.length) chip.className = 'count-chip warn';
       var box = el('div', 'bz-eval ' + ev.summary.tone);
-      box.appendChild(el('span', 'bz-eval-k', 'Claude の評価・' + ev.atText + (ev.stale ? '（そのあと数字が変わりました' + (busy ? '。見直しています' : '') + '）' : '')));
+      box.appendChild(el('span', 'bz-eval-k', 'Claude の評価・' + ev.atText + (ev.stale ? '（そのあと数字が変わりました' + (busy ? '。見直しています' : '') + '）' : '') + (ev.notSaved ? '（まだ保存できていません。次に開いたときに保存し直します）' : '')));
       box.appendChild(el('b', 'bz-eval-head', ev.summary.head));
       box.appendChild(el('p', 'bz-eval-body', ev.summary.body));
       body.appendChild(box);
