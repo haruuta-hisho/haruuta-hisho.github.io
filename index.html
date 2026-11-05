@@ -1263,6 +1263,22 @@
   .lu-weekly-row b { color: var(--lime); }
   .lu-weekly-row small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
   .lu-weekly .empty { margin: 4px 0 0; font-size: 13px; }
+  /* 職員の回答（docs/spec.md 5-77）。切り替えで「職員の回答」にしたら、ほかのカードは隠す */
+  #lunch-seg { margin: 0 0 12px; }
+  #screen-lunch.staff-mode > section.card:not(#lunch-staff-card) { display: none !important; }
+  .st-person { padding: 12px 0; border-top: 1px solid var(--line); }
+  .st-person:first-child { border-top: 0; padding-top: 4px; }
+  .st-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .st-name { font-weight: 700; font-size: 15px; }
+  .st-date { color: var(--weak); font-size: 12px; }
+  .st-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; margin: 4px 0; font-size: 13px; line-height: 1.6; color: var(--text-soft, #D9D6CB); }
+  .st-key { flex: 0 0 auto; min-width: 4.5em; color: var(--muted); font-size: 12px; }
+  .st-tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .st-tag.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .st-tag.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .st-tag.like { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+  .st-tag.ok { background: var(--badge-lime-bg); color: var(--badge-lime-fg); }
+  .st-note { color: var(--muted); }
   .lu-band { margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border-left: 4px solid; font-size: 14px; line-height: 1.6; }
   .lu-band.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); border-color: var(--badge-red-fg); }
   .lu-band.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); border-color: var(--badge-yellow-fg); }
@@ -2320,6 +2336,17 @@
       <h2 class="adv-hero-title">水曜ランチ</h2>
       <p class="adv-hero-lead">レシピはしばらく作っていない順。足すときは、PC の Claude に「秘書アプリに入れておいて」と頼んでください（リンク・写真・返事を貼るだけで大丈夫です）。</p>
     </section>
+    <div class="seg stagger" id="lunch-seg" role="tablist" aria-label="ランチの見せ方">
+      <button type="button" class="seg-btn" data-lunch-view="recipes" role="tab" aria-selected="true">レシピ</button>
+      <button type="button" class="seg-btn" data-lunch-view="staff" role="tab" aria-selected="false">職員の回答</button>
+    </div>
+    <section class="card" id="lunch-staff-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">職員の回答</h2>
+        <span class="count-chip" id="lunch-staff-count"></span>
+      </div>
+      <div id="lunch-staff-body"></div>
+    </section>
     <section class="card" id="lunch-ask-card" hidden>
       <div class="card-head"><h2 class="card-title">Claude に聞いて作る</h2></div>
       <div id="lunch-ask-body"></div>
@@ -3210,6 +3237,7 @@
       LUNCH_UI.loaded = true;
       if (DATA.lunchOpenPreview) { LUNCH_UI.open = DATA.lunchOpenPreview; LUNCH_UI.people = DATA.lunch.defaultPeople; }
       renderLunch();
+      if (DATA.lunchViewPreview) setLunchView(DATA.lunchViewPreview);
       return;
     }
     if (typeof google === 'undefined' || !google.script || !google.script.run) return;
@@ -3227,6 +3255,7 @@
   }
 
   function renderLunch() {
+    if (LUNCH_VIEW === 'staff') renderLunchStaff(); // 職員の回答を開いているときも、読み直したら中身を新しくする
     var body = document.getElementById('lunch-body');
     var chip = document.getElementById('lunch-count');
     var title = document.getElementById('lunch-card-title');
@@ -3300,6 +3329,55 @@
       box.appendChild(row);
     });
     body.appendChild(box);
+  }
+  // 職員の回答（docs/spec.md 5-77。代表だけの画面なので名前つき）
+  var LUNCH_VIEW = 'recipes';
+  function setLunchView(view) {
+    LUNCH_VIEW = view;
+    document.querySelectorAll('#lunch-seg .seg-btn').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-lunch-view') === view ? 'true' : 'false'); });
+    document.getElementById('screen-lunch').classList.toggle('staff-mode', view === 'staff');
+    document.getElementById('lunch-staff-card').hidden = view !== 'staff';
+    if (view === 'staff') renderLunchStaff();
+  }
+  document.querySelectorAll('#lunch-seg .seg-btn').forEach(function (b) {
+    b.addEventListener('click', function () { setLunchView(b.getAttribute('data-lunch-view')); window.scrollTo(0, 0); });
+  });
+  function renderLunchStaff() {
+    var body = document.getElementById('lunch-staff-body');
+    var chip = document.getElementById('lunch-staff-count');
+    var v = DATA.lunch;
+    body.textContent = ''; chip.textContent = '';
+    if (!v || !v.ok) { body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); return; }
+    if (v.allergy && !v.allergy.ok) { body.appendChild(el('p', 'lu-allergy-note', v.allergy.errorText)); return; }
+    var list = v.staffAnswers || [];
+    chip.textContent = list.length + '人';
+    if (v.allergy && v.allergy.errorText) body.appendChild(el('p', 'lu-allergy-note', v.allergy.errorText));
+    if (!list.length) { body.appendChild(el('p', 'empty', 'まだだれも答えていません。')); return; }
+    var line = function (box, key, nodes) {
+      var row = el('div', 'st-line');
+      row.appendChild(el('span', 'st-key', key));
+      nodes.forEach(function (n) { row.appendChild(n); });
+      box.appendChild(row);
+    };
+    var tags = function (arr, cls) { return arr.map(function (t) { return el('span', 'st-tag' + (cls ? ' ' + cls : ''), t); }); };
+    list.forEach(function (p) {
+      var box = el('div', 'st-person');
+      var head = el('div', 'st-head');
+      head.appendChild(el('span', 'st-name', p.name));
+      head.appendChild(el('span', 'st-date', p.answered ? (p.uncertain ? '最新の回答が読めません' : (p.dateText ? p.dateText + ' 回答' : '')) : 'アンケート未回答'));
+      box.appendChild(head);
+      if (p.answered && !p.uncertain) {
+        if (p.none && !p.allergies.length) line(box, 'アレルギー', tags(['なし'], 'ok'));
+        else if (p.allergies.length) line(box, 'アレルギー', p.allergies.map(function (a) { return el('span', 'st-tag ' + a.level, a.label + '（' + a.levelLabel + '）'); }));
+        if (p.other) line(box, 'そのほか', [el('span', '', p.other)]);
+        if (p.likes.like.length) line(box, '好き', tags(p.likes.like, 'like'));
+        if (p.likes.dislike.length) line(box, '苦手', tags(p.likes.dislike, 'sick'));
+        if (p.likesNote) line(box, 'ひとこと', [el('span', 'st-note', p.likesNote)]);
+      }
+      if (p.dropped.length) line(box, '前の回答', [el('span', 'st-note', p.dropped.join('、') + ' が消えています（本人に確認）')]);
+      line(box, '次のランチ', p.wishes.length ? tags(p.wishes) : [el('span', 'st-note', 'まだ書いていません')]);
+      body.appendChild(box);
+    });
   }
   function lunchAlertBadge(b, rc) {
     if (!rc.alerts || !rc.alerts.length) return;
