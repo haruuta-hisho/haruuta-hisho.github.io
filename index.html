@@ -1244,6 +1244,20 @@
   .lu-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
   .lu-good { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: var(--badge-lime-bg); color: var(--badge-lime-fg); font-size: 11px; }
   .lu-row::after { content: '›'; flex: 0 0 auto; color: var(--weak); font-size: 18px; }
+  /* 職員アンケートのアレルギーの警告（docs/spec.md 5-74） */
+  .lu-alert { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .lu-alert.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); }
+  .lu-alert.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .lu-alert.dislike { background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .lu-allergy-note { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+    background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
+  .lu-bands { margin: 12px 0 4px; }
+  .lu-band { margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border-left: 4px solid; font-size: 14px; line-height: 1.6; }
+  .lu-band.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); border-color: var(--badge-red-fg); }
+  .lu-band.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); border-color: var(--badge-yellow-fg); }
+  .lu-band.dislike { background: var(--badge-gray-bg); color: var(--badge-gray-fg); border-color: var(--badge-gray-fg); }
+  .lu-band-head { display: block; font-weight: 700; font-size: 15px; }
+  .lu-band-line { display: block; color: var(--text-soft); font-size: 13px; }
   .lu-back { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: none; background: none;
     color: var(--lime); font-family: inherit; font-size: 14px; cursor: pointer; }
   .lu-title { margin: 4px 0 2px; font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 22px; line-height: 1.4; }
@@ -3218,6 +3232,7 @@
     title.textContent = 'レシピ';
     chip.textContent = v.recipes.length + '品';
     if (!v.recipes.length) { body.appendChild(el('p', 'empty', v.emptyMessage)); renderLunchHistory(); return; }
+    lunchAllergyNote(body, v);
     var ul = el('ul', 'lu-list');
     v.recipes.forEach(function (rc) {
       var li = el('li', '');
@@ -3229,6 +3244,7 @@
       main.appendChild(el('span', 'lu-sub', rc.lastText ? '前回 ' + rc.lastText + '・' + rc.count + '回' : 'まだ作っていない'));
       b.appendChild(main);
       if (rc.good > 0) b.appendChild(el('span', 'lu-good', '好評 ' + rc.good));
+      lunchAlertBadge(b, rc);
       b.addEventListener('click', function () {
         LUNCH_UI.open = rc.id; LUNCH_UI.people = v.defaultPeople || rc.serves; LUNCH_UI.recording = false; LUNCH_UI.reaction = '';
         renderLunch(); window.scrollTo(0, 0);
@@ -3238,6 +3254,33 @@
     });
     body.appendChild(ul);
     renderLunchHistory();
+  }
+
+  // 職員アンケートのアレルギー（docs/spec.md 5-74）。読めない・まだ誰も答えていないときは、印が無いことを安全と読まれないように出す
+  function lunchAllergyNote(body, v) {
+    var a = v.allergy;
+    if (!a) return;
+    var text = !a.ok ? a.errorText : (a.answered === 0 ? v.allergyText.NONE_ANSWERED : '');
+    if (text) body.appendChild(el('p', 'lu-allergy-note', text));
+  }
+  function lunchAlertBadge(b, rc) {
+    if (!rc.alerts || !rc.alerts.length) return;
+    var labels = [];
+    rc.alerts.forEach(function (x) { if (labels.indexOf(x.label) < 0) labels.push(x.label); });
+    b.appendChild(el('span', 'lu-alert ' + rc.alerts[0].level, labels.join('・') + ' 注意'));
+  }
+  function lunchAlertBands(body, r, v) {
+    lunchAllergyNote(body, v);
+    if (!r.alerts || !r.alerts.length) return;
+    var box = el('div', 'lu-bands');
+    r.alerts.forEach(function (x) {
+      var band = el('div', 'lu-band ' + x.level);
+      band.appendChild(el('span', 'lu-band-head', x.label + '（' + x.levelLabel + '）: ' + x.names.join('、')));
+      if (x.sure.length) band.appendChild(el('span', 'lu-band-line', '入っている材料: ' + x.sure.join('、')));
+      if (x.maybe.length) band.appendChild(el('span', 'lu-band-line', x.maybe.join('、') + ' … ' + v.allergyText.MAYBE_NOTE));
+      box.appendChild(band);
+    });
+    body.appendChild(box);
   }
 
   // Claude に聞いて作る・返事を貼って整える（docs/spec.md 5-40）
@@ -3521,6 +3564,7 @@
     body.appendChild(back);
     body.appendChild(el('h3', 'lu-title', r.name));
     body.appendChild(el('span', 'lu-sub', r.lastText ? '前回 ' + r.lastText + '・' + r.count + '回作った' + (r.good ? '・好評 ' + r.good : '') : 'まだ作っていない'));
+    lunchAlertBands(body, r, v);
     var people = LUNCH_UI.people || v.defaultPeople || r.serves;
     var row = el('div', 'lu-people');
     var minus = el('button', '', '−');
