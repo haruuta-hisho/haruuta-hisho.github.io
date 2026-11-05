@@ -1252,6 +1252,9 @@
   .lu-allergy-note { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
     background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
   .lu-bands { margin: 12px 0 4px; }
+  .lu-allergy-others { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+    background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
+  .lu-allergy-others .lu-band-head { font-size: 13px; }
   .lu-band { margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border-left: 4px solid; font-size: 14px; line-height: 1.6; }
   .lu-band.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); border-color: var(--badge-red-fg); }
   .lu-band.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); border-color: var(--badge-yellow-fg); }
@@ -3262,6 +3265,12 @@
     if (!a) return;
     var text = !a.ok ? a.errorText : (a.answered === 0 ? v.allergyText.NONE_ANSWERED : '');
     if (text) body.appendChild(el('p', 'lu-allergy-note', text));
+    if (a.others && a.others.length) {
+      var box = el('div', 'lu-allergy-others');
+      box.appendChild(el('span', 'lu-band-head', v.allergyText.OTHERS_TITLE));
+      a.others.forEach(function (o) { box.appendChild(el('span', 'lu-band-line', o.name + ': ' + o.text)); });
+      body.appendChild(box);
+    }
   }
   function lunchAlertBadge(b, rc) {
     if (!rc.alerts || !rc.alerts.length) return;
