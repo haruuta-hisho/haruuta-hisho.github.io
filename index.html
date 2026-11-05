@@ -1266,6 +1266,29 @@
   /* 職員の回答（docs/spec.md 5-77）。切り替えで「職員の回答」にしたら、ほかのカードは隠す */
   #lunch-seg { margin: 0 0 12px; }
   #screen-lunch.staff-mode > section.card:not(#lunch-staff-card) { display: none !important; }
+  #screen-lunch.stats-mode > section.card:not(#lunch-stats-card) { display: none !important; }
+  /* 集計のグラフ（docs/spec.md 5-78）。色は dataviz の検査を通したもの（好き・苦手は青と赤、ふつうは灰。重さは状態の色＋文字） */
+  #lunch-stats-card { --viz-like: #3987e5; --viz-normal: #383835; --viz-dislike: #e66767; --viz-severe: #d03b3b; --viz-sick: #fab219; --viz-mild: #8B877B; }
+  .vz-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .vz-tile { padding: 10px 8px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); text-align: center; }
+  .vz-tile b { display: block; font-family: 'Shippori Mincho B1', serif; font-size: 28px; line-height: 1.1; color: var(--text); }
+  .vz-tile span { font-size: 11px; color: var(--muted); }
+  .vz-sec { margin: 0 0 18px; }
+  .vz-sec h3 { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--text); }
+  .vz-lead { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+  .vz-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+  .vz-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 3px; vertical-align: -1px; }
+  .vz-row { display: block; width: 100%; padding: 6px 0; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+  .vz-row-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-soft); margin-bottom: 4px; }
+  .vz-row-head span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .vz-bar { display: flex; gap: 2px; height: 14px; }
+  .vz-bar i { display: block; height: 100%; min-width: 3px; }
+  .vz-bar i:first-child { border-radius: 4px 0 0 4px; }
+  .vz-bar i:last-child { border-radius: 0 4px 4px 0; }
+  .vz-bar i:only-child { border-radius: 4px; }
+  .vz-names { margin: 6px 0 2px; padding: 8px 10px; border-radius: 10px; background: var(--bg); font-size: 12px; line-height: 1.7; color: var(--text-soft); }
+  .vz-names b { color: var(--muted); font-weight: 400; margin-right: 4px; }
+  .vz-empty { font-size: 13px; color: var(--muted); }
   .st-person { padding: 12px 0; border-top: 1px solid var(--line); }
   .st-person:first-child { border-top: 0; padding-top: 4px; }
   .st-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
@@ -2339,7 +2362,12 @@
     <div class="seg stagger" id="lunch-seg" role="tablist" aria-label="ランチの見せ方">
       <button type="button" class="seg-btn" data-lunch-view="recipes" role="tab" aria-selected="true">レシピ</button>
       <button type="button" class="seg-btn" data-lunch-view="staff" role="tab" aria-selected="false">職員の回答</button>
+      <button type="button" class="seg-btn" data-lunch-view="stats" role="tab" aria-selected="false">集計</button>
     </div>
+    <section class="card" id="lunch-stats-card" hidden>
+      <div class="card-head"><h2 class="card-title">集計</h2></div>
+      <div id="lunch-stats-body"></div>
+    </section>
     <section class="card" id="lunch-staff-card" hidden>
       <div class="card-head">
         <h2 class="card-title">職員の回答</h2>
@@ -3255,7 +3283,8 @@
   }
 
   function renderLunch() {
-    if (LUNCH_VIEW === 'staff') renderLunchStaff(); // 職員の回答を開いているときも、読み直したら中身を新しくする
+    if (LUNCH_VIEW === 'staff') renderLunchStaff(); // 職員の回答・集計を開いているときも、読み直したら中身を新しくする
+    if (LUNCH_VIEW === 'stats') renderLunchStats();
     var body = document.getElementById('lunch-body');
     var chip = document.getElementById('lunch-count');
     var title = document.getElementById('lunch-card-title');
@@ -3336,8 +3365,11 @@
     LUNCH_VIEW = view;
     document.querySelectorAll('#lunch-seg .seg-btn').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-lunch-view') === view ? 'true' : 'false'); });
     document.getElementById('screen-lunch').classList.toggle('staff-mode', view === 'staff');
+    document.getElementById('screen-lunch').classList.toggle('stats-mode', view === 'stats');
     document.getElementById('lunch-staff-card').hidden = view !== 'staff';
+    document.getElementById('lunch-stats-card').hidden = view !== 'stats';
     if (view === 'staff') renderLunchStaff();
+    if (view === 'stats') renderLunchStats();
   }
   document.querySelectorAll('#lunch-seg .seg-btn').forEach(function (b) {
     b.addEventListener('click', function () { setLunchView(b.getAttribute('data-lunch-view')); window.scrollTo(0, 0); });
@@ -3377,6 +3409,95 @@
       if (p.dropped.length) line(box, '前の回答', [el('span', 'st-note', p.dropped.join('、') + ' が消えています（本人に確認）')]);
       line(box, '次のランチ', p.wishes.length ? tags(p.wishes) : [el('span', 'st-note', 'まだ書いていません')]);
       body.appendChild(box);
+    });
+  }
+  // 集計（docs/spec.md 5-78。代表だけの画面。行を押すと名前が出る）
+  var LUNCH_STATS_OPEN = '';
+  function renderLunchStats() {
+    var body = document.getElementById('lunch-stats-body');
+    var v = DATA.lunch;
+    body.textContent = '';
+    if (!v || !v.ok) { body.appendChild(el('p', 'error', (v && v.errorText) || '読めませんでした。')); return; }
+    if (v.allergy && !v.allergy.ok) { body.appendChild(el('p', 'lu-allergy-note', v.allergy.errorText)); return; }
+    var s = v.staffStats;
+    if (!s) { body.appendChild(el('p', 'vz-empty', 'まだだれも答えていません。')); return; }
+    if (v.allergy && v.allergy.errorText) body.appendChild(el('p', 'lu-allergy-note', v.allergy.errorText));
+    var tiles = el('div', 'vz-tiles');
+    [[s.answered, 'アンケートに答えた人'], [s.withAllergy, 'アレルギー・苦手あり'], [s.wishers, '次のランチに書いた人']].forEach(function (t) {
+      var d = el('div', 'vz-tile'); d.appendChild(el('b', '', String(t[0]))); d.appendChild(el('span', '', t[1])); tiles.appendChild(d);
+    });
+    body.appendChild(tiles);
+    // 1行 = 名前の見出し＋横の棒（区切りは2pxのすき間）。押すと名前を出す
+    var chart = function (sec, id, label, total, max, parts, namesOf) {
+      var row = el('button', 'vz-row');
+      row.type = 'button';
+      row.setAttribute('aria-expanded', LUNCH_STATS_OPEN === id ? 'true' : 'false');
+      var head = el('div', 'vz-row-head');
+      head.appendChild(el('span', '', label)); head.appendChild(el('span', '', total + '人'));
+      row.appendChild(head);
+      var bar = el('div', 'vz-bar');
+      bar.style.width = Math.max(4, Math.round(total * 100 / Math.max(1, max))) + '%';
+      parts.forEach(function (pt) {
+        if (!pt.n) return;
+        var i = el('i'); i.style.flex = pt.n + ' 1 0'; i.style.background = pt.color; i.title = pt.name + ' ' + pt.n + '人'; bar.appendChild(i);
+      });
+      row.appendChild(bar);
+      row.addEventListener('click', function () { LUNCH_STATS_OPEN = LUNCH_STATS_OPEN === id ? '' : id; renderLunchStats(); });
+      sec.appendChild(row);
+      if (LUNCH_STATS_OPEN === id) {
+        var nm = el('div', 'vz-names');
+        namesOf().forEach(function (g) {
+          if (!g.names.length) return;
+          var line = el('div', ''); line.appendChild(el('b', '', g.name)); line.appendChild(document.createTextNode(g.names.join('、'))); nm.appendChild(line);
+        });
+        sec.appendChild(nm);
+      }
+    };
+    var section = function (title, lead, legend) {
+      var sec = el('div', 'vz-sec');
+      sec.appendChild(el('h3', '', title));
+      if (lead) sec.appendChild(el('p', 'vz-lead', lead));
+      if (legend) {
+        var lg = el('div', 'vz-legend');
+        legend.forEach(function (x) { var sp = el('span', ''); var i = el('i'); i.style.background = x[1]; sp.appendChild(i); sp.appendChild(document.createTextNode(x[0])); lg.appendChild(sp); });
+        sec.appendChild(lg);
+      }
+      body.appendChild(sec);
+      return sec;
+    };
+    // 次のランチの希望（1つの色・多い順）
+    var w = section('次のランチで食べたいもの', '今週の分（水曜14時でリセット）。押すと書いた人が出ます。');
+    if (!s.wishes.length) w.appendChild(el('p', 'vz-empty', 'まだありません。'));
+    var wmax = s.wishes.length ? s.wishes[0].count : 1;
+    s.wishes.forEach(function (x, i) {
+      chart(w, 'w' + i, x.label, x.count, wmax, [{ n: x.count, color: 'var(--lime)', name: x.label }], function () { return [{ name: '', names: x.names }]; });
+    });
+    // アレルギー（重さで色分け・文字の凡例つき）
+    var css = getComputedStyle(document.getElementById('lunch-stats-card'));
+    var col = function (n) { return css.getPropertyValue(n).trim(); };
+    var a = section('食べられないもの', '品目ごとの人数。押すと名前が出ます。', [['命に関わる', col('--viz-severe')], ['体調が悪くなる', col('--viz-sick')], ['苦手', col('--viz-mild')]]);
+    if (!s.allergies.length) a.appendChild(el('p', 'vz-empty', 'ありません。'));
+    var amax = 1;
+    s.allergies.forEach(function (x) { amax = Math.max(amax, x.total); });
+    s.allergies.forEach(function (x, i) {
+      chart(a, 'a' + i, x.label, x.total, amax, [
+        { n: x.severe.length, color: col('--viz-severe'), name: '命に関わる' },
+        { n: x.sick.length, color: col('--viz-sick'), name: '体調が悪くなる' },
+        { n: x.dislike.length, color: col('--viz-mild'), name: '苦手' }],
+        function () { return [{ name: '命に関わる', names: x.severe }, { name: '体調が悪くなる', names: x.sick }, { name: '苦手', names: x.dislike }]; });
+    });
+    // 好き嫌い（好き・ふつう・苦手の割合。好きが多い順）
+    var l = section('好きなもの・苦手なもの', '好きが多い順。押すと名前が出ます。', [['好き', col('--viz-like')], ['ふつう', col('--viz-normal')], ['苦手', col('--viz-dislike')]]);
+    if (!s.likes.length) l.appendChild(el('p', 'vz-empty', 'まだありません。'));
+    var lmax = 1;
+    s.likes.forEach(function (x) { lmax = Math.max(lmax, x.like.length + x.normal.length + x.dislike.length); });
+    s.likes.forEach(function (x, i) {
+      var n = x.like.length + x.normal.length + x.dislike.length;
+      chart(l, 'l' + i, x.label, n, lmax, [
+        { n: x.like.length, color: col('--viz-like'), name: '好き' },
+        { n: x.normal.length, color: col('--viz-normal'), name: 'ふつう' },
+        { n: x.dislike.length, color: col('--viz-dislike'), name: '苦手' }],
+        function () { return [{ name: '好き', names: x.like }, { name: 'ふつう', names: x.normal }, { name: '苦手', names: x.dislike }]; });
     });
   }
   function lunchAlertBadge(b, rc) {
