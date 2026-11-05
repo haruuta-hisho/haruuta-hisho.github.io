@@ -3281,17 +3281,17 @@
       body.appendChild(box);
     }
   }
-  // 毎週の食べたい希望（docs/spec.md 5-76。代表だけが見る画面なので名前つき）
+  // 次のランチの食べたい希望（docs/spec.md 5-76。前回のランチのあとに書かれた分。代表だけが見る画面なので名前つき）
   function lunchWeeklyWishes(body, v) {
     var w = v.weeklyWishes;
     if (!w) return;
     var box = el('div', 'lu-weekly');
     var head = el('div', 'lu-weekly-head');
-    head.appendChild(el('span', '', w.error ? '食べたい希望' : w.label + 'の食べたい希望'));
+    head.appendChild(el('span', '', '次のランチの食べたい希望'));
     head.appendChild(el('span', '', w.error ? '' : w.wishers + '人'));
     box.appendChild(head);
     if (w.error) box.appendChild(el('p', 'empty', '読めませんでした。少しおいて開き直してください。'));
-    else if (!w.items.length) box.appendChild(el('p', 'empty', 'まだありません（職員はアンケートの「今週の食べたい」から書けます）。'));
+    else if (!w.items.length) box.appendChild(el('p', 'empty', 'まだありません（職員はアンケートの「次のランチ」から書けます）。'));
     else w.items.forEach(function (x) {
       var row = el('div', 'lu-weekly-row');
       row.appendChild(el('span', '', x.label));
