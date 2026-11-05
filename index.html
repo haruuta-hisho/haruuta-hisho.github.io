@@ -1255,6 +1255,14 @@
   .lu-allergy-others { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6;
     background: var(--badge-gray-bg); color: var(--badge-gray-fg); }
   .lu-allergy-others .lu-band-head { font-size: 13px; }
+  /* 毎週の食べたい希望（docs/spec.md 5-76） */
+  .lu-weekly { margin: 8px 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+  .lu-weekly-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; font-weight: 700; font-size: 14px; }
+  .lu-weekly-head span:last-child { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .lu-weekly-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .lu-weekly-row b { color: var(--lime); }
+  .lu-weekly-row small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+  .lu-weekly .empty { margin: 4px 0 0; font-size: 13px; }
   .lu-band { margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border-left: 4px solid; font-size: 14px; line-height: 1.6; }
   .lu-band.severe { background: var(--badge-red-bg); color: var(--badge-red-fg); border-color: var(--badge-red-fg); }
   .lu-band.sick { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); border-color: var(--badge-yellow-fg); }
@@ -3236,6 +3244,7 @@
     chip.textContent = v.recipes.length + '品';
     if (!v.recipes.length) { body.appendChild(el('p', 'empty', v.emptyMessage)); renderLunchHistory(); return; }
     lunchAllergyNote(body, v);
+    lunchWeeklyWishes(body, v);
     var ul = el('ul', 'lu-list');
     v.recipes.forEach(function (rc) {
       var li = el('li', '');
@@ -3271,6 +3280,26 @@
       a.others.forEach(function (o) { box.appendChild(el('span', 'lu-band-line', o.name + ': ' + o.text)); });
       body.appendChild(box);
     }
+  }
+  // 毎週の食べたい希望（docs/spec.md 5-76。代表だけが見る画面なので名前つき）
+  function lunchWeeklyWishes(body, v) {
+    var w = v.weeklyWishes;
+    if (!w) return;
+    var box = el('div', 'lu-weekly');
+    var head = el('div', 'lu-weekly-head');
+    head.appendChild(el('span', '', w.error ? '食べたい希望' : w.label + 'の食べたい希望'));
+    head.appendChild(el('span', '', w.error ? '' : w.wishers + '人'));
+    box.appendChild(head);
+    if (w.error) box.appendChild(el('p', 'empty', '読めませんでした。少しおいて開き直してください。'));
+    else if (!w.items.length) box.appendChild(el('p', 'empty', 'まだありません（職員はアンケートの「今週の食べたい」から書けます）。'));
+    else w.items.forEach(function (x) {
+      var row = el('div', 'lu-weekly-row');
+      row.appendChild(el('span', '', x.label));
+      row.appendChild(el('b', '', x.count + '人'));
+      row.appendChild(el('small', '', x.names.join('、')));
+      box.appendChild(row);
+    });
+    body.appendChild(box);
   }
   function lunchAlertBadge(b, rc) {
     if (!rc.alerts || !rc.alerts.length) return;
