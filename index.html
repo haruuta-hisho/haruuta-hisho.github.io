@@ -440,6 +440,22 @@
   .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 8px 2px; font-size: 11px; color: var(--muted); }
   .cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
   .cal-section { margin: 14px 6px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .cal-top { margin: 0 0 14px; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
+  .cal-top .cal-section { margin-top: 0; padding-top: 0; border-top: 0; }
+  .cal-top .cal-section + .cal-section, .cal-top #cal-day + #cal-monthonly .cal-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .cal-top #cal-monthonly:empty { display: none; }
+  .ledger-search { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 6px 0 14px; min-height: 48px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+  .ledger-search:focus-within { border-color: var(--lime); }
+  .ledger-search > svg { width: 20px; height: 20px; flex: none; }
+  .ledger-search input { flex: 1; min-width: 0; height: 46px; border: 0; outline: 0; background: transparent; color: var(--text);
+    font: inherit; font-size: 16px; -webkit-appearance: none; appearance: none; }
+  .ledger-search input::placeholder { color: var(--weak); }
+  .ledger-search input::-webkit-search-cancel-button { display: none; }
+  .ledger-search-clear { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; border-radius: 999px;
+    background: transparent; color: var(--muted); cursor: pointer; }
+  .ledger-search-clear svg { width: 18px; height: 18px; }
+  .ledger-search[hidden], .ledger-search-clear[hidden] { display: none; }
   .cal-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .cal-section-title { font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 15px; margin: 0; color: var(--text); }
   .cal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -2231,6 +2247,21 @@
       <p class="ai-note-text" id="ai-note-ledger-text"></p>
       <div class="ai-note-basis" id="ai-note-ledger-basis"></div>
     </section>
+    <!-- 行事を探す（2026-11-07 代表「台帳に検索機能つけておいて」。docs/spec.md 5-79）。表が読めないときは JS が隠す -->
+    <div class="ledger-search stagger" id="ledger-search-wrap" hidden>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="search" id="ledger-search" placeholder="行事を探す" aria-label="行事を探す" autocomplete="off" enterkeyhint="search" maxlength="60">
+      <button type="button" class="ledger-search-clear" id="ledger-search-clear" aria-label="探す文字を消す" hidden>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <section class="card" id="ledger-search-card" hidden>
+      <div class="card-head">
+        <h2 class="card-title">探した結果</h2>
+        <span class="count-chip" id="ledger-search-count"></span>
+      </div>
+      <div id="ledger-search-body"></div>
+    </section>
     <!-- リスト／カレンダーの切り替え（docs/spec.md 5-21）。カレンダーを止める設定のときは JS が隠す -->
     <div class="seg stagger" id="ledger-seg" role="tablist" aria-label="台帳の見せ方" hidden>
       <button type="button" class="seg-btn" id="seg-list" data-view="list" role="tab" aria-selected="true">
@@ -2242,6 +2273,8 @@
     </div>
 
     <section class="card cal-card" id="ledger-cal-card" hidden>
+      <!-- 押した日の行事と「この月のいつか」はカレンダーの上（2026-11-07 代表の選択 A「押した日の行事を上に」） -->
+      <div class="cal-top" id="cal-top"><div id="cal-day"></div><div id="cal-monthonly"></div></div>
       <div class="cal-head">
         <button class="cal-nav" id="cal-prev" type="button" aria-label="前の月">
           <svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2268,8 +2301,6 @@
         <span><i class="cal-dot"></i>それより先</span>
         <span><i class="cal-dot repeat"></i>繰り返しの予定</span>
       </div>
-      <div id="cal-monthonly"></div>
-      <div id="cal-day"></div>
     </section>
 
     <section class="card stagger" id="ledger-card">
@@ -6763,7 +6794,7 @@
     var count = document.getElementById('ledger-done-count');
     body.textContent = '';
     count.textContent = '';
-    if (!LEDGER_UI.doneOpen || !(DATA.ledger && DATA.ledger.edit)) { card.hidden = true; return; }
+    if (!LEDGER_UI.doneOpen || !(DATA.ledger && DATA.ledger.edit) || ledgerSearching()) { card.hidden = true; return; }
     card.hidden = false;
     var d = LEDGER_UI.done;
     if (!d) { body.appendChild(el('p', 'empty', '読み込んでいます…')); return; }
@@ -6891,7 +6922,111 @@
       document.getElementById('ledger-card').hidden = false;
       calCard.hidden = true;
     }
+    renderLedgerSearch();
   }
+
+  // ---- 行事を探す（2026-11-07 代表「台帳に検索機能つけておいて」。docs/spec.md 5-79）----
+  // 探す文字が入っている間は、一覧・カレンダー・すべての行事・済んだものを隠し、当たった行事だけを出す。
+  // ひらがな／カタカナ・全角／半角・大文字／小文字・空白の違いは見ない。空白で区切ると「どれも含む」。
+  function ledgerSearching() { return !!(LEDGER_UI.q && ledgerNorm(LEDGER_UI.q)); }
+
+  function ledgerNorm(s) {
+    s = String(s == null ? '' : s);
+    try { s = s.normalize('NFKC'); } catch (e) { /* 古い端末はそのまま */ }
+    s = s.toLowerCase();
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      out += (c >= 0x3041 && c <= 0x3096) ? String.fromCharCode(c + 0x60) : s.charAt(i);
+    }
+    return out.replace(/\s+/g, '');
+  }
+
+  function ledgerSearchTerms(q) {
+    return String(q || '').split(/\s+/).map(ledgerNorm).filter(function (t) { return t; });
+  }
+
+  function ledgerSearchText(item) {
+    var kind = ledgerKindInfo(item.kind);
+    return ledgerNorm([item.name, item.note, item.place, item.members, item.time, item.cycle,
+      item.dueLabel || item.dueText, kind ? kind.label : ''].join(' '));
+  }
+
+  function ledgerSearchMatches(item, terms) {
+    var text = ledgerSearchText(item);
+    for (var i = 0; i < terms.length; i++) if (text.indexOf(terms[i]) < 0) return false;
+    return true;
+  }
+
+  function renderLedgerSearch() {
+    var v = DATA.ledger;
+    var wrap = document.getElementById('ledger-search-wrap');
+    var card = document.getElementById('ledger-search-card');
+    var body = document.getElementById('ledger-search-body');
+    var count = document.getElementById('ledger-search-count');
+    if (!wrap || !card) return;
+    var can = !!(v && v.ok);
+    var input = document.getElementById('ledger-search');
+    if (input.value !== (LEDGER_UI.q || '') && document.activeElement !== input) input.value = LEDGER_UI.q || '';
+    wrap.hidden = !can;
+    document.getElementById('ledger-search-clear').hidden = !LEDGER_UI.q;
+    body.textContent = '';
+    count.textContent = '';
+    if (!can || !ledgerSearching()) { card.hidden = true; return; }
+    ['ledger-card', 'ledger-all-card', 'ledger-done-card', 'ledger-cal-card', 'ledger-seg'].forEach(function (id) {
+      document.getElementById(id).hidden = true;
+    });
+    card.hidden = false;
+    var terms = ledgerSearchTerms(LEDGER_UI.q);
+    var edit = v.edit;
+    // 書ける設定なら表の全部の行（期日がまだ・隠した行も）、書けない設定なら画面に並んでいる行から探す
+    var pool = edit ? edit.list : (v.items || []);
+    var hits = pool.filter(function (it) { return ledgerSearchMatches(it, terms); });
+    count.textContent = hits.length + '件';
+    if (!hits.length) {
+      body.appendChild(el('p', 'empty', '「' + LEDGER_UI.q.trim() + '」に当たる行事はありません。'));
+      return;
+    }
+    var LIMIT = 50;
+    var ul = el('ul', 'ledger');
+    hits.slice(0, LIMIT).forEach(function (item) {
+      var li;
+      if (edit) {
+        li = ledgerRowEl({
+          name: item.name,
+          dueText: item.due ? item.dueLabel : '期日まだ',
+          cycle: item.cycle, time: item.time, place: item.place, placeLink: item.placeLink, members: item.members, kind: item.kind, note: item.note,
+          daysText: item.show ? item.daysText : '隠し中',
+          level: item.show ? item.level : 'far',
+        }, item);
+        if (!item.show) li.classList.add('hidden-row');
+      } else {
+        li = ledgerRowEl(item, null, true);
+      }
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if (hits.length > LIMIT) body.appendChild(el('p', 'overflow', 'ほか ' + (hits.length - LIMIT) + '件（言葉を足して絞ってください）'));
+  }
+
+  (function () {
+    var input = document.getElementById('ledger-search');
+    var clear = document.getElementById('ledger-search-clear');
+    if (!input) return;
+    input.addEventListener('input', function () {
+      var was = ledgerSearching();
+      LEDGER_UI.q = input.value;
+      // 探すのをやめたら、一覧・すべての行事・済んだものを元の開き方に戻す
+      if (was && !ledgerSearching()) renderLedger(); else renderLedgerView();
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') input.blur(); });
+    clear.addEventListener('click', function () {
+      input.value = '';
+      LEDGER_UI.q = '';
+      renderLedger();
+      input.focus();
+    });
+  })();
 
   function calIndex(y, m) { return y * 12 + (m - 1); }
 
@@ -7227,7 +7362,7 @@
     var card = document.getElementById('ledger-all-card');
     var body = document.getElementById('ledger-all-body');
     body.textContent = '';
-    if (!edit || !LEDGER_UI.allOpen) { card.hidden = true; return; }
+    if (!edit || !LEDGER_UI.allOpen || ledgerSearching()) { card.hidden = true; return; }
     card.hidden = false;
     document.getElementById('ledger-all-count').textContent = edit.list.length + '件';
     if (!edit.list.length) { body.appendChild(el('p', 'empty', 'まだ行事がありません。「足す」から入れてください。')); return; }
@@ -7261,7 +7396,9 @@
   var LEDGER_UI = { item: null, busy: false, quick: false, allOpen: !!(DATA && DATA.ledgerAllOpen), undoTimer: null, confirmStep: 0,
     doneOpen: !!(DATA && DATA.ledgerDoneOpen), done: (DATA && DATA.ledgerDonePreview) || null,
     // 見せ方（list / calendar）。前に選んだほうを覚えておく（この端末だけ。消えてもリストに戻るだけ）
-    view: DATA.ledgerView || readLedgerView() || 'list', cal: null, calAnim: '' };
+    view: DATA.ledgerView || readLedgerView() || 'list', cal: null, calAnim: '',
+    // 探す文字（見本づくりでは DATA.ledgerSearch で最初から入れられる）
+    q: (DATA && DATA.ledgerSearch) || '' };
 
   function readLedgerView() {
     try { var v = window.localStorage.getItem('hisho.ledgerView'); return v === 'calendar' || v === 'list' ? v : null; }
